@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using GiveAID.Web.Data;
@@ -8,7 +8,7 @@ using GiveAID.Web.Models;
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
-    /// Gallery — photo/image management.
+    /// Gallery â€” photo/image management.
     /// Stores photo URLs (no file upload). Supports optional Programme linkage.
     /// </summary>
     [RoutePrefix("api/gallery")]
@@ -22,7 +22,7 @@ namespace GiveAID.Web.Controllers
         }
 
         // GET: api/gallery
-        // Public — list gallery items with optional filters
+        // Public â€” list gallery items with optional filters
         [HttpGet]
         [Route("")]
         public IHttpActionResult GetAll(
@@ -98,7 +98,7 @@ namespace GiveAID.Web.Controllers
         }
 
         // GET: api/gallery/categories
-        // Public — distinct categories
+        // Public â€” distinct categories
         [HttpGet]
         [Route("categories")]
         public IHttpActionResult GetCategories()
@@ -125,7 +125,7 @@ namespace GiveAID.Web.Controllers
         }
 
         // GET: api/gallery/programmes
-        // Public — programmes that have gallery items
+        // Public â€” programmes that have gallery items
         [HttpGet]
         [Route("programmes")]
         public IHttpActionResult GetProgrammes()
@@ -221,7 +221,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/gallery  (Admin only)
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(GalleryRequest request)
         {
             try
@@ -283,7 +283,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/gallery/5  (Admin only)
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, GalleryRequest request)
         {
             try
@@ -338,7 +338,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/gallery/5  (SuperAdmin only)
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -387,3 +387,5 @@ namespace GiveAID.Web.Controllers
         public int DisplayOrder { get; set; }
     }
 }
+
+

@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
 using GiveAID.Web.Data;
+using GiveAID.Web.Helpers;
 using GiveAID.Web.Models;
 using GiveAID.Web.Controllers;
 
@@ -103,7 +104,7 @@ namespace GiveAID.Web.Controllers
         // GET: api/causes/stats
         [HttpGet]
         [Route("stats")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetStats()
         {
             try
@@ -135,7 +136,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/causes
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(Cause cause)
         {
             try
@@ -165,7 +166,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/causes/5
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, Cause cause)
         {
             try
@@ -203,7 +204,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/causes/5
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -241,3 +242,5 @@ namespace GiveAID.Web.Controllers
         }
     }
 }
+
+

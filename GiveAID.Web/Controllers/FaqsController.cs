@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using GiveAID.Web.Data;
@@ -8,7 +8,7 @@ using GiveAID.Web.Models;
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
-    /// Help Centre — Frequently Asked Questions
+    /// Help Centre â€” Frequently Asked Questions
     /// Public list (no auth) + admin CRUD.
     /// </summary>
     [RoutePrefix("api/faqs")]
@@ -144,7 +144,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/faqs  (Admin only)
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(Faq faq)
         {
             try
@@ -185,7 +185,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/faqs/5  (Admin only)
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, Faq faq)
         {
             try
@@ -221,7 +221,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/faqs/5  (SuperAdmin only)
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -257,3 +257,5 @@ namespace GiveAID.Web.Controllers
         }
     }
 }
+
+

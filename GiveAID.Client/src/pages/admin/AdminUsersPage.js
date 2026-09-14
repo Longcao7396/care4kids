@@ -1,27 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Spinner } from 'react-bootstrap';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminPageFrame from '../../components/AdminPageFrame';
 import '../admin/AdminForm.css';
 
-/* ─────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * AdminUsersPage
  *   Manage all platform users.
- *   - Admins can deactivate/reactivate and change User→Admin (role guard).
+ *   - Admins can deactivate/reactivate and change Userâ†’Admin (role guard).
  *   - SuperAdmin can change any role including SuperAdmin demotion/promotion
  *     (with last-SuperAdmin guard left to backend).
- * ───────────────────────────────────────────────── */
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const ROLES = ['User', 'Admin', 'SuperAdmin'];
 
 const fmtDate = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return 'â€”';
   const d = new Date(iso);
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 const fmtDateTime = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return 'â€”';
   const d = new Date(iso);
   return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 };
@@ -119,9 +119,9 @@ function AdminUsersPage() {
 
   return (
     <AdminPageFrame
-      eyebrow="People · Users"
+      eyebrow="People Â· Users"
       title="Users"
-      sub="Everyone who has an account on Care4Kids. Manage roles, status, and access."
+      sub="Everyone who has an account on GiveAID. Manage roles, status, and access."
       error={errorMsg}
       success={successMsg}
     >
@@ -136,7 +136,7 @@ function AdminUsersPage() {
           <input
             type="text"
             className="af-search-input"
-            placeholder="Search name, email, or username…"
+            placeholder="Search name, email, or usernameâ€¦"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -191,7 +191,7 @@ function AdminUsersPage() {
                 {items.map((u) => {
                   const canEditRole =
                     isSuperAdmin ||
-                    (u.role === 'User'); // Admin can promote User→Admin (their own choice)
+                    (u.role === 'User'); // Admin can promote Userâ†’Admin (their own choice)
                   const canDeactivate = isSuperAdmin || u.userId !== me?.userId;
 
                   return (
@@ -219,6 +219,8 @@ function AdminUsersPage() {
                             style={{ minWidth: 110, padding: '5px 8px', fontSize: '0.8125rem' }}
                             value={u.role}
                             onChange={(e) => handleChangeRole(u, e.target.value)}
+                            disabled={u.userId === me?.userId}
+                            title={u.userId === me?.userId ? 'You cannot change your own role' : undefined}
                           >
                             {ROLES.map((r) => (
                               <option
@@ -240,7 +242,7 @@ function AdminUsersPage() {
                         <span className={`af-pill ${u.isActive ? 'af-pill-active' : 'af-pill-completed'}`}>
                           {u.isActive ? 'Active' : 'Inactive'}
                         </span>
-                        {u.isVerified && <span className="ad-verified-tag" title="Email verified">✓ Verified</span>}
+                        {u.isVerified && <span className="ad-verified-tag" title="Email verified">âœ“ Verified</span>}
                       </td>
                       <td>
                         <div className="af-cell-strong">{u.donationCount}</div>
@@ -300,7 +302,7 @@ function AdminUsersPage() {
                   disabled={pagination.page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  ‹ Prev
+                  â€¹ Prev
                 </button>
                 <button
                   type="button"
@@ -308,7 +310,7 @@ function AdminUsersPage() {
                   disabled={pagination.page >= pagination.totalPages}
                   onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 >
-                  Next ›
+                  Next â€º
                 </button>
               </div>
             </div>
@@ -323,7 +325,7 @@ function AdminUsersPage() {
   );
 }
 
-/* map role → af-pill-* key */
+/* map role â†’ af-pill-* key */
 function rolePillKey(role) {
   switch (role) {
     case 'SuperAdmin': return 'cancelled'; /* coral-toned */
@@ -333,3 +335,4 @@ function rolePillKey(role) {
 }
 
 export default AdminUsersPage;
+

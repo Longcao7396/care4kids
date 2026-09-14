@@ -1,15 +1,16 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
 using GiveAID.Web.Data;
+using GiveAID.Web.Helpers;
 using GiveAID.Web.Models;
 
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
     /// About Us module - Our Supporters page.
-    /// Uses the existing Organizations table — Supporters, NGO and Partner
+    /// Uses the existing Organizations table â€” Supporters, NGO and Partner
     /// types are all displayed, with optional type filter.
     /// </summary>
     [RoutePrefix("api/supporters")]
@@ -131,7 +132,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/supporters  (Admin only)
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(Organization organization)
         {
             try
@@ -164,7 +165,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/supporters/5  (Admin only)
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, Organization organization)
         {
             try
@@ -211,7 +212,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/supporters/5  (SuperAdmin only)
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -256,6 +257,7 @@ namespace GiveAID.Web.Controllers
                 vision = o.Vision,
                 contributionAmount = o.ContributionAmount,
                 contributionType = o.ContributionType,
+                isActive = o.IsActive,
                 isFeatured = o.IsFeatured,
                 displayOrder = o.DisplayOrder
             };
@@ -271,3 +273,5 @@ namespace GiveAID.Web.Controllers
         }
     }
 }
+
+

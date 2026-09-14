@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -90,7 +90,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // POST: api/careers/5/apply  (public — anyone can apply)
+        // POST: api/careers/5/apply  (public â€” anyone can apply)
         [HttpPost]
         [Route("{id:int}/apply")]
         public IHttpActionResult Apply(int id, CareerApplyRequest request)
@@ -154,7 +154,7 @@ namespace GiveAID.Web.Controllers
         // GET: api/careers/5/applications  (Admin only)
         [HttpGet]
         [Route("{id:int}/applications")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetApplications(int id)
         {
             try
@@ -189,7 +189,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/careers  (Admin only)
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(Career career)
         {
             try
@@ -223,7 +223,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/careers/5  (Admin only)
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, Career career)
         {
             try
@@ -265,7 +265,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/careers/5  (SuperAdmin only)
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -334,3 +334,5 @@ namespace GiveAID.Web.Controllers
         public string PortfolioUrl { get; set; }
     }
 }
+
+

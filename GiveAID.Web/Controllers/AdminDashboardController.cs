@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -19,20 +19,7 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                // Get user from token
-                var token = Request.Headers.Authorization?.Parameter;
-                if (string.IsNullOrEmpty(token))
-                {
-                    return Unauthorized();
-                }
-
-                var userId = JwtHelper.GetUserIdFromToken(Request);
-                var user = db.Users.Find(userId);
-                if (user == null || (user.Role != "Admin" && user.Role != "SuperAdmin"))
-                {
-                    return Content(System.Net.HttpStatusCode.Forbidden, 
-                        new { success = false, message = "Admin access required" });
-                }
+                var auth = JwtHelper.CheckAdmin(Request, db);
 
                 // Total Donations
                 var totalDonations = db.Donations
@@ -78,6 +65,13 @@ namespace GiveAID.Web.Controllers
                     .ToList();
 
                 // Donations by Campaign (Top 5)
+                // Pre-compute donor counts in a single query to avoid N+1 subqueries
+                var donorCountsByCampaign = db.Donations
+                    .Where(d => d.PaymentStatus == "Completed" && d.CampaignId != null)
+                    .GroupBy(d => d.CampaignId)
+                    .Select(g => new { CampaignId = g.Key, donorCount = g.Select(d => d.UserId).Distinct().Count() })
+                    .ToDictionary(x => x.CampaignId, x => x.donorCount);
+
                 var donationsByCampaign = db.Campaigns
                     .Include(c => c.Cause)
                     .Where(c => c.Status == "Active")
@@ -91,17 +85,30 @@ namespace GiveAID.Web.Controllers
                         percentageReached = c.GoalAmount > 0
                             ? (c.RaisedAmount / c.GoalAmount) * 100
                             : 0,
-                        donorCount = db.Donations
-                            .Where(d => d.CampaignId == c.CampaignId && d.PaymentStatus == "Completed")
-                            .Select(d => d.UserId)
-                            .Distinct()
-                            .Count()
+                        donorCount = 0
+                    })
+                    .ToList()
+                    .Select(c => new {
+                        c.campaignId,
+                        c.campaignName,
+                        c.causeName,
+                        c.goalAmount,
+                        c.raisedAmount,
+                        c.percentageReached,
+                        donorCount = donorCountsByCampaign.ContainsKey(c.campaignId) ? donorCountsByCampaign[c.campaignId] : 0
                     })
                     .OrderByDescending(x => x.raisedAmount)
                     .Take(5)
                     .ToList();
 
                 // Donations by Cause
+                // Pre-compute donation counts in a single query to avoid N+1 subqueries
+                var donationCountsByCause = db.Donations
+                    .Where(d => d.PaymentStatus == "Completed" && d.CauseId != null)
+                    .GroupBy(d => d.CauseId)
+                    .Select(g => new { CauseId = g.Key, donationCount = g.Count() })
+                    .ToDictionary(x => x.CauseId, x => x.donationCount);
+
                 var donationsByCause = db.Causes
                     .Select(c => new
                     {
@@ -110,9 +117,16 @@ namespace GiveAID.Web.Controllers
                         causeCode = c.CauseCode,
                         targetAmount = c.TargetAmount,
                         raisedAmount = c.RaisedAmount,
-                        donationCount = db.Donations
-                            .Where(d => d.CauseId == c.CauseId && d.PaymentStatus == "Completed")
-                            .Count()
+                        donationCount = 0
+                    })
+                    .ToList()
+                    .Select(c => new {
+                        c.causeId,
+                        c.causeName,
+                        c.causeCode,
+                        c.targetAmount,
+                        c.raisedAmount,
+                        donationCount = donationCountsByCause.ContainsKey(c.causeId) ? donationCountsByCause[c.causeId] : 0
                     })
                     .OrderByDescending(x => x.raisedAmount)
                     .ToList();
@@ -169,20 +183,7 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                // Get user from token
-                var token = Request.Headers.Authorization?.Parameter;
-                if (string.IsNullOrEmpty(token))
-                {
-                    return Unauthorized();
-                }
-
-                var userId = JwtHelper.GetUserIdFromToken(Request);
-                var user = db.Users.Find(userId);
-                if (user == null || (user.Role != "Admin" && user.Role != "SuperAdmin"))
-                {
-                    return Content(System.Net.HttpStatusCode.Forbidden,
-                        new { success = false, message = "Admin access required" });
-                }
+                var auth = JwtHelper.CheckAdmin(Request, db);
 
                 var donations = db.Donations
                     .Include(d => d.User)
@@ -223,20 +224,7 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                // Get user from token
-                var token = Request.Headers.Authorization?.Parameter;
-                if (string.IsNullOrEmpty(token))
-                {
-                    return Unauthorized();
-                }
-
-                var userId = JwtHelper.GetUserIdFromToken(Request);
-                var user = db.Users.Find(userId);
-                if (user == null || (user.Role != "Admin" && user.Role != "SuperAdmin"))
-                {
-                    return Content(System.Net.HttpStatusCode.Forbidden,
-                        new { success = false, message = "Admin access required" });
-                }
+                var auth = JwtHelper.CheckAdmin(Request, db);
 
                 var totalUsers = db.Users.Count(u => u.Role == "User");
                 var activeUsers = db.Users.Count(u => u.Role == "User" && u.IsActive);
@@ -269,20 +257,14 @@ namespace GiveAID.Web.Controllers
             int page = 1,
             int pageSize = 20,
             string status = null,
-            string search = null)
+            string search = null,
+            int? campaignId = null,
+            DateTime? dateFrom = null,
+            DateTime? dateTo = null)
         {
             try
             {
-                var token = Request.Headers.Authorization?.Parameter;
-                if (string.IsNullOrEmpty(token)) { return Unauthorized(); }
-
-                var userId = JwtHelper.GetUserIdFromToken(Request);
-                var user = db.Users.Find(userId);
-                if (user == null || (user.Role != "Admin" && user.Role != "SuperAdmin"))
-                {
-                    return Content(System.Net.HttpStatusCode.Forbidden,
-                        new { success = false, message = "Admin access required" });
-                }
+                var auth = JwtHelper.CheckAdmin(Request, db);
 
                 var query = db.Donations
                     .Include(d => d.User)
@@ -303,6 +285,21 @@ namespace GiveAID.Web.Controllers
                         d.User.FullName.ToLower().Contains(s) ||
                         d.User.Email.ToLower().Contains(s) ||
                         d.Cause.CauseName.ToLower().Contains(s));
+                }
+
+                if (campaignId.HasValue)
+                {
+                    query = query.Where(d => d.CampaignId == campaignId.Value);
+                }
+
+                if (dateFrom.HasValue)
+                {
+                    query = query.Where(d => d.DonationDate >= dateFrom.Value);
+                }
+
+                if (dateTo.HasValue)
+                {
+                    query = query.Where(d => d.DonationDate <= dateTo.Value);
                 }
 
                 var total = query.Count();
@@ -368,3 +365,5 @@ namespace GiveAID.Web.Controllers
         }
     }
 }
+
+

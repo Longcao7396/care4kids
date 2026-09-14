@@ -181,7 +181,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/campaigns (Admin only)
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(CampaignCreateRequest request)
         {
             try
@@ -250,7 +250,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/campaigns/5 (Admin only)
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, CampaignUpdateRequest request)
         {
             try
@@ -318,7 +318,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/campaigns/5 (Admin only)
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -502,7 +502,7 @@ namespace GiveAID.Web.Controllers
         // GET: api/campaigns/{id}/registrations (Admin)
         [HttpGet]
         [Route("{id:int}/registrations")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetRegistrations(int id)
         {
             try
@@ -668,4 +668,6 @@ namespace GiveAID.Web.Controllers
         public decimal? ActualBudget { get; set; }
     }
 }
+
+
 

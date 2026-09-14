@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -22,7 +22,7 @@ namespace GiveAID.Web.Controllers
             _context = new GiveAIDContext();
         }
 
-        // POST: api/contacts  — PUBLIC: submit contact form
+        // POST: api/contacts  â€” PUBLIC: submit contact form
         [HttpPost]
         [Route("")]
         public IHttpActionResult Submit(ContactSubmitRequest request)
@@ -74,10 +74,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/contacts  — Admin: list all submissions
+        // GET: api/contacts  â€” Admin: list all submissions
         [HttpGet]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetAll(
             bool? isRead = null,
             string search = null,
@@ -116,8 +116,8 @@ namespace GiveAID.Web.Controllers
                         email = c.Email,
                         phone = c.Phone,
                         subject = c.Subject,
-                        messagePreview = c.Message.Length > 80
-                            ? c.Message.Substring(0, 80) + "…"
+                        messagePreview = (c.Message ?? string.Empty).Length > 80
+                            ? c.Message.Substring(0, 80) + "â€¦"
                             : c.Message,
                         isRead = c.IsRead,
                         hasReply = !string.IsNullOrEmpty(c.ReplyMessage),
@@ -143,10 +143,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/contacts/5  — Admin: get single submission
+        // GET: api/contacts/5  â€” Admin: get single submission
         [HttpGet]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetById(int id)
         {
             try
@@ -188,10 +188,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // PUT: api/contacts/5/reply  — Admin: send reply
+        // PUT: api/contacts/5/reply  â€” Admin: send reply
         [HttpPut]
         [Route("{id:int}/reply")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Reply(int id, ContactReplyRequest request)
         {
             try
@@ -228,10 +228,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // PUT: api/contacts/5/read  — Admin: toggle read/unread
+        // PUT: api/contacts/5/read  â€” Admin: toggle read/unread
         [HttpPut]
         [Route("{id:int}/read")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult ToggleRead(int id)
         {
             try
@@ -257,10 +257,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // DELETE: api/contacts/5  — SuperAdmin: hard delete
+        // DELETE: api/contacts/5  â€” SuperAdmin: hard delete
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -286,10 +286,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/contacts/stats  — Admin: unread count
+        // GET: api/contacts/stats  â€” Admin: unread count
         [HttpGet]
         [Route("stats")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetStats()
         {
             try
@@ -334,3 +334,5 @@ namespace GiveAID.Web.Controllers
         public string ReplyMessage { get; set; }
     }
 }
+
+

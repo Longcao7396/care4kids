@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using GiveAID.Web.Data;
@@ -8,7 +8,7 @@ using GiveAID.Web.Models;
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
-    /// Organizations — full CRUD for all organization types:
+    /// Organizations â€” full CRUD for all organization types:
     /// NGO, Partner, Supporter, Corporate, Government, Other.
     /// Uses the existing Organizations table.
     /// </summary>
@@ -138,7 +138,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/organizations  (Admin only)
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(OrganizationRequest request)
         {
             try
@@ -187,7 +187,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/organizations/5  (Admin only)
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, OrganizationRequest request)
         {
             try
@@ -233,7 +233,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/organizations/5  (SuperAdmin only)
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -352,3 +352,5 @@ namespace GiveAID.Web.Controllers
         public int DisplayOrder { get; set; }
     }
 }
+
+

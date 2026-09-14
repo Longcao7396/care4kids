@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Row, Col, Card, Alert, Button, Modal, Form,
   Spinner, Badge, ProgressBar, Table
@@ -72,6 +72,7 @@ function CampaignFormModal({ show, editing, initial, causes, onSave, onClose }) 
         causeId: form.causeId ? parseInt(form.causeId) : null,
         goalAmount: form.goalAmount ? parseFloat(form.goalAmount) : null,
         beneficiariesCount: form.beneficiariesCount ? parseInt(form.beneficiariesCount) : null,
+        targetBeneficiaries: form.targetBeneficiaries ? parseInt(form.targetBeneficiaries) : null,
         displayOrder: parseInt(form.displayOrder) || 0,
       });
     } finally {
@@ -131,7 +132,8 @@ function CampaignFormModal({ show, editing, initial, causes, onSave, onClose }) 
           </Row>
           <Row>
             <Col md={6}>{field('Image URL', 'imageUrl', 'url', 'https://...')}</Col>
-            <Col md={3}>{field('Target Beneficiaries', 'beneficiariesCount', 'number', '500')}</Col>
+            <Col md={3}>{field('Beneficiaries', 'beneficiariesCount', 'number', '500')}</Col>
+            <Col md={3}>{field('Target Beneficiaries', 'targetBeneficiaries', 'number', '1000')}</Col>
             <Col md={3}>
               <Form.Check
                 type="switch" id="camp-is-featured" label="Featured"

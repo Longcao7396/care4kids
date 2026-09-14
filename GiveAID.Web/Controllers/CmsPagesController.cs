@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -9,7 +9,7 @@ using GiveAID.Web.Models;
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
-    /// CMS pages controller — exposes the existing CmsPages table so the
+    /// CMS pages controller â€” exposes the existing CmsPages table so the
     /// About Us module can pull editable text content (about_us, our_team,
     /// careers, achievements, contact_info, etc.) and admins can manage it.
     ///
@@ -86,10 +86,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/cms/pages/id/5  (Admin only — includes inactive)
+        // GET: api/cms/pages/id/5  (Admin only â€” includes inactive)
         [HttpGet]
         [Route("pages/id/{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin,ContentManager")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin,ContentManager")]
         public IHttpActionResult GetById(int id)
         {
             try
@@ -107,7 +107,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/cms/pages  (Admin only)
         [HttpPost]
         [Route("pages")]
-        [Authorize(Roles = "SuperAdmin,Admin,ContentManager")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin,ContentManager")]
         public IHttpActionResult Create(CmsPageCreateRequest request)
         {
             try
@@ -165,7 +165,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/cms/pages/5  (Admin only)
         [HttpPut]
         [Route("pages/{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin,ContentManager")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin,ContentManager")]
         public IHttpActionResult Update(int id, CmsPageUpdateRequest request)
         {
             try
@@ -211,7 +211,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/cms/pages/5  (SuperAdmin only)
         [HttpDelete]
         [Route("pages/{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -288,3 +288,5 @@ namespace GiveAID.Web.Controllers
         public int? DisplayOrder { get; set; }
     }
 }
+
+

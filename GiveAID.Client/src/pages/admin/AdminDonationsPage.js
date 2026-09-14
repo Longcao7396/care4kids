@@ -1,24 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Spinner } from 'react-bootstrap';
 import api from '../../services/api';
 import AdminPageFrame from '../../components/AdminPageFrame';
 import '../admin/AdminForm.css';
 
-/* ─────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * AdminDonationsPage
  *   Lists every donation across the platform.
  *   Filters: status (Completed/Pending/Failed/Refunded), search.
  *   Pagination: server-side via page/pageSize.
- * ───────────────────────────────────────────────── */
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const STATUS_OPTIONS = ['Completed', 'Pending', 'Failed', 'Refunded'];
 
 const fmtVnd = (n) => n != null
   ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n)
-  : '—';
+  : 'â€”';
 
 const fmtDate = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return 'â€”';
   const d = new Date(iso);
   return d.toLocaleString('en-GB', {
     day: '2-digit', month: 'short', year: 'numeric',
@@ -35,7 +35,18 @@ function AdminDonationsPage() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [campaignFilter, setCampaignFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [campaigns, setCampaigns] = useState([]);
   const [page, setPage] = useState(1);
+
+  /* Fetch campaign list once for the dropdown */
+  useEffect(() => {
+    api.get('/campaigns', { params: { pageSize: 200 } })
+      .then((r) => r.data.success && setCampaigns(r.data.data || []))
+      .catch(() => {});
+  }, []);
 
   const fetch = useCallback(async () => {
     try {
@@ -44,6 +55,9 @@ function AdminDonationsPage() {
       const params = { page, pageSize: 20 };
       if (statusFilter) params.status = statusFilter;
       if (search.trim()) params.search = search.trim();
+      if (campaignFilter) params.campaignId = campaignFilter;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
       const res = await api.get('/admin/donations', { params });
       if (res.data.success) {
         const d = res.data.data;
@@ -62,12 +76,12 @@ function AdminDonationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, search]);
+  }, [page, statusFilter, search, campaignFilter, dateFrom, dateTo]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
   /* Reset page when filters change */
-  useEffect(() => { setPage(1); }, [statusFilter, search]);
+  useEffect(() => { setPage(1); }, [statusFilter, search, campaignFilter, dateFrom, dateTo]);
 
   /* Build compact pagination window */
   const pageNumbers = (() => {
@@ -76,16 +90,16 @@ function AdminDonationsPage() {
     const arr = [];
     for (let i = 1; i <= tp; i++) {
       if (i === 1 || i === tp || Math.abs(i - cur) <= 2) arr.push(i);
-      else if (arr[arr.length - 1] !== '…') arr.push('…');
+      else if (arr[arr.length - 1] !== 'â€¦') arr.push('â€¦');
     }
     return arr;
   })();
 
   return (
     <AdminPageFrame
-      eyebrow="Fundraising · Donations"
+      eyebrow="Fundraising Â· Donations"
       title="Donations"
-      sub="Every donation that has reached Care4Kids — track status, donor, and impact."
+      sub="Every donation that has reached GiveAID â€” track status, donor, and impact."
       error={errorMsg}
     >
       {/* Summary KPIs */}
@@ -118,7 +132,7 @@ function AdminDonationsPage() {
           <input
             type="text"
             className="af-search-input"
-            placeholder="Search donor, email, transaction ID, cause…"
+            placeholder="Search donor, email, transaction ID, causeâ€¦"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -133,6 +147,27 @@ function AdminDonationsPage() {
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
+
+        <select className="af-filter" value={campaignFilter} onChange={(e) => setCampaignFilter(e.target.value)}>
+          <option value="">All campaigns</option>
+          {campaigns.map((c) => <option key={c.campaignId} value={c.campaignId}>{c.campaignName}</option>)}
+        </select>
+
+        <input
+          type="date"
+          className="af-filter"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          placeholder="From"
+        />
+
+        <input
+          type="date"
+          className="af-filter"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          placeholder="To"
+        />
 
         <div className="af-toolbar-spacer" />
         <button type="button" className="af-btn af-btn-secondary" onClick={fetch}>
@@ -196,15 +231,15 @@ function AdminDonationsPage() {
                       {d.campaignName && <div className="af-cell-meta">{d.campaignName}</div>}
                     </td>
                     <td>
-                      <span className="af-cell-meta">{d.paymentMethod || '—'}</span>
+                      <span className="af-cell-meta">{d.paymentMethod || 'â€”'}</span>
                     </td>
                     <td>
                       <span className={`af-pill af-pill-${(d.paymentStatus || '').toLowerCase()}`}>
-                        {d.paymentStatus || '—'}
+                        {d.paymentStatus || 'â€”'}
                       </span>
                     </td>
                     <td>
-                      <code className="af-code">{d.transactionId || '—'}</code>
+                      <code className="af-code">{d.transactionId || 'â€”'}</code>
                     </td>
                     <td>
                       <span className="af-cell-meta">{fmtDate(d.donationDate)}</span>
@@ -231,11 +266,11 @@ function AdminDonationsPage() {
                   disabled={pagination.page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  ‹ Prev
+                  â€¹ Prev
                 </button>
                 {pageNumbers.map((n, idx) =>
-                  n === '…' ? (
-                    <span key={`gap-${idx}`} className="af-page-btn" style={{ border: 0, background: 'transparent' }} disabled>…</span>
+                  n === 'â€¦' ? (
+                    <span key={`gap-${idx}`} className="af-page-btn" style={{ border: 0, background: 'transparent' }} disabled>â€¦</span>
                   ) : (
                     <button
                       key={n}
@@ -253,7 +288,7 @@ function AdminDonationsPage() {
                   disabled={pagination.page >= pagination.totalPages}
                   onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 >
-                  Next ›
+                  Next â€º
                 </button>
               </div>
             </div>
@@ -269,3 +304,4 @@ function AdminDonationsPage() {
 }
 
 export default AdminDonationsPage;
+

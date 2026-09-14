@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -87,7 +87,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/team  (Admin only)
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(TeamMember member)
         {
             try
@@ -121,7 +121,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/team/5  (Admin only)
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, TeamMember member)
         {
             try
@@ -165,7 +165,7 @@ namespace GiveAID.Web.Controllers
         // DELETE: api/team/5  (SuperAdmin only - hard delete)
         [HttpDelete]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin")]
+        [JwtAuthorize(Roles = "SuperAdmin")]
         public IHttpActionResult Delete(int id)
         {
             try
@@ -224,3 +224,5 @@ namespace GiveAID.Web.Controllers
         }
     }
 }
+
+
