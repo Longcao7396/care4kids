@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Care4Kids - Campaign List Wireframes (Final)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fafafa;
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .wireframe-page {
+            max-width: 1440px;
+            margin: 0 auto 60px;
+            background: white;
+            padding: 40px;
+            border: 3px solid #222;
+            page-break-after: always;
+        }
+
+        .wireframe-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+        }
+
+        /* HEADER - Consistent across all states */
+        .header {
+            border: 2px solid #222;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-placeholder {
+            width: 140px;
+            height: 50px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .nav-item {
+            padding: 5px 8px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-item.active {
+            border-bottom: 2px solid #222;
+            font-weight: bold;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-wireframe {
+            border: 2px solid #222;
+            padding: 8px 16px;
+            font-size: 12px;
+            background: white;
+            text-align: center;
+        }
+
+        .btn-wireframe.primary {
+            background: #222;
+            color: white;
+        }
+
+        /* BREADCRUMB */
+        .breadcrumb {
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .text-line {
+            height: 2px;
+            background: #222;
+            margin: 5px 0;
+        }
+
+        .text-line.short {
+            width: 70%;
+        }
+
+        /* FILTERS SECTION */
+        .filters-section {
+            border: 2px dashed #555;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .input-wireframe {
+            flex: 1;
+            max-width: 400px;
+            height: 38px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            background: white;
+            display: flex;
+            align-items: center;
+        }
+
+        .select-wireframe {
+            width: 180px;
+            height: 38px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .select-wireframe::after {
+            content: '▼';
+            font-size: 10px;
+        }
+
+        /* CAMPAIGNS GRID */
+        .campaigns-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .campaign-card {
+            border: 3px solid #222;
+            background: white;
+            overflow: hidden;
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 180px;
+            border-bottom: 2px solid #222;
+            position: relative;
+            background: white;
+            overflow: hidden;
+        }
+
+        /* Fixed X pattern - stays inside container */
+        .card-image-container::before,
+        .card-image-container::after {
+            content: '';
+            position: absolute;
+            background: #222;
+            width: 2px;
+        }
+
+        .card-image-container::before {
+            height: 254px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .card-image-container::after {
+            height: 254px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
+        .image-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            border: 1px solid #222;
+            padding: 3px 8px;
+            font-size: 10px;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: 2px solid #222;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .card-content {
+            padding: 18px;
+        }
+
+        .cause-badge {
+            display: inline-block;
+            border: 2px solid #222;
+            padding: 3px 10px;
+            font-size: 11px;
+            margin-bottom: 10px;
+        }
+
+        .card-badges {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .card-description {
+            margin-bottom: 15px;
+        }
+
+        .card-stats {
+            border-top: 2px dashed #555;
+            border-bottom: 2px dashed #555;
+            padding: 12px 0;
+            margin: 15px 0;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin: 6px 0;
+        }
+
+        .progress-bar-container {
+            margin: 12px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 22px;
+            border: 2px solid #222;
+            position: relative;
+            background: white;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                #222,
+                #222 4px,
+                #666 4px,
+                #666 8px
+            );
+        }
+
+        .progress-label {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            font-size: 11px;
+            font-weight: bold;
+            background: white;
+            padding: 0 4px;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-card {
+            flex: 1;
+            border: 2px solid #222;
+            padding: 10px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            background: white;
+        }
+
+        .btn-card.primary {
+            background: #222;
+            color: white;
+        }
+
+        /* PAGINATION */
+        .pagination {
+            text-align: center;
+            padding: 25px 0;
+            border: 2px dashed #555;
+        }
+
+        .pagination-btn {
+            display: inline-block;
+            border: 2px solid #222;
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 12px;
+            background: white;
+        }
+
+        .pagination-btn.active {
+            background: #222;
+            color: white;
+        }
+
+        /* FOOTER - Consistent across all states */
+        .footer {
+            border: 2px solid #222;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .footer-columns {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .footer-column h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .footer-link {
+            font-size: 12px;
+            margin: 6px 0;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .social-icon {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #222;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #222;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            border: 2px dashed #555;
+            margin-bottom: 30px;
+        }
+
+        .empty-icon {
+            width: 120px;
+            height: 120px;
+            border: 3px solid #222;
+            border-radius: 50%;
+            margin: 0 auto 25px;
+            position: relative;
+        }
+
+        .empty-icon::before,
+        .empty-icon::after {
+            content: '';
+            position: absolute;
+            background: #222;
+        }
+
+        .empty-icon::before {
+            width: 60px;
+            height: 3px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .empty-icon::after {
+            width: 3px;
+            height: 60px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        /* LOADING STATE */
+        .skeleton-card {
+            border: 3px solid #222;
+            background: white;
+        }
+
+        .skeleton-image {
+            width: 100%;
+            height: 180px;
+            border-bottom: 2px solid #222;
+            background: repeating-linear-gradient(
+                90deg,
+                #f0f0f0,
+                #f0f0f0 20px,
+                white 20px,
+                white 40px
+            );
+        }
+
+        .skeleton-content {
+            padding: 18px;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            background: #ddd;
+            margin: 10px 0;
+            border: 1px solid #222;
+        }
+
+        .skeleton-line.title {
+            height: 18px;
+            width: 70%;
+        }
+
+        .skeleton-line.short {
+            width: 50%;
+        }
+
+        /* ERROR STATE */
+        .error-state {
+            text-align: center;
+            padding: 80px 40px;
+            border: 2px dashed #555;
+            margin-bottom: 30px;
+        }
+
+        .error-icon {
+            width: 120px;
+            height: 120px;
+            border: 3px solid #222;
+            margin: 0 auto 25px;
+            position: relative;
+        }
+
+        .error-icon::before,
+        .error-icon::after {
+            content: '';
+            position: absolute;
+            background: #222;
+            width: 3px;
+            height: 80px;
+            top: 50%;
+            left: 50%;
+        }
+
+        .error-icon::before {
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .error-icon::after {
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
+        .error-state h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .error-state p {
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        /* UX NOTES */
+        .ux-note {
+            border-left: 3px solid #666;
+            background: #f9f9f9;
+            padding: 10px 15px;
+            margin: 20px 0;
+            font-size: 11px;
+            font-style: italic;
+            color: #555;
+        }
+
+        .ux-note::before {
+            content: 'UX NOTE: ';
+            font-weight: bold;
+            color: #222;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .wireframe-page {
+                border: 2px solid #222;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========================= STATE 1: MAIN CAMPAIGN LIST ========================= -->
+<div class="wireframe-page">
+    <div class="wireframe-title">State 1: Main Campaign List Page</div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-placeholder">Care4Kids</div>
+        <nav class="nav-menu">
+            <div class="nav-item">Home</div>
+            <div class="nav-item active">Campaigns</div>
+            <div class="nav-item">Donate</div>
+            <div class="nav-item">Programmes</div>
+            <div class="nav-item">Gallery</div>
+            <div class="nav-item">About Us</div>
+            <div class="nav-item">Help Centre</div>
+        </nav>
+        <div class="auth-buttons">
+            <div class="btn-wireframe">Login</div>
+            <div class="btn-wireframe">Register</div>
+        </div>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">Home > Campaigns</div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Campaigns</h1>
+        <div class="text-line"></div>
+        <div class="text-line short"></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-section">
+        <div class="filter-row">
+            <div class="filter-label">Search:</div>
+            <div class="input-wireframe">🔍 Search campaigns...</div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">Filter by:</div>
+            <div class="select-wireframe">All Causes</div>
+            <div class="select-wireframe">All Status</div>
+            <div class="btn-wireframe primary">APPLY FILTER</div>
+            <div class="btn-wireframe">RESET</div>
+        </div>
+    </div>
+
+    <!-- CAMPAIGNS GRID -->
+    <div class="campaigns-grid">
+        <!-- Campaign 1 -->
+        <div class="campaign-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+                <div class="status-badge">[ACTIVE]</div>
+            </div>
+            <div class="card-content">
+                <div class="card-badges">
+                    <div class="cause-badge">[Education]</div>
+                    <div class="status-badge" style="position: static; border: 2px solid #222; padding: 4px 10px; font-size: 11px; font-weight: bold; background: white;">[ACTIVE]</div>
+                </div>
+                <div class="card-title">Cặp sách đến trường</div>
+                <div class="card-description">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+                <div class="card-stats">
+                    <div class="stat-row">
+                        <span>Goal:</span>
+                        <span>30,000,000 VNĐ</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Raised:</span>
+                        <span>18,500,000 VNĐ</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 62%"></div>
+                            <div class="progress-label">62%</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>👥 428 donors</span>
+                        <span>⏰ 27 days left</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">DONATE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaign 2 -->
+        <div class="campaign-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+                <div class="status-badge">[ACTIVE]</div>
+            </div>
+            <div class="card-content">
+                <div class="card-badges">
+                    <div class="cause-badge">[Education]</div>
+                    <div class="status-badge" style="position: static; border: 2px solid #222; padding: 4px 10px; font-size: 11px; font-weight: bold; background: white;">[ACTIVE]</div>
+                </div>
+                <div class="card-title">1000 bộ sách cho em</div>
+                <div class="card-description">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+                <div class="card-stats">
+                    <div class="stat-row">
+                        <span>Goal:</span>
+                        <span>50,000,000 VNĐ</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Raised:</span>
+                        <span>32,500,000 VNĐ</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 65%"></div>
+                            <div class="progress-label">65%</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>👥 612 donors</span>
+                        <span>⏰ 45 days left</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">DONATE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaign 3 -->
+        <div class="campaign-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+                <div class="status-badge">[ACTIVE]</div>
+            </div>
+            <div class="card-content">
+                <div class="card-badges">
+                    <div class="cause-badge">[Education]</div>
+                    <div class="status-badge" style="position: static; border: 2px solid #222; padding: 4px 10px; font-size: 11px; font-weight: bold; background: white;">[ACTIVE]</div>
+                </div>
+                <div class="card-title">Máy tính cho tương lai</div>
+                <div class="card-description">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+                <div class="card-stats">
+                    <div class="stat-row">
+                        <span>Goal:</span>
+                        <span>80,000,000 VNĐ</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Raised:</span>
+                        <span>45,600,000 VNĐ</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 57%"></div>
+                            <div class="progress-label">57%</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>👥 385 donors</span>
+                        <span>⏰ 60 days left</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">DONATE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaign 4 -->
+        <div class="campaign-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+                <div class="status-badge">[COMPLETED]</div>
+            </div>
+            <div class="card-content">
+                <div class="card-badges">
+                    <div class="cause-badge">[Food]</div>
+                    <div class="status-badge" style="position: static; border: 2px solid #222; padding: 4px 10px; font-size: 11px; font-weight: bold; background: white;">[COMPLETED]</div>
+                </div>
+                <div class="card-title">Hỗ trợ bữa ăn dinh dưỡng</div>
+                <div class="card-description">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+                <div class="card-stats">
+                    <div class="stat-row">
+                        <span>Goal:</span>
+                        <span>40,000,000 VNĐ</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Raised:</span>
+                        <span>40,000,000 VNĐ</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%"></div>
+                            <div class="progress-label">100%</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>👥 523 donors</span>
+                        <span>✓ Completed</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">DONATE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaign 5 -->
+        <div class="campaign-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+                <div class="status-badge">[ACTIVE]</div>
+            </div>
+            <div class="card-content">
+                <div class="card-badges">
+                    <div class="cause-badge">[Healthcare]</div>
+                    <div class="status-badge" style="position: static; border: 2px solid #222; padding: 4px 10px; font-size: 11px; font-weight: bold; background: white;">[UPCOMING]</div>
+                </div>
+                <div class="card-title">Chăm sóc sức khỏe trẻ em</div>
+                <div class="card-description">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+                <div class="card-stats">
+                    <div class="stat-row">
+                        <span>Goal:</span>
+                        <span>35,000,000 VNĐ</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Raised:</span>
+                        <span>22,100,000 VNĐ</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 63%"></div>
+                            <div class="progress-label">63%</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>👥 298 donors</span>
+                        <span>⏰ 38 days left</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">DONATE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaign 6 -->
+        <div class="campaign-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+                <div class="status-badge">[ACTIVE]</div>
+            </div>
+            <div class="card-content">
+                <div class="card-badges">
+                    <div class="cause-badge">[Education]</div>
+                    <div class="status-badge" style="position: static; border: 2px solid #222; padding: 4px 10px; font-size: 11px; font-weight: bold; background: white;">[CLOSED]</div>
+                </div>
+                <div class="card-title">Dụng cụ học tập</div>
+                <div class="card-description">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+                <div class="card-stats">
+                    <div class="stat-row">
+                        <span>Goal:</span>
+                        <span>25,000,000 VNĐ</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Raised:</span>
+                        <span>12,300,000 VNĐ</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 49%"></div>
+                            <div class="progress-label">49%</div>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>👥 198 donors</span>
+                        <span>⏰ 33 days left</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">DONATE</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+        <span class="pagination-btn">← PREV</span>
+        <span class="pagination-btn active">1</span>
+        <span class="pagination-btn">2</span>
+        <span class="pagination-btn">3</span>
+        <span class="pagination-btn">NEXT →</span>
+    </div>
+
+    <div class="ux-note">
+        This is the default state showing all campaigns with status badges: [ACTIVE] - accepting donations, [UPCOMING] - not started yet, [COMPLETED] - goal reached, [CLOSED] - no longer accepting donations. Users can search and filter by cause/status.
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-columns">
+            <div class="footer-column">
+                <h3>About Care4Kids</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <div class="footer-link">→ Home</div>
+                <div class="footer-link">→ Campaigns</div>
+                <div class="footer-link">→ Donate</div>
+                <div class="footer-link">→ Programmes</div>
+                <div class="footer-link">→ Gallery</div>
+                <div class="footer-link">→ About Us</div>
+                <div class="footer-link">→ Partners</div>
+            </div>
+            <div class="footer-column">
+                <h3>Help & Support</h3>
+                <div class="footer-link">→ Help Centre</div>
+                <div class="footer-link">→ FAQ</div>
+                <div class="footer-link">→ Contact Us</div>
+                <div class="footer-link">→ Raise a Query</div>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <div class="social-icons">
+                    <div class="social-icon">f</div>
+                    <div class="social-icon">t</div>
+                    <div class="social-icon">in</div>
+                    <div class="social-icon">ig</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="text-line" style="width: 400px; margin: 0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================= STATE 2: EMPTY STATE ========================= -->
+<div class="wireframe-page">
+    <div class="wireframe-title">State 2: Empty State (No Results)</div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-placeholder">Care4Kids</div>
+        <nav class="nav-menu">
+            <div class="nav-item">Home</div>
+            <div class="nav-item active">Campaigns</div>
+            <div class="nav-item">Donate</div>
+            <div class="nav-item">Programmes</div>
+            <div class="nav-item">Gallery</div>
+            <div class="nav-item">About Us</div>
+            <div class="nav-item">Help Centre</div>
+        </nav>
+        <div class="auth-buttons">
+            <div class="btn-wireframe">Login</div>
+            <div class="btn-wireframe">Register</div>
+        </div>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">Home > Campaigns</div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Campaigns</h1>
+        <div class="text-line"></div>
+        <div class="text-line short"></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-section">
+        <div class="filter-row">
+            <div class="filter-label">Search:</div>
+            <div class="input-wireframe">🔍 Search campaigns...</div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">Filter by:</div>
+            <div class="select-wireframe">All Causes</div>
+            <div class="select-wireframe">All Status</div>
+            <div class="btn-wireframe primary">APPLY FILTER</div>
+            <div class="btn-wireframe">RESET</div>
+        </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state">
+        <div class="empty-icon"></div>
+        <h2>NO CAMPAIGNS FOUND</h2>
+        <p>Try changing your search terms or filters.</p>
+        <div class="btn-wireframe primary">CLEAR FILTERS</div>
+    </div>
+
+    <div class="ux-note">
+        Displayed when no campaigns match the user's search/filter criteria.
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-columns">
+            <div class="footer-column">
+                <h3>About Care4Kids</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <div class="footer-link">→ Home</div>
+                <div class="footer-link">→ Campaigns</div>
+                <div class="footer-link">→ Donate</div>
+                <div class="footer-link">→ Programmes</div>
+                <div class="footer-link">→ Gallery</div>
+                <div class="footer-link">→ About Us</div>
+                <div class="footer-link">→ Partners</div>
+            </div>
+            <div class="footer-column">
+                <h3>Help & Support</h3>
+                <div class="footer-link">→ Help Centre</div>
+                <div class="footer-link">→ FAQ</div>
+                <div class="footer-link">→ Contact Us</div>
+                <div class="footer-link">→ Raise a Query</div>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <div class="social-icons">
+                    <div class="social-icon">f</div>
+                    <div class="social-icon">t</div>
+                    <div class="social-icon">in</div>
+                    <div class="social-icon">ig</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="text-line" style="width: 400px; margin: 0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================= STATE 3: LOADING STATE ========================= -->
+<div class="wireframe-page">
+    <div class="wireframe-title">State 3: Loading State</div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-placeholder">Care4Kids</div>
+        <nav class="nav-menu">
+            <div class="nav-item">Home</div>
+            <div class="nav-item active">Campaigns</div>
+            <div class="nav-item">Donate</div>
+            <div class="nav-item">Programmes</div>
+            <div class="nav-item">Gallery</div>
+            <div class="nav-item">About Us</div>
+            <div class="nav-item">Help Centre</div>
+        </nav>
+        <div class="auth-buttons">
+            <div class="btn-wireframe">Login</div>
+            <div class="btn-wireframe">Register</div>
+        </div>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">Home > Campaigns</div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Campaigns</h1>
+        <div class="text-line"></div>
+        <div class="text-line short"></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-section">
+        <div class="filter-row">
+            <div class="filter-label">Search:</div>
+            <div class="input-wireframe">🔍 Search campaigns...</div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">Filter by:</div>
+            <div class="select-wireframe">All Causes</div>
+            <div class="select-wireframe">All Status</div>
+            <div class="btn-wireframe primary">APPLY FILTER</div>
+            <div class="btn-wireframe">RESET</div>
+        </div>
+    </div>
+
+    <!-- LOADING SKELETON GRID -->
+    <div class="campaigns-grid">
+        <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+            </div>
+        </div>
+
+        <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+            </div>
+        </div>
+
+        <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+            </div>
+        </div>
+
+        <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+            </div>
+        </div>
+
+        <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+            </div>
+        </div>
+
+        <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ux-note">
+        Displayed while campaign data is being fetched from the server.
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-columns">
+            <div class="footer-column">
+                <h3>About Care4Kids</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <div class="footer-link">→ Home</div>
+                <div class="footer-link">→ Campaigns</div>
+                <div class="footer-link">→ Donate</div>
+                <div class="footer-link">→ Programmes</div>
+                <div class="footer-link">→ Gallery</div>
+                <div class="footer-link">→ About Us</div>
+                <div class="footer-link">→ Partners</div>
+            </div>
+            <div class="footer-column">
+                <h3>Help & Support</h3>
+                <div class="footer-link">→ Help Centre</div>
+                <div class="footer-link">→ FAQ</div>
+                <div class="footer-link">→ Contact Us</div>
+                <div class="footer-link">→ Raise a Query</div>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <div class="social-icons">
+                    <div class="social-icon">f</div>
+                    <div class="social-icon">t</div>
+                    <div class="social-icon">in</div>
+                    <div class="social-icon">ig</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="text-line" style="width: 400px; margin: 0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================= STATE 4: ERROR STATE ========================= -->
+<div class="wireframe-page">
+    <div class="wireframe-title">State 4: Error State</div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-placeholder">Care4Kids</div>
+        <nav class="nav-menu">
+            <div class="nav-item">Home</div>
+            <div class="nav-item active">Campaigns</div>
+            <div class="nav-item">Donate</div>
+            <div class="nav-item">Programmes</div>
+            <div class="nav-item">Gallery</div>
+            <div class="nav-item">About Us</div>
+            <div class="nav-item">Help Centre</div>
+        </nav>
+        <div class="auth-buttons">
+            <div class="btn-wireframe">Login</div>
+            <div class="btn-wireframe">Register</div>
+        </div>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">Home > Campaigns</div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Campaigns</h1>
+        <div class="text-line"></div>
+        <div class="text-line short"></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-section">
+        <div class="filter-row">
+            <div class="filter-label">Search:</div>
+            <div class="input-wireframe">🔍 Search campaigns...</div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">Filter by:</div>
+            <div class="select-wireframe">All Causes</div>
+            <div class="select-wireframe">All Status</div>
+            <div class="btn-wireframe primary">APPLY FILTER</div>
+            <div class="btn-wireframe">RESET</div>
+        </div>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div class="error-state">
+        <div class="error-icon"></div>
+        <h2>UNABLE TO LOAD CAMPAIGNS</h2>
+        <p>Please check your connection and try again.</p>
+        <div class="btn-wireframe primary">RETRY</div>
+    </div>
+
+    <div class="ux-note">
+        Displayed when the API fails to load campaigns (network error, server down, etc.). Technical error codes can be logged separately for debugging.
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-columns">
+            <div class="footer-column">
+                <h3>About Care4Kids</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <div class="footer-link">→ Home</div>
+                <div class="footer-link">→ Campaigns</div>
+                <div class="footer-link">→ Donate</div>
+                <div class="footer-link">→ Programmes</div>
+                <div class="footer-link">→ Gallery</div>
+                <div class="footer-link">→ About Us</div>
+                <div class="footer-link">→ Partners</div>
+            </div>
+            <div class="footer-column">
+                <h3>Help & Support</h3>
+                <div class="footer-link">→ Help Centre</div>
+                <div class="footer-link">→ FAQ</div>
+                <div class="footer-link">→ Contact Us</div>
+                <div class="footer-link">→ Raise a Query</div>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <div class="social-icons">
+                    <div class="social-icon">f</div>
+                    <div class="social-icon">t</div>
+                    <div class="social-icon">in</div>
+                    <div class="social-icon">ig</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="text-line" style="width: 400px; margin: 0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

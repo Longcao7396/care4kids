@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Care4Kids - Help Centre Wireframe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fafafa;
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .wireframe-page {
+            max-width: 1440px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border: 3px solid #222;
+        }
+
+        .wireframe-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+        }
+
+        /* HEADER */
+        .header {
+            border: 2px solid #222;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-placeholder {
+            width: 140px;
+            height: 50px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .nav-item {
+            padding: 5px 8px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-item.active {
+            border-bottom: 2px solid #222;
+            font-weight: bold;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-wireframe {
+            border: 2px solid #222;
+            padding: 8px 16px;
+            font-size: 12px;
+            background: white;
+            text-align: center;
+        }
+
+        .btn-wireframe.primary {
+            background: #222;
+            color: white;
+        }
+
+        /* BREADCRUMB */
+        .breadcrumb {
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        /* SEARCH SECTION */
+        .search-section {
+            border: 2px solid #222;
+            padding: 30px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            height: 45px;
+            border: 2px solid #222;
+            padding: 0 15px;
+            font-size: 13px;
+            background: white;
+            display: flex;
+            align-items: center;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .search-button {
+            border: 2px solid #222;
+            padding: 12px 30px;
+            font-size: 13px;
+            background: #222;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* FAQ SECTION */
+        .faq-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .faq-item {
+            border: 2px solid #222;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-question {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .faq-icon {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* QUICK LINKS SECTION */
+        .quick-links-section {
+            margin-bottom: 40px;
+        }
+
+        .quick-links-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .quick-link-card {
+            border: 2px solid #222;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* NEED HELP SECTION */
+        .need-help-section {
+            border: 2px dashed #555;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .need-help-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .text-line {
+            height: 2px;
+            background: #222;
+            margin: 8px auto;
+            max-width: 600px;
+        }
+
+        .text-line.short {
+            max-width: 400px;
+        }
+
+        .help-button {
+            border: 2px solid #222;
+            padding: 12px 35px;
+            font-size: 13px;
+            background: #222;
+            color: white;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 25px;
+        }
+
+        /* FOOTER */
+        .footer {
+            border: 2px solid #222;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .footer-columns {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .footer-column h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .footer-link {
+            font-size: 12px;
+            margin: 6px 0;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .social-icon {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #222;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #222;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .wireframe-page {
+                border: 2px solid #222;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wireframe-page">
+    <div class="wireframe-title">Help Centre Page - Low-Fidelity Wireframe</div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-placeholder">Care4Kids</div>
+        <nav class="nav-menu">
+            <div class="nav-item">Home</div>
+            <div class="nav-item">Campaigns</div>
+            <div class="nav-item">Donate</div>
+            <div class="nav-item">Programmes</div>
+            <div class="nav-item">Gallery</div>
+            <div class="nav-item">About Us</div>
+            <div class="nav-item active">Help Centre</div>
+        </nav>
+        <div class="auth-buttons">
+            <div class="btn-wireframe">Login</div>
+            <div class="btn-wireframe">Register</div>
+        </div>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">Home > Help Centre</div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Help Centre</h1>
+    </div>
+
+    <!-- SEARCH SECTION -->
+    <div class="search-section">
+        <div class="search-input">Search for help.................................</div>
+        <div class="search-button">[SEARCH]</div>
+    </div>
+
+    <!-- FAQ SECTION -->
+    <div class="faq-section">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question">How do I donate?</div>
+            <div class="faq-icon">[+]</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How can I view my donation history?</div>
+            <div class="faq-icon">[+]</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How do I register for a programme?</div>
+            <div class="faq-icon">[+]</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Can I donate anonymously?</div>
+            <div class="faq-icon">[+]</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How can I contact Care4Kids?</div>
+            <div class="faq-icon">[+]</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">What happens when a campaign is completed?</div>
+            <div class="faq-icon">[+]</div>
+        </div>
+    </div>
+
+    <!-- QUICK LINKS SECTION -->
+    <div class="quick-links-section">
+        <h2 class="section-title">Quick Links</h2>
+        
+        <div class="quick-links-grid">
+            <div class="quick-link-card">[Donation Guide]</div>
+            <div class="quick-link-card">[Programme Registration]</div>
+            <div class="quick-link-card">[Donation History]</div>
+            <div class="quick-link-card">[Contact Support]</div>
+        </div>
+    </div>
+
+    <!-- NEED MORE HELP SECTION -->
+    <div class="need-help-section">
+        <h2>Need More Help?</h2>
+        <div class="text-line"></div>
+        <div class="text-line short"></div>
+        <div class="text-line short"></div>
+        <div class="help-button">[CREATE CONVERSATION]</div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-columns">
+            <div class="footer-column">
+                <h3>About Care4Kids</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <div class="footer-link">→ Home</div>
+                <div class="footer-link">→ Campaigns</div>
+                <div class="footer-link">→ Donate</div>
+                <div class="footer-link">→ Programmes</div>
+                <div class="footer-link">→ Gallery</div>
+                <div class="footer-link">→ About Us</div>
+                <div class="footer-link">→ Partners</div>
+            </div>
+            <div class="footer-column">
+                <h3>Help & Support</h3>
+                <div class="footer-link">→ Help Centre</div>
+                <div class="footer-link">→ FAQ</div>
+                <div class="footer-link">→ Contact Us</div>
+                <div class="footer-link">→ Raise a Query</div>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <div class="social-icons">
+                    <div class="social-icon">f</div>
+                    <div class="social-icon">t</div>
+                    <div class="social-icon">in</div>
+                    <div class="social-icon">ig</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="text-line" style="width: 400px; margin: 0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

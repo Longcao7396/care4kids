@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Care4Kids - About Us Wireframe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fafafa;
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .wireframe-page {
+            max-width: 1440px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border: 3px solid #222;
+        }
+
+        .wireframe-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+        }
+
+        /* ==================== HEADER ==================== */
+        .header {
+            border: 2px solid #222;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-placeholder {
+            width: 140px;
+            height: 50px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .nav-item {
+            padding: 5px 8px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-item.active {
+            border-bottom: 2px solid #222;
+            font-weight: bold;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-wireframe {
+            border: 2px solid #222;
+            padding: 8px 16px;
+            font-size: 12px;
+            background: white;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .btn-wireframe.primary {
+            background: #222;
+            color: white;
+        }
+
+        /* ==================== BREADCRUMB ==================== */
+        .breadcrumb {
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* ==================== PAGE HEADER ==================== */
+        .page-header {
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        /* ==================== TEXT LINES ==================== */
+        .text-line {
+            height: 2px;
+            background: #222;
+            margin: 5px 0;
+        }
+
+        .text-line.short {
+            width: 70%;
+        }
+
+        .text-line.medium {
+            width: 85%;
+        }
+
+        /* ==================== SECTION 1: ABOUT CARE4KIDS ==================== */
+        .about-section {
+            margin-bottom: 50px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #222;
+            position: relative;
+            background: white;
+        }
+
+        .image-placeholder::before,
+        .image-placeholder::after {
+            content: '';
+            position: absolute;
+            background: #222;
+            width: 2px;
+        }
+
+        .image-placeholder::before {
+            height: 565px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .image-placeholder::after {
+            height: 565px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
+        .image-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            border: 1px solid #222;
+            padding: 3px 8px;
+            font-size: 10px;
+        }
+
+        .about-content h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .about-description {
+            font-size: 13px;
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+
+        .about-subsection {
+            margin-bottom: 20px;
+        }
+
+        .about-subsection h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        /* ==================== SECTION 2: IMPACT STATS ==================== */
+        .impact-section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 25px;
+            font-family: 'Architects Daughter', cursive;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .stat-box {
+            border: 3px solid #222;
+            padding: 30px 20px;
+            text-align: center;
+            background: white;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        /* ==================== SECTION 3: WHAT WE DO ==================== */
+        .services-section {
+            margin-bottom: 50px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .service-card {
+            border: 2px solid #222;
+            padding: 20px;
+            background: white;
+        }
+
+        .icon-placeholder {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #222;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .service-card h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .service-card .text-line {
+            margin: 5px auto;
+        }
+
+        /* ==================== SECTION 4: PARTNERS ==================== */
+        .partners-section {
+            margin-bottom: 50px;
+        }
+
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .partner-card {
+            border: 2px solid #222;
+            padding: 20px;
+            background: white;
+            text-align: center;
+        }
+
+        .logo-placeholder-small {
+            width: 100%;
+            height: 80px;
+            border: 2px solid #222;
+            margin-bottom: 15px;
+            position: relative;
+            background: white;
+        }
+
+        .logo-placeholder-small::before,
+        .logo-placeholder-small::after {
+            content: '';
+            position: absolute;
+            background: #222;
+            width: 2px;
+        }
+
+        .logo-placeholder-small::before {
+            height: 113px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .logo-placeholder-small::after {
+            height: 113px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
+        .partner-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        /* ==================== SECTION 5: GET INVOLVED CTA ==================== */
+        .cta-section {
+            margin-bottom: 50px;
+            text-align: center;
+            border: 2px dashed #222;
+            padding: 40px;
+        }
+
+        .cta-section p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn-wireframe.large {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* ==================== FOOTER ==================== */
+        .footer {
+            border-top: 3px solid #222;
+            padding-top: 30px;
+            margin-top: 50px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .footer-column h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .footer-link {
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .social-icon {
+            width: 35px;
+            height: 35px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .footer-bottom {
+            border-top: 2px solid #222;
+            padding-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wireframe-page">
+    <div class="wireframe-title">About Us Page - Low-Fidelity Wireframe</div>
+
+    <!-- ==================== HEADER ==================== -->
+    <div class="header">
+        <div class="logo-placeholder">Care4Kids</div>
+        <nav class="nav-menu">
+            <div class="nav-item">Home</div>
+            <div class="nav-item">Campaigns</div>
+            <div class="nav-item">Donate</div>
+            <div class="nav-item">Programmes</div>
+            <div class="nav-item">Gallery</div>
+            <div class="nav-item active">About Us</div>
+            <div class="nav-item">Help Centre</div>
+        </nav>
+        <div class="auth-buttons">
+            <div class="btn-wireframe">Login</div>
+            <div class="btn-wireframe">Register</div>
+        </div>
+    </div>
+
+    <!-- ==================== BREADCRUMB ==================== -->
+    <div class="breadcrumb">Home > About Us</div>
+
+    <!-- ==================== PAGE HEADER ==================== -->
+    <div class="page-header">
+        <h1>About Care4Kids</h1>
+    </div>
+
+    <!-- ==================== SECTION 1: ABOUT CARE4KIDS ==================== -->
+    <div class="about-section">
+        <div class="image-placeholder">
+            <div class="image-label">[IMAGE]</div>
+        </div>
+        <div class="about-content">
+            <h2>About Care4Kids</h2>
+            <p class="about-description">
+                Care4Kids is a children's welfare and donation management platform supporting children in difficult circumstances.
+            </p>
+            
+            <div class="about-subsection">
+                <h3>Mission</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            
+            <div class="about-subsection">
+                <h3>Vision</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line medium"></div>
+            </div>
+            
+            <div class="about-subsection">
+                <h3>Core Values</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 2: OUR IMPACT ==================== -->
+    <div class="impact-section">
+        <h2 class="section-title">Our Impact</h2>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-number">5,000+</div>
+                <div class="stat-label">Children Supported</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">250+</div>
+                <div class="stat-label">Campaigns Completed</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">$500K+</div>
+                <div class="stat-label">Total Donations</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">1,200+</div>
+                <div class="stat-label">Volunteers</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 3: WHAT WE DO ==================== -->
+    <div class="services-section">
+        <h2 class="section-title">What We Do</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="icon-placeholder">[ICON]</div>
+                <h3>Education</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="service-card">
+                <div class="icon-placeholder">[ICON]</div>
+                <h3>Food</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="service-card">
+                <div class="icon-placeholder">[ICON]</div>
+                <h3>Healthcare</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="service-card">
+                <div class="icon-placeholder">[ICON]</div>
+                <h3>School Supplies</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 4: OUR PARTNERS & NGOs ==================== -->
+    <div class="partners-section">
+        <h2 class="section-title">Our Partners & NGOs</h2>
+        <div class="partners-grid">
+            <div class="partner-card">
+                <div class="logo-placeholder-small">
+                    <div class="image-label">[LOGO]</div>
+                </div>
+                <h3>Partner Name</h3>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="partner-card">
+                <div class="logo-placeholder-small">
+                    <div class="image-label">[LOGO]</div>
+                </div>
+                <h3>Partner Name</h3>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="partner-card">
+                <div class="logo-placeholder-small">
+                    <div class="image-label">[LOGO]</div>
+                </div>
+                <h3>Partner Name</h3>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="partner-card">
+                <div class="logo-placeholder-small">
+                    <div class="image-label">[LOGO]</div>
+                </div>
+                <h3>Partner Name</h3>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 5: GET INVOLVED CTA ==================== -->
+    <div class="cta-section">
+        <p>Help support children in difficult circumstances.</p>
+        <div class="cta-buttons">
+            <div class="btn-wireframe primary large">DONATE</div>
+            <div class="btn-wireframe large">CONTACT US</div>
+        </div>
+    </div>
+
+    <!-- ==================== FOOTER ==================== -->
+    <div class="footer">
+        <div class="footer-grid">
+            <div class="footer-column">
+                <h3>About Care4Kids</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <div class="footer-link">→ Home</div>
+                <div class="footer-link">→ Campaigns</div>
+                <div class="footer-link">→ Donate</div>
+                <div class="footer-link">→ Programmes</div>
+                <div class="footer-link">→ Gallery</div>
+                <div class="footer-link">→ About Us</div>
+                <div class="footer-link">→ Partners</div>
+            </div>
+            <div class="footer-column">
+                <h3>Help & Support</h3>
+                <div class="footer-link">→ Help Centre</div>
+                <div class="footer-link">→ FAQ</div>
+                <div class="footer-link">→ Contact Us</div>
+                <div class="footer-link">→ Raise a Query</div>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <div class="social-icons">
+                    <div class="social-icon">f</div>
+                    <div class="social-icon">t</div>
+                    <div class="social-icon">in</div>
+                    <div class="social-icon">ig</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="text-line" style="width: 400px; margin: 0 auto;"></div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

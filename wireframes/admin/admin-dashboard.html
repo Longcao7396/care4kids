@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Care4Kids Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fafafa;
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* LEFT SIDEBAR */
+        .admin-sidebar {
+            width: 260px;
+            background: white;
+            border-right: 3px solid #222;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .admin-logo {
+            padding: 25px 20px;
+            border-bottom: 2px solid #222;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .sidebar-menu {
+            padding: 15px 0;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            font-size: 13px;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .menu-item.active {
+            border-left: 3px solid #222;
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .menu-item:hover {
+            background: #f9f9f9;
+        }
+
+        /* MAIN CONTENT */
+        .admin-main {
+            margin-left: 260px;
+            flex: 1;
+            background: #fafafa;
+        }
+
+        /* TOP BAR */
+        .admin-topbar {
+            background: white;
+            border-bottom: 2px solid #222;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+        }
+
+        .topbar-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            width: 250px;
+            height: 32px;
+            border: 2px solid #222;
+            padding: 0 10px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            background: white;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            padding: 6px 10px;
+            border: 2px solid #222;
+        }
+
+        /* CONTENT AREA */
+        .admin-content {
+            padding: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-family: 'Architects Daughter', cursive;
+            margin-bottom: 25px;
+        }
+
+        /* STATS CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 3px solid #222;
+            padding: 20px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            font-family: 'Architects Daughter', cursive;
+            margin-bottom: 5px;
+        }
+
+        .stat-change {
+            font-size: 10px;
+        }
+
+        /* CHART PLACEHOLDER */
+        .chart-container {
+            background: white;
+            border: 3px solid #222;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .chart-placeholder {
+            width: 100%;
+            height: 280px;
+            border: 2px dashed #555;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 20px;
+            position: relative;
+        }
+
+        .chart-bar {
+            width: 50px;
+            background: repeating-linear-gradient(
+                0deg,
+                #222,
+                #222 4px,
+                #666 4px,
+                #666 8px
+            );
+            position: relative;
+        }
+
+        .chart-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+        }
+
+        .chart-axes {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+        }
+
+        .chart-y-axis {
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 25px;
+            width: 2px;
+            background: #222;
+        }
+
+        .chart-x-axis {
+            position: absolute;
+            left: 15px;
+            right: 15px;
+            bottom: 25px;
+            height: 2px;
+            background: #222;
+        }
+
+        /* DATA TABLE */
+        .table-container {
+            background: white;
+            border: 3px solid #222;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 2px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+            border-bottom: 2px solid #222;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px 15px;
+            font-size: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border: 2px solid #222;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: white;
+        }
+
+        .status-completed {
+            background: #f0f0f0;
+        }
+
+        .status-pending {
+            background: white;
+            border-style: dashed;
+        }
+
+        /* ACTION BUTTONS */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: 2px solid #222;
+            font-size: 12px;
+            font-weight: bold;
+            background: white;
+            cursor: pointer;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .btn-primary {
+            background: #222;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 10px;
+        }
+
+        .text-line {
+            height: 2px;
+            background: #222;
+            margin: 5px 0;
+        }
+
+        .text-line.short {
+            width: 60%;
+        }
+
+        /* PROGRESS BAR */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 18px;
+            border: 2px solid #222;
+            position: relative;
+            background: white;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                #222,
+                #222 3px,
+                #666 3px,
+                #666 6px
+            );
+        }
+
+        .progress-label {
+            font-size: 10px;
+            font-weight: bold;
+            min-width: 35px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .admin-sidebar {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <!-- LEFT SIDEBAR -->
+    <aside class="admin-sidebar">
+        <div class="admin-logo">Care4Kids<br>ADMIN PANEL</div>
+        <nav class="sidebar-menu">
+            <div class="menu-item active">■ Dashboard</div>
+            <div class="menu-item">□ Campaigns</div>
+            <div class="menu-item">□ Programmes</div>
+            <div class="menu-item">□ Donations</div>
+            <div class="menu-item">□ Causes</div>
+            <div class="menu-item">□ Partners / NGOs</div>
+            <div class="menu-item">□ Users</div>
+            <div class="menu-item">□ Gallery</div>
+            <div class="menu-item">□ Conversations</div>
+            <div class="menu-item">□ Reports</div>
+            <div class="menu-item">□ Notifications</div>
+            <div class="menu-item">□ Settings</div>
+            <div class="menu-item">□ Admin Profile</div>
+            <div class="menu-item">□ Logout</div>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+        <!-- TOP BAR -->
+        <div class="admin-topbar">
+            <div class="breadcrumb">Dashboard</div>
+            <div class="topbar-right">
+                <div class="search-box">🔍 Search...</div>
+                <div class="icon-btn">🔔</div>
+                <div class="admin-profile">
+                    <div>Nguyen Van Admin ▼</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="admin-content">
+            <h1 class="page-title">Dashboard Overview</h1>
+
+            <!-- STATISTICS CARDS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Campaigns</div>
+                    <div class="stat-value">48</div>
+                    <div class="stat-change">↑ +5 this month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Campaigns</div>
+                    <div class="stat-value">28</div>
+                    <div class="stat-change">Currently running</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Donations</div>
+                    <div class="stat-value">1,248</div>
+                    <div class="stat-change">↑ +142 this month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Amount</div>
+                    <div class="stat-value">2.4B</div>
+                    <div class="stat-change">VNĐ raised</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Programmes</div>
+                    <div class="stat-value">36</div>
+                    <div class="stat-change">↑ +3 this month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Registered Users</div>
+                    <div class="stat-value">3,842</div>
+                    <div class="stat-change">↑ +218 this month</div>
+                </div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="action-buttons">
+                <button class="btn btn-primary">+ CREATE CAMPAIGN</button>
+                <button class="btn btn-primary">+ CREATE PROGRAMME</button>
+                <button class="btn">VIEW DONATIONS</button>
+                <button class="btn">MANAGE USERS</button>
+            </div>
+
+            <!-- CHART -->
+            <div class="chart-container">
+                <div class="chart-title">Donation Overview (Last 6 Months)</div>
+                <div class="chart-placeholder">
+                    <div class="chart-axes">
+                        <div class="chart-y-axis"></div>
+                        <div class="chart-x-axis"></div>
+                    </div>
+                    <div class="chart-bar" style="height: 120px;">
+                        <div class="chart-label">Jan</div>
+                    </div>
+                    <div class="chart-bar" style="height: 180px;">
+                        <div class="chart-label">Feb</div>
+                    </div>
+                    <div class="chart-bar" style="height: 145px;">
+                        <div class="chart-label">Mar</div>
+                    </div>
+                    <div class="chart-bar" style="height: 210px;">
+                        <div class="chart-label">Apr</div>
+                    </div>
+                    <div class="chart-bar" style="height: 195px;">
+                        <div class="chart-label">May</div>
+                    </div>
+                    <div class="chart-bar" style="height: 230px;">
+                        <div class="chart-label">Jun</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT DONATIONS TABLE -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">Recent Donations</div>
+                    <button class="btn btn-sm">VIEW ALL</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Donor Name</th>
+                            <th>Campaign</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Trần Thị Mai</td>
+                            <td>Cặp sách đến trường</td>
+                            <td>500,000 VNĐ</td>
+                            <td>Sep 4, 2026</td>
+                            <td><span class="status-badge status-completed">COMPLETED</span></td>
+                        </tr>
+                        <tr>
+                            <td>Lê Văn Hùng</td>
+                            <td>1000 bộ sách cho em</td>
+                            <td>1,000,000 VNĐ</td>
+                            <td>Sep 4, 2026</td>
+                            <td><span class="status-badge status-completed">COMPLETED</span></td>
+                        </tr>
+                        <tr>
+                            <td>Phạm Thị Lan</td>
+                            <td>Máy tính cho tương lai</td>
+                            <td>2,000,000 VNĐ</td>
+                            <td>Sep 3, 2026</td>
+                            <td><span class="status-badge status-pending">PENDING</span></td>
+                        </tr>
+                        <tr>
+                            <td>Nguyễn Văn Bình</td>
+                            <td>Chăm sóc sức khỏe trẻ em</td>
+                            <td>750,000 VNĐ</td>
+                            <td>Sep 3, 2026</td>
+                            <td><span class="status-badge status-completed">COMPLETED</span></td>
+                        </tr>
+                        <tr>
+                            <td>Đỗ Thị Hương</td>
+                            <td>Cặp sách đến trường</td>
+                            <td>300,000 VNĐ</td>
+                            <td>Sep 2, 2026</td>
+                            <td><span class="status-badge status-completed">COMPLETED</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- RECENT CAMPAIGNS TABLE -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">Recent Campaigns</div>
+                    <button class="btn btn-sm">VIEW ALL</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Campaign Name</th>
+                            <th>Cause</th>
+                            <th>Goal</th>
+                            <th>Raised</th>
+                            <th>Progress</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Cặp sách đến trường</td>
+                            <td>Education</td>
+                            <td>30,000,000 VNĐ</td>
+                            <td>18,500,000 VNĐ</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 62%;"></div>
+                                    </div>
+                                    <div class="progress-label">62%</div>
+                                </div>
+                            </td>
+                            <td><span class="status-badge status-active">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>1000 bộ sách cho em</td>
+                            <td>Education</td>
+                            <td>50,000,000 VNĐ</td>
+                            <td>32,500,000 VNĐ</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 65%;"></div>
+                                    </div>
+                                    <div class="progress-label">65%</div>
+                                </div>
+                            </td>
+                            <td><span class="status-badge status-active">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Máy tính cho tương lai</td>
+                            <td>Education</td>
+                            <td>80,000,000 VNĐ</td>
+                            <td>45,600,000 VNĐ</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 57%;"></div>
+                                    </div>
+                                    <div class="progress-label">57%</div>
+                                </div>
+                            </td>
+                            <td><span class="status-badge status-active">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Hỗ trợ bữa ăn dinh dưỡng</td>
+                            <td>Food</td>
+                            <td>40,000,000 VNĐ</td>
+                            <td>40,000,000 VNĐ</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 100%;"></div>
+                                    </div>
+                                    <div class="progress-label">100%</div>
+                                </div>
+                            </td>
+                            <td><span class="status-badge status-completed">COMPLETED</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Chăm sóc sức khỏe trẻ em</td>
+                            <td>Healthcare</td>
+                            <td>35,000,000 VNĐ</td>
+                            <td>22,100,000 VNĐ</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 63%;"></div>
+                                    </div>
+                                    <div class="progress-label">63%</div>
+                                </div>
+                            </td>
+                            <td><span class="status-badge status-active">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

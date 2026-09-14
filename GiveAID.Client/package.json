@@ -1,0 +1,55 @@
+{
+  "name": "giveaid-client",
+  "version": "1.0.0",
+  "description": "Give-AID NGO Website - React Frontend",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.5.0",
+    "bootstrap": "^5.3.2",
+    "bootstrap-icons": "1.11.3",
+    "react": "^18.2.0",
+    "react-bootstrap": "^2.9.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.16.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm:start:backend\" \"npm:start:frontend\"",
+    "start:frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-frontend.ps1",
+    "start:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1",
+    "stop:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-backend.ps1",
+    "stop:frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-frontend.ps1",
+    "stop": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm:stop:backend\" \"npm:stop:frontend\"",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:44300",
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
+    "wait-on": "^9.1.0"
+  }
+}

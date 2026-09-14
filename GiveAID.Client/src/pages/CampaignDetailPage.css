@@ -1,0 +1,621 @@
+/* =====================================================
+   CARE4KIDS — CAMPAIGN DETAIL PAGE
+   Editorial Humanitarian
+   ===================================================== */
+
+/* ─── Loading / Error ─── */
+
+.cdp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--space-5);
+}
+
+.cdp-loading p {
+  color: var(--c4k-gray-600);
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+.cdp-error-page {
+  padding: var(--space-10) 0;
+}
+
+.cdp-error-page .alert {
+  max-width: 600px;
+}
+
+/* ─── Page ─── */
+
+.cdp-page {
+  background: var(--c4k-white);
+}
+
+/* ─── HERO ─── */
+
+.cdp-hero {
+  position: relative;
+  min-height: 480px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.cdp-hero-image {
+  position: absolute;
+  inset: 0;
+}
+
+.cdp-hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.cdp-hero-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--c4k-gray-200);
+}
+
+.cdp-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(14,58,107,0.20) 0%,
+    rgba(14,58,107,0.65) 60%,
+    rgba(14,58,107,0.85) 100%
+  );
+}
+
+.cdp-hero-content {
+  position: relative;
+  z-index: 2;
+  padding: var(--space-10) 0 var(--space-7);
+  color: var(--c4k-white);
+}
+
+.cdp-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  margin-bottom: var(--space-5);
+  transition: color var(--t-fast);
+}
+
+.cdp-back-link:hover {
+  color: var(--c4k-white);
+}
+
+.cdp-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--space-4);
+}
+
+.cdp-hero-badges .badge {
+  font-size: var(--fs-caption) !important;
+  padding: 5px 12px !important;
+  background: rgba(255,255,255,0.95) !important;
+  border: none !important;
+}
+
+.cdp-hero-badges .badge-teal { color: var(--c4k-teal-darker) !important; }
+.cdp-hero-badges .badge-coral { color: var(--c4k-coral-darker) !important; }
+.cdp-hero-badges .badge-success { color: var(--c4k-success) !important; }
+.cdp-hero-badges .badge-neutral { background: rgba(255,255,255,0.85) !important; color: var(--c4k-gray-700) !important; }
+
+.cdp-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 700;
+  color: var(--c4k-white);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--space-4);
+  max-width: 800px;
+}
+
+.cdp-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body);
+  color: rgba(255,255,255,0.85);
+  margin: 0;
+  font-weight: 500;
+}
+
+.cdp-hero-meta svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.cdp-hero-divider {
+  color: rgba(255,255,255,0.5);
+  margin: 0 4px;
+}
+
+/* ─── CONTENT ─── */
+
+.cdp-content {
+  padding: var(--space-10) 0;
+  background: var(--c4k-white);
+}
+
+.cdp-main {
+  /* editorial long-form column */
+}
+
+/* ─── Sections ─── */
+
+.cdp-section {
+  margin-bottom: var(--space-9);
+}
+
+.cdp-section .eyebrow {
+  display: block;
+  margin-bottom: var(--space-4);
+}
+
+.cdp-lead {
+  font-family: var(--font-serif);
+  font-size: clamp(1.125rem, 2vw, 1.375rem);
+  line-height: 1.7;
+  color: var(--c4k-gray-800);
+  font-weight: 400;
+  margin: 0;
+}
+
+/* ─── Stats row ─── */
+
+.cdp-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-9);
+  padding: var(--space-7) 0;
+  border-top: 1px solid var(--c4k-gray-200);
+  border-bottom: 1px solid var(--c4k-gray-200);
+}
+
+.cdp-stat-card {
+  text-align: center;
+  padding: var(--space-3);
+}
+
+.cdp-stat-num {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: var(--space-2);
+  word-break: break-word;
+}
+
+.cdp-stat-lbl {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c4k-gray-500);
+}
+
+/* ─── Tabs ─── */
+
+.cdp-tabs {
+  border-bottom: 1px solid var(--c4k-gray-200) !important;
+  margin-bottom: var(--space-6) !important;
+}
+
+.cdp-tabs .nav-link {
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  background: transparent !important;
+  color: var(--c4k-gray-600) !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--fs-body);
+  font-weight: 600 !important;
+  padding: 12px 20px !important;
+  border-radius: 0 !important;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+
+.cdp-tabs .nav-link:hover {
+  color: var(--c4k-teal) !important;
+  border-bottom-color: var(--c4k-gray-300) !important;
+}
+
+.cdp-tabs .nav-link.active {
+  color: var(--c4k-teal-dark) !important;
+  border-bottom-color: var(--c4k-coral) !important;
+}
+
+.cdp-tab-pane {
+  padding: var(--space-6) 0;
+}
+
+.cdp-tab-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h4);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-5);
+  letter-spacing: -0.01em;
+}
+
+/* ─── Info grid (Campaign Details tab) ─── */
+
+.cdp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-7);
+}
+
+.cdp-info-item {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--c4k-gray-100);
+}
+
+.cdp-info-label {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c4k-gray-500);
+  margin-bottom: var(--space-2);
+}
+
+.cdp-info-value {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--c4k-charcoal);
+}
+
+.cdp-long-desc {
+  margin-top: var(--space-7);
+}
+
+.cdp-prose {
+  max-width: 720px;
+}
+
+.cdp-prose p {
+  font-size: var(--fs-body);
+  line-height: 1.8;
+  color: var(--c4k-gray-700);
+  margin-bottom: var(--space-5);
+}
+
+/* ─── Donations list ─── */
+
+.cdp-donations-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.cdp-donation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--c4k-gray-100);
+  gap: var(--space-5);
+}
+
+.cdp-donation-item:first-child {
+  padding-top: 0;
+}
+
+.cdp-donation-info {
+  flex: 1;
+}
+
+.cdp-donation-name {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h5);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-2);
+}
+
+.cdp-donation-msg {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-body);
+  color: var(--c4k-gray-600);
+  margin-bottom: var(--space-2);
+  line-height: 1.65;
+}
+
+.cdp-donation-date {
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-500);
+  font-weight: 500;
+}
+
+.cdp-donation-amount {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--c4k-teal-dark);
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+
+/* ─── Donation Breakdown ─── */
+
+.cdp-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.cdp-breakdown-item {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--c4k-gray-100);
+}
+
+.cdp-breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-3);
+  gap: var(--space-3);
+}
+
+.cdp-breakdown-range {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h5);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+}
+
+.cdp-breakdown-meta {
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-600);
+  font-weight: 500;
+}
+
+.cdp-breakdown-progress {
+  height: 10px !important;
+  background-color: var(--c4k-gray-100) !important;
+  border-radius: var(--radius-pill) !important;
+  overflow: hidden;
+}
+
+.cdp-breakdown-progress .progress-bar {
+  background: linear-gradient(90deg, var(--c4k-teal), var(--c4k-coral)) !important;
+}
+
+/* ─── Empty alerts ─── */
+
+.cdp-empty-alert {
+  background-color: var(--c4k-info-bg) !important;
+  border-left-color: var(--c4k-info) !important;
+  color: var(--c4k-info) !important;
+}
+
+/* ─── Sidebar (donate card) ─── */
+
+.cdp-sidebar-col {
+  position: relative;
+}
+
+.cdp-donate-card {
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  position: sticky;
+  top: calc(var(--navbar-h) + var(--space-5));
+  box-shadow: var(--shadow-md);
+}
+
+.cdp-donate-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h4);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-5);
+  letter-spacing: -0.02em;
+}
+
+.cdp-donate-progress {
+  margin-bottom: var(--space-3);
+}
+
+.cdp-donate-progress-num {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.cdp-donate-progress-goal {
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-500);
+  font-weight: 500;
+  margin-top: var(--space-1);
+}
+
+.cdp-main-progress {
+  height: 10px !important;
+  background-color: var(--c4k-gray-200) !important;
+  border-radius: var(--radius-pill) !important;
+  overflow: hidden;
+  margin-bottom: var(--space-3);
+}
+
+.cdp-main-progress .progress-bar {
+  background: linear-gradient(90deg, var(--c4k-teal), var(--c4k-coral)) !important;
+}
+
+.cdp-donate-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  margin-bottom: var(--space-5);
+}
+
+.cdp-donate-pct {
+  color: var(--c4k-coral);
+}
+
+.cdp-donate-days {
+  color: var(--c4k-gray-600);
+}
+
+.cdp-donate-btn {
+  width: 100%;
+  margin-bottom: var(--space-6);
+}
+
+.cdp-ended-alert {
+  margin-bottom: var(--space-6);
+}
+
+/* ─── Share buttons ─── */
+
+.cdp-share {
+  border-top: 1px solid var(--c4k-gray-100);
+  padding-top: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.cdp-share-label {
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-500);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  text-align: center;
+}
+
+.cdp-share-buttons {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.cdp-share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: transparent;
+  border: 1px solid var(--c4k-gray-300);
+  border-radius: var(--radius-md);
+  color: var(--c4k-gray-600);
+  cursor: pointer;
+  transition: all var(--t-base);
+}
+
+.cdp-share-btn:hover {
+  background: var(--c4k-teal);
+  border-color: var(--c4k-teal);
+  color: var(--c4k-white);
+  transform: translateY(-1px);
+}
+
+/* ─── Campaign reference ─── */
+
+.cdp-code {
+  text-align: center;
+  padding: var(--space-4);
+  background: var(--c4k-off-white);
+  border-radius: var(--radius-md);
+}
+
+.cdp-code-label {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c4k-gray-500);
+  margin-bottom: var(--space-2);
+}
+
+.cdp-code-value {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-s);
+  color: var(--c4k-charcoal);
+  background: var(--c4k-white);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--c4k-gray-200);
+}
+
+/* ─── RESPONSIVE ─── */
+
+@media (max-width: 991px) {
+  .cdp-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cdp-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cdp-donate-card {
+    position: relative;
+    top: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .cdp-hero {
+    min-height: 380px;
+  }
+
+  .cdp-hero-content {
+    padding: var(--space-8) 0 var(--space-5);
+  }
+
+  .cdp-content {
+    padding: var(--space-7) 0;
+  }
+
+  .cdp-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-5) 0;
+  }
+
+  .cdp-donate-card {
+    padding: var(--space-5);
+  }
+
+  .cdp-donation-item {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .cdp-donation-amount {
+    align-self: flex-start;
+  }
+
+  .cdp-breakdown-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+}

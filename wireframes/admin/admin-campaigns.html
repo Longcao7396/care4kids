@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Management - Care4Kids Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fafafa;
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* LEFT SIDEBAR */
+        .admin-sidebar {
+            width: 260px;
+            background: white;
+            border-right: 3px solid #222;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .admin-logo {
+            padding: 25px 20px;
+            border-bottom: 2px solid #222;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .sidebar-menu {
+            padding: 15px 0;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            font-size: 13px;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .menu-item.active {
+            border-left: 3px solid #222;
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .menu-item:hover {
+            background: #f9f9f9;
+        }
+
+        /* MAIN CONTENT */
+        .admin-main {
+            margin-left: 260px;
+            flex: 1;
+            background: #fafafa;
+        }
+
+        /* TOP BAR */
+        .admin-topbar {
+            background: white;
+            border-bottom: 2px solid #222;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+        }
+
+        .topbar-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            width: 250px;
+            height: 32px;
+            border: 2px solid #222;
+            padding: 0 10px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            background: white;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            padding: 6px 10px;
+            border: 2px solid #222;
+        }
+
+        /* CONTENT AREA */
+        .admin-content {
+            padding: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-family: 'Architects Daughter', cursive;
+            margin-bottom: 25px;
+        }
+
+        /* FILTERS */
+        .filters-section {
+            background: white;
+            border: 3px solid #222;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .input-field {
+            flex: 1;
+            max-width: 400px;
+            height: 36px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .select-field {
+            width: 180px;
+            height: 36px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        /* DATA TABLE */
+        .table-container {
+            background: white;
+            border: 3px solid #222;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 2px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+            border-bottom: 2px solid #222;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px 15px;
+            font-size: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border: 2px solid #222;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: 2px solid #222;
+            font-size: 12px;
+            font-weight: bold;
+            background: white;
+            cursor: pointer;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .btn-primary {
+            background: #222;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 10px;
+        }
+
+        .btn-danger {
+            border-color: #222;
+        }
+
+        /* PROGRESS BAR */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 16px;
+            border: 2px solid #222;
+            position: relative;
+            background: white;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                #222,
+                #222 3px,
+                #666 3px,
+                #666 6px
+            );
+        }
+
+        .progress-label {
+            font-size: 10px;
+            font-weight: bold;
+            min-width: 30px;
+        }
+
+        /* PAGINATION */
+        .pagination {
+            text-align: center;
+            padding: 20px;
+            border-top: 2px dashed #555;
+        }
+
+        .pagination-btn {
+            display: inline-block;
+            border: 2px solid #222;
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 11px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .pagination-btn.active {
+            background: #222;
+            color: white;
+        }
+
+        /* FORM */
+        .form-container {
+            background: white;
+            border: 3px solid #222;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .form-title {
+            font-size: 20px;
+            font-family: 'Architects Daughter', cursive;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #222;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 38px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 100px;
+            border: 2px solid #222;
+            padding: 12px;
+            font-size: 12px;
+            font-family: 'Courier Prime', monospace;
+            resize: vertical;
+        }
+
+        .form-select {
+            width: 100%;
+            height: 38px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .file-upload {
+            width: 100%;
+            height: 120px;
+            border: 2px dashed #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .file-upload::before {
+            content: '📁';
+            font-size: 32px;
+            position: absolute;
+            top: 30px;
+        }
+
+        .file-upload-text {
+            position: absolute;
+            bottom: 30px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #555;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .admin-sidebar {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <!-- LEFT SIDEBAR -->
+    <aside class="admin-sidebar">
+        <div class="admin-logo">Care4Kids<br>ADMIN PANEL</div>
+        <nav class="sidebar-menu">
+            <div class="menu-item">■ Dashboard</div>
+            <div class="menu-item active">□ Campaigns</div>
+            <div class="menu-item">□ Programmes</div>
+            <div class="menu-item">□ Donations</div>
+            <div class="menu-item">□ Causes</div>
+            <div class="menu-item">□ Partners / NGOs</div>
+            <div class="menu-item">□ Users</div>
+            <div class="menu-item">□ Gallery</div>
+            <div class="menu-item">□ Conversations</div>
+            <div class="menu-item">□ Reports</div>
+            <div class="menu-item">□ Notifications</div>
+            <div class="menu-item">□ Settings</div>
+            <div class="menu-item">□ Admin Profile</div>
+            <div class="menu-item">□ Logout</div>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+        <!-- TOP BAR -->
+        <div class="admin-topbar">
+            <div class="breadcrumb">Dashboard > Campaigns</div>
+            <div class="topbar-right">
+                <div class="search-box">🔍 Search...</div>
+                <div class="icon-btn">🔔</div>
+                <div class="admin-profile">
+                    <div>Nguyen Van Admin ▼</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="admin-content">
+            <h1 class="page-title">Campaign Management</h1>
+
+            <button class="btn btn-primary" style="margin-bottom: 25px;">+ CREATE CAMPAIGN</button>
+
+            <!-- FILTERS -->
+            <div class="filters-section">
+                <div class="filter-row">
+                    <div class="filter-label">Search:</div>
+                    <input type="text" class="input-field" placeholder="Search campaigns...">
+                </div>
+                <div class="filter-row">
+                    <div class="filter-label">Filter by:</div>
+                    <select class="select-field">
+                        <option>All Causes</option>
+                        <option>Education</option>
+                        <option>Healthcare</option>
+                        <option>Food</option>
+                        <option>Emergency</option>
+                    </select>
+                    <select class="select-field">
+                        <option>All Status</option>
+                        <option>Active</option>
+                        <option>Completed</option>
+                        <option>Upcoming</option>
+                        <option>Closed</option>
+                    </select>
+                    <select class="select-field">
+                        <option>All Dates</option>
+                        <option>Last 7 days</option>
+                        <option>Last 30 days</option>
+                        <option>Last 90 days</option>
+                    </select>
+                    <button class="btn btn-primary">APPLY</button>
+                    <button class="btn">RESET</button>
+                </div>
+            </div>
+
+            <!-- CAMPAIGNS TABLE -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">All Campaigns (48)</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Campaign Name</th>
+                            <th>Cause</th>
+                            <th>Goal</th>
+                            <th>Raised</th>
+                            <th>Progress</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#C001</td>
+                            <td>Cặp sách đến trường</td>
+                            <td>Education</td>
+                            <td>30,000,000</td>
+                            <td>18,500,000</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 62%;"></div>
+                                    </div>
+                                    <div class="progress-label">62%</div>
+                                </div>
+                            </td>
+                            <td>Aug 1, 2026</td>
+                            <td>Oct 1, 2026</td>
+                            <td><span class="status-badge">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                                <button class="btn btn-sm btn-danger">DELETE</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#C002</td>
+                            <td>1000 bộ sách cho em</td>
+                            <td>Education</td>
+                            <td>50,000,000</td>
+                            <td>32,500,000</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 65%;"></div>
+                                    </div>
+                                    <div class="progress-label">65%</div>
+                                </div>
+                            </td>
+                            <td>Jul 15, 2026</td>
+                            <td>Oct 20, 2026</td>
+                            <td><span class="status-badge">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                                <button class="btn btn-sm btn-danger">DELETE</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#C003</td>
+                            <td>Máy tính cho tương lai</td>
+                            <td>Education</td>
+                            <td>80,000,000</td>
+                            <td>45,600,000</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 57%;"></div>
+                                    </div>
+                                    <div class="progress-label">57%</div>
+                                </div>
+                            </td>
+                            <td>Jul 5, 2026</td>
+                            <td>Nov 5, 2026</td>
+                            <td><span class="status-badge">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                                <button class="btn btn-sm btn-danger">DELETE</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#C004</td>
+                            <td>Hỗ trợ bữa ăn dinh dưỡng</td>
+                            <td>Food</td>
+                            <td>40,000,000</td>
+                            <td>40,000,000</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 100%;"></div>
+                                    </div>
+                                    <div class="progress-label">100%</div>
+                                </div>
+                            </td>
+                            <td>Jun 1, 2026</td>
+                            <td>Aug 31, 2026</td>
+                            <td><span class="status-badge">COMPLETED</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                                <button class="btn btn-sm btn-danger">DELETE</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#C005</td>
+                            <td>Chăm sóc sức khỏe trẻ em</td>
+                            <td>Healthcare</td>
+                            <td>35,000,000</td>
+                            <td>22,100,000</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 63%;"></div>
+                                    </div>
+                                    <div class="progress-label">63%</div>
+                                </div>
+                            </td>
+                            <td>Jul 28, 2026</td>
+                            <td>Oct 12, 2026</td>
+                            <td><span class="status-badge">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                                <button class="btn btn-sm btn-danger">DELETE</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#C006</td>
+                            <td>Dụng cụ học tập</td>
+                            <td>Education</td>
+                            <td>25,000,000</td>
+                            <td>12,300,000</td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 49%;"></div>
+                                    </div>
+                                    <div class="progress-label">49%</div>
+                                </div>
+                            </td>
+                            <td>Aug 2, 2026</td>
+                            <td>Oct 7, 2026</td>
+                            <td><span class="status-badge">ACTIVE</span></td>
+                            <td>
+                                <button class="btn btn-sm">VIEW</button>
+                                <button class="btn btn-sm">EDIT</button>
+                                <button class="btn btn-sm btn-danger">DELETE</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <span class="pagination-btn">← PREV</span>
+                    <span class="pagination-btn active">1</span>
+                    <span class="pagination-btn">2</span>
+                    <span class="pagination-btn">3</span>
+                    <span class="pagination-btn">4</span>
+                    <span class="pagination-btn">NEXT →</span>
+                </div>
+            </div>
+
+            <!-- CREATE/EDIT CAMPAIGN FORM -->
+            <div class="form-container">
+                <div class="form-title">Create / Edit Campaign</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Campaign Title *</label>
+                    <input type="text" class="form-input" placeholder="Enter campaign title">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Cause *</label>
+                        <select class="form-select">
+                            <option>Select Cause</option>
+                            <option>Education</option>
+                            <option>Healthcare</option>
+                            <option>Food</option>
+                            <option>Emergency</option>
+                            <option>Children Welfare</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Goal Amount (VNĐ) *</label>
+                        <input type="text" class="form-input" placeholder="e.g. 50000000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description *</label>
+                    <textarea class="form-textarea" placeholder="Enter campaign description..."></textarea>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Start Date *</label>
+                        <input type="text" class="form-input" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date *</label>
+                        <input type="text" class="form-input" placeholder="YYYY-MM-DD">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Campaign Image *</label>
+                    <div class="file-upload">
+                        <div class="file-upload-text">Click to upload or drag and drop</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status *</label>
+                    <select class="form-select">
+                        <option>Active</option>
+                        <option>Upcoming</option>
+                        <option>Completed</option>
+                        <option>Closed</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary">SAVE CAMPAIGN</button>
+                    <button class="btn">CANCEL</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

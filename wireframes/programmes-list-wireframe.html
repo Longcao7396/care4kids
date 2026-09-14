@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Care4Kids - Programmes List Wireframe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fafafa;
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .wireframe-page {
+            max-width: 1440px;
+            margin: 0 auto 60px;
+            background: white;
+            padding: 40px;
+            border: 3px solid #222;
+        }
+
+        .wireframe-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+        }
+
+        /* HEADER */
+        .header {
+            border: 2px solid #222;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-placeholder {
+            width: 140px;
+            height: 50px;
+            border: 2px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .nav-item {
+            padding: 5px 8px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-item.active {
+            border-bottom: 2px solid #222;
+            font-weight: bold;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-wireframe {
+            border: 2px solid #222;
+            padding: 8px 16px;
+            font-size: 12px;
+            background: white;
+            text-align: center;
+        }
+
+        .btn-wireframe.primary {
+            background: #222;
+            color: white;
+        }
+
+        /* BREADCRUMB */
+        .breadcrumb {
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .text-line {
+            height: 2px;
+            background: #222;
+            margin: 5px 0;
+        }
+
+        .text-line.short {
+            width: 70%;
+        }
+
+        /* FILTERS SECTION */
+        .filters-section {
+            border: 2px dashed #555;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .input-wireframe {
+            flex: 1;
+            max-width: 400px;
+            height: 38px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            background: white;
+            display: flex;
+            align-items: center;
+        }
+
+        .select-wireframe {
+            width: 180px;
+            height: 38px;
+            border: 2px solid #222;
+            padding: 0 12px;
+            font-size: 12px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .select-wireframe::after {
+            content: '▼';
+            font-size: 10px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* PROGRAMMES GRID */
+        .programmes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .programme-card {
+            border: 3px solid #222;
+            background: white;
+            overflow: hidden;
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 180px;
+            border-bottom: 2px solid #222;
+            position: relative;
+            background: white;
+            overflow: hidden;
+        }
+
+        /* X pattern inside container */
+        .card-image-container::before,
+        .card-image-container::after {
+            content: '';
+            position: absolute;
+            background: #222;
+            width: 2px;
+        }
+
+        .card-image-container::before {
+            height: 254px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .card-image-container::after {
+            height: 254px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
+        .image-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            border: 1px solid #222;
+            padding: 3px 8px;
+            font-size: 10px;
+        }
+
+        .card-content {
+            padding: 18px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .card-info {
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .info-label {
+            font-weight: bold;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .status-badge {
+            display: inline-block;
+            border: 2px solid #222;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-card {
+            flex: 1;
+            border: 2px solid #222;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            background: white;
+        }
+
+        .btn-card.primary {
+            background: #222;
+            color: white;
+        }
+
+        /* PAGINATION */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+
+        .page-btn {
+            border: 2px solid #222;
+            padding: 8px 16px;
+            font-size: 12px;
+            background: white;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .page-btn.active {
+            background: #222;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* FOOTER */
+        .footer {
+            border: 2px solid #222;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .footer-columns {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .footer-column h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-family: 'Architects Daughter', cursive;
+        }
+
+        .footer-link {
+            font-size: 12px;
+            margin: 6px 0;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .social-icon {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #222;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #222;
+        }
+
+        /* UX NOTE */
+        .ux-note {
+            border-left: 3px solid #666;
+            background: #f9f9f9;
+            padding: 10px 15px;
+            margin: 20px 0;
+            font-size: 11px;
+            font-style: italic;
+            color: #555;
+        }
+
+        .ux-note::before {
+            content: 'UX NOTE: ';
+            font-weight: bold;
+            color: #222;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .wireframe-page {
+                border: 2px solid #222;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wireframe-page">
+    <div class="wireframe-title">Care4Kids - Programmes List Wireframe</div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-placeholder">Care4Kids</div>
+        <nav class="nav-menu">
+            <div class="nav-item">Home</div>
+            <div class="nav-item">Campaigns</div>
+            <div class="nav-item">Donate</div>
+            <div class="nav-item active">Programmes</div>
+            <div class="nav-item">Gallery</div>
+            <div class="nav-item">About Us</div>
+            <div class="nav-item">Help Centre</div>
+        </nav>
+        <div class="auth-buttons">
+            <div class="btn-wireframe">Login</div>
+            <div class="btn-wireframe">Register</div>
+        </div>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">Home > Programmes</div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Programmes</h1>
+        <div class="text-line"></div>
+        <div class="text-line short"></div>
+    </div>
+
+    <!-- FILTERS SECTION -->
+    <div class="filters-section">
+        <div class="filter-row">
+            <div class="filter-label">Search:</div>
+            <div class="input-wireframe">Search programmes...</div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">Date:</div>
+            <div class="select-wireframe">All Dates</div>
+            <div class="filter-label" style="margin-left: 20px;">Status:</div>
+            <div class="select-wireframe">All Status</div>
+        </div>
+        <div class="filter-actions">
+            <div class="btn-wireframe primary">APPLY FILTER</div>
+            <div class="btn-wireframe">RESET</div>
+        </div>
+    </div>
+
+    <!-- PROGRAMMES GRID -->
+    <div class="programmes-grid">
+        
+        <!-- Programme Card 1 -->
+        <div class="programme-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+            </div>
+            <div class="card-content">
+                <div class="card-title">Trao tặng dụng cụ học tập</div>
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">15/09/2026</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">Hanoi</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Volunteer Slots:</span>
+                        <span class="info-value">50</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Registered:</span>
+                        <span class="info-value">37</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Remaining:</span>
+                        <span class="info-value">13</span>
+                    </div>
+                </div>
+                <div class="status-badge">[OPEN]</div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">REGISTER</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programme Card 2 -->
+        <div class="programme-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+            </div>
+            <div class="card-content">
+                <div class="card-title">Ngày hội trẻ em</div>
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">22/09/2026</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">Ho Chi Minh City</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Volunteer Slots:</span>
+                        <span class="info-value">100</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Registered:</span>
+                        <span class="info-value">100</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Remaining:</span>
+                        <span class="info-value">0</span>
+                    </div>
+                </div>
+                <div class="status-badge">[FULL]</div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">REGISTER</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programme Card 3 -->
+        <div class="programme-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+            </div>
+            <div class="card-content">
+                <div class="card-title">Hỗ trợ trẻ em vùng khó khăn</div>
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">30/09/2026</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">Da Nang</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Volunteer Slots:</span>
+                        <span class="info-value">60</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Registered:</span>
+                        <span class="info-value">28</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Remaining:</span>
+                        <span class="info-value">32</span>
+                    </div>
+                </div>
+                <div class="status-badge">[OPEN]</div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">REGISTER</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programme Card 4 -->
+        <div class="programme-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+            </div>
+            <div class="card-content">
+                <div class="card-title">Tặng quà Trung Thu</div>
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">10/09/2026</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">Can Tho</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Volunteer Slots:</span>
+                        <span class="info-value">40</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Registered:</span>
+                        <span class="info-value">40</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Remaining:</span>
+                        <span class="info-value">0</span>
+                    </div>
+                </div>
+                <div class="status-badge">[FULL]</div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">REGISTER</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programme Card 5 -->
+        <div class="programme-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+            </div>
+            <div class="card-content">
+                <div class="card-title">Chương trình bữa ăn cho em</div>
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">05/10/2026</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">Hue</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Volunteer Slots:</span>
+                        <span class="info-value">30</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Registered:</span>
+                        <span class="info-value">15</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Remaining:</span>
+                        <span class="info-value">15</span>
+                    </div>
+                </div>
+                <div class="status-badge">[OPEN]</div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">REGISTER</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programme Card 6 -->
+        <div class="programme-card">
+            <div class="card-image-container">
+                <div class="image-label">IMAGE</div>
+            </div>
+            <div class="card-content">
+                <div class="card-title">Đồng hành cùng trẻ đến trường</div>
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">12/10/2026</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">Nha Trang</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Volunteer Slots:</span>
+                        <span class="info-value">45</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Registered:</span>
+                        <span class="info-value">22</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Remaining:</span>
+                        <span class="info-value">23</span>
+                    </div>
+                </div>
+                <div class="status-badge">[OPEN]</div>
+                <div class="card-actions">
+                    <div class="btn-card">VIEW DETAILS</div>
+                    <div class="btn-card primary">REGISTER</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+        <div class="page-btn">< PREV</div>
+        <div class="page-btn active">1</div>
+        <div class="page-btn">2</div>
+        <div class="page-btn">3</div>
+        <div class="page-btn">NEXT ></div>
+    </div>
+
+    <!-- UX NOTES -->
+    <div class="ux-note">
+        Users can search and filter programmes by date and status. Each programme shows volunteer availability. Status options: [OPEN], [FULL], [CLOSED], [COMPLETED]. Users must be logged in to register as volunteers.
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-columns">
+            <div class="footer-column">
+                <h3>About Care4Kids</h3>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <div class="footer-link">→ Home</div>
+                <div class="footer-link">→ Campaigns</div>
+                <div class="footer-link">→ Donate</div>
+                <div class="footer-link">→ Programmes</div>
+                <div class="footer-link">→ Gallery</div>
+                <div class="footer-link">→ About Us</div>
+                <div class="footer-link">→ Partners</div>
+            </div>
+            <div class="footer-column">
+                <h3>Help & Support</h3>
+                <div class="footer-link">→ Help Centre</div>
+                <div class="footer-link">→ FAQ</div>
+                <div class="footer-link">→ Contact Us</div>
+                <div class="footer-link">→ Raise a Query</div>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <div class="social-icons">
+                    <div class="social-icon">f</div>
+                    <div class="social-icon">t</div>
+                    <div class="social-icon">in</div>
+                    <div class="social-icon">ig</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="text-line" style="width: 400px; margin: 0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

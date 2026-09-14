@@ -1,0 +1,672 @@
+/* =====================================================
+   ABOUT US SUB-PAGES — shared style
+   Team, Career, Achievements, Supporters - Care4Kids Theme
+   ===================================================== */
+
+.about-subpage {
+  min-height: 100vh;
+}
+
+.about-subpage .page-header {
+  background: var(--hero-gradient);
+  color: var(--text-light);
+  padding: 4rem 0 3rem;
+  margin-bottom: 3rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.about-subpage .page-header h1 {
+  color: var(--text-light);
+  margin-bottom: 0.75rem;
+  font-size: 2.5rem;
+}
+
+.about-subpage .page-header .lead {
+  color: var(--text-gray);
+  font-size: 1.1rem;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.about-subpage .page-header .text-accent {
+  color: var(--accent-sky);
+}
+
+/* Generic card override for the dark theme */
+.about-subpage .card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+}
+
+.about-subpage .card .card-title,
+.about-subpage .card h5,
+.about-subpage .card h6 {
+  color: var(--text-light);
+}
+
+.about-subpage .text-muted {
+  color: var(--text-gray) !important;
+}
+
+/* =====================================================
+   TEAM PAGE
+   ===================================================== */
+.team-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+  height: 100%;
+  overflow: hidden;
+}
+
+.team-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--accent-sky);
+}
+
+.team-photo-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  background-color: var(--primary-slate);
+  overflow: hidden;
+}
+
+.team-photo-wrapper img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.team-card:hover .team-photo-wrapper img {
+  transform: scale(1.05);
+}
+
+.team-featured-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--accent-orange);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.team-card-body {
+  padding: 1.25rem;
+}
+
+.team-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 0.25rem;
+}
+
+.team-role {
+  font-size: 0.9rem;
+  color: var(--accent-sky);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.team-department {
+  display: inline-block;
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--accent-cyan);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.team-bio {
+  color: var(--text-gray);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.team-socials {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.team-social-link {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--primary-slate);
+  color: var(--text-gray);
+  font-size: 0.95rem;
+  transition: all var(--transition-base);
+}
+
+.team-social-link:hover {
+  background: var(--accent-sky);
+  color: var(--primary-navy);
+  transform: translateY(-2px);
+}
+
+.team-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-gray);
+}
+
+.team-filter-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* =====================================================
+   CAREER PAGE
+   ===================================================== */
+.career-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  height: 100%;
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.career-card:hover {
+  border-color: var(--accent-sky);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.career-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+}
+
+.career-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 0.35rem;
+  line-height: 1.3;
+}
+
+.career-department {
+  display: inline-block;
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--accent-cyan);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.career-type-badge {
+  background: var(--accent-orange);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.career-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  color: var(--text-gray);
+  font-size: 0.9rem;
+}
+
+.career-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.career-meta-item i {
+  color: var(--accent-sky);
+}
+
+.career-description {
+  color: var(--text-gray);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.career-card .btn {
+  margin-top: auto;
+}
+
+.career-detail-body {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+}
+
+.career-detail-body h4,
+.career-detail-body h5 {
+  color: var(--text-light);
+}
+
+.career-detail-body ul {
+  color: var(--text-gray);
+  padding-left: 1.25rem;
+}
+
+.career-detail-body li {
+  margin-bottom: 0.4rem;
+}
+
+/* =====================================================
+   ACHIEVEMENTS PAGE
+   ===================================================== */
+.achievement-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+  height: 100%;
+  transition: all var(--transition-base);
+}
+
+.achievement-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-sky);
+}
+
+.achievement-stat-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(14, 165, 233, 0.15);
+  color: var(--accent-sky);
+  font-size: 1.6rem;
+}
+
+.achievement-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-light);
+  margin: 0;
+}
+
+.achievement-stat-label {
+  color: var(--text-gray);
+  font-size: 0.85rem;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.achievement-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  height: 100%;
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.achievement-card:hover {
+  border-color: var(--accent-sky);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.achievement-featured-tag {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--accent-orange);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.achievement-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: rgba(14, 165, 233, 0.15);
+  color: var(--accent-sky);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+}
+
+.achievement-title {
+  color: var(--text-light);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.achievement-category {
+  display: inline-block;
+  background: var(--primary-slate);
+  color: var(--accent-cyan);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
+}
+
+.achievement-metric {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent-sky);
+  margin: 0.75rem 0 0.25rem;
+}
+
+.achievement-metric-label {
+  color: var(--text-gray);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.achievement-description {
+  color: var(--text-gray);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-top: 0.75rem;
+}
+
+.achievement-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-gray);
+  font-size: 0.85rem;
+}
+
+/* =====================================================
+   SUPPORTERS PAGE
+   ===================================================== */
+.supporter-stats {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.supporter-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.supporter-filter-tab {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-gray);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.supporter-filter-tab:hover {
+  border-color: var(--accent-sky);
+  color: var(--accent-sky);
+}
+
+.supporter-filter-tab.active {
+  background: var(--accent-sky);
+  color: var(--primary-navy);
+  border-color: var(--accent-sky);
+}
+
+.supporter-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-base);
+}
+
+.supporter-card:hover {
+  border-color: var(--accent-sky);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.supporter-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.supporter-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: var(--primary-slate);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.supporter-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.supporter-logo-fallback {
+  color: var(--accent-sky);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.supporter-name {
+  color: var(--text-light);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.supporter-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.supporter-type-Supporter {
+  background: rgba(14, 165, 233, 0.15);
+  color: var(--accent-sky);
+}
+
+.supporter-type-Partner {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--accent-orange);
+}
+
+.supporter-type-NGO {
+  background: rgba(34, 211, 238, 0.15);
+  color: var(--accent-cyan);
+}
+
+.supporter-description {
+  color: var(--text-gray);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  flex: 1;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.supporter-meta {
+  color: var(--text-gray);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.supporter-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.supporter-meta-item i {
+  color: var(--accent-sky);
+  width: 16px;
+}
+
+/* =====================================================
+   ADMIN SUB-PAGES
+   ===================================================== */
+.about-admin-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.about-admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.about-admin-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-gray);
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.about-admin-tab:hover {
+  color: var(--accent-sky);
+}
+
+.about-admin-tab.active {
+  color: var(--accent-sky);
+  border-bottom-color: var(--accent-sky);
+}
+
+/* Modal overrides for the dark theme */
+.modal-content .form-control,
+.modal-content .form-select {
+  background-color: var(--primary-slate);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+}
+
+.modal-content .form-control:focus,
+.modal-content .form-select:focus {
+  background-color: var(--bg-card);
+  border-color: var(--accent-sky);
+  color: var(--text-light);
+}
+
+.modal-content .form-label {
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .about-subpage .page-header {
+    padding: 3rem 0 2rem;
+  }
+
+  .about-subpage .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .career-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .achievement-stat-value {
+    font-size: 1.5rem;
+  }
+}

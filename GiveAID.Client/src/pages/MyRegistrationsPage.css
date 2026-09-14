@@ -1,0 +1,327 @@
+/* =====================================================
+   CARE4KIDS — MY REGISTRATIONS
+   ===================================================== */
+
+.mrp-page {
+  background: var(--c4k-off-white);
+  min-height: 100vh;
+}
+
+.mrp-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+/* ─── HERO ─── */
+
+.mrp-hero {
+  background: var(--c4k-teal);
+  padding: var(--space-9) 0 var(--space-7);
+  color: var(--c4k-white);
+  text-align: center;
+}
+
+.mrp-hero .eyebrow {
+  display: block;
+  color: rgba(255,255,255,0.7) !important;
+  margin-bottom: var(--space-3);
+}
+
+.mrp-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--c4k-white);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: var(--space-4);
+}
+
+.mrp-hero-sub {
+  font-size: var(--fs-body-l);
+  color: rgba(255,255,255,0.8);
+  line-height: 1.65;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ─── STATS ─── */
+
+.mrp-stats-section {
+  margin-top: calc(-1 * var(--space-5));
+  position: relative;
+  z-index: 2;
+}
+
+.mrp-stats {
+  gap: var(--space-3);
+}
+
+.mrp-stat-col {
+  display: flex;
+}
+
+.mrp-stat-card {
+  flex: 1;
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  text-align: center;
+  width: 100%;
+}
+
+.mrp-stat-lbl {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c4k-gray-500);
+  margin-bottom: var(--space-2);
+}
+
+.mrp-stat-num {
+  font-family: var(--font-serif);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.mrp-stat-num-coral { color: var(--c4k-coral); }
+.mrp-stat-num-teal  { color: var(--c4k-teal-dark); }
+
+/* ─── FILTERS ─── */
+
+.mrp-controls-section {
+  padding: var(--space-7) 0 var(--space-5);
+}
+
+.mrp-filters {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.mrp-filter-btn {
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-300);
+  color: var(--c4k-gray-700);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  white-space: nowrap;
+}
+
+.mrp-filter-btn:hover {
+  border-color: var(--c4k-teal);
+  color: var(--c4k-teal-dark);
+  background: var(--c4k-teal-soft);
+}
+
+.mrp-filter-btn.is-active {
+  background: var(--c4k-teal);
+  border-color: var(--c4k-teal);
+  color: var(--c4k-white);
+}
+
+/* ─── LIST ─── */
+
+.mrp-list-section {
+  padding: 0 0 var(--space-10);
+}
+
+.mrp-item {
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all var(--t-base);
+}
+
+.mrp-item:hover {
+  border-color: var(--c4k-gray-300);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.mrp-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--c4k-gray-100);
+  flex-wrap: wrap;
+}
+
+.mrp-item-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mrp-item-tags .badge {
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+}
+
+.mrp-item-date-registered {
+  font-size: var(--fs-caption);
+  color: var(--c4k-gray-500);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mrp-item-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h4);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-4);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.mrp-item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.mrp-item-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-600);
+}
+
+.mrp-item-meta-row svg {
+  color: var(--c4k-gray-500);
+  flex-shrink: 0;
+}
+
+.mrp-item-meta-attended {
+  color: var(--c4k-success);
+  font-weight: 600;
+}
+
+.mrp-item-meta-attended svg {
+  color: var(--c4k-success) !important;
+}
+
+.mrp-item-notes {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-700);
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c4k-coral-softest);
+  border-left: 3px solid var(--c4k-coral);
+  border-radius: var(--radius-sm);
+  line-height: 1.55;
+}
+
+.mrp-item-notes-lbl {
+  display: block;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c4k-coral-darker);
+  margin-bottom: 4px;
+}
+
+.mrp-item-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-s);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c4k-teal-dark);
+  text-decoration: none;
+  margin-top: auto;
+  transition: gap var(--t-fast);
+}
+
+.mrp-item-cta:hover {
+  gap: 10px;
+}
+
+/* ─── EMPTY ─── */
+
+.mrp-empty {
+  text-align: center;
+  padding: var(--space-9) var(--space-5) !important;
+  background: var(--c4k-white) !important;
+  border: 1px solid var(--c4k-gray-200) !important;
+  border-radius: var(--radius-xl);
+}
+
+.mrp-empty svg {
+  color: var(--c4k-gray-300);
+  margin-bottom: var(--space-4);
+}
+
+.mrp-empty h4 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-3);
+}
+
+.mrp-empty p {
+  color: var(--c4k-gray-600);
+  margin-bottom: var(--space-5);
+}
+
+/* ─── RESPONSIVE ─── */
+
+@media (max-width: 767px) {
+  .mrp-hero {
+    padding: var(--space-7) 0 var(--space-6);
+  }
+
+  .mrp-controls-section {
+    padding: var(--space-6) 0 var(--space-4);
+  }
+
+  .mrp-list-section {
+    padding-bottom: var(--space-8);
+  }
+
+  .mrp-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--space-2);
+  }
+
+  .mrp-filter-btn {
+    flex-shrink: 0;
+  }
+
+  .mrp-item {
+    padding: var(--space-5);
+  }
+}

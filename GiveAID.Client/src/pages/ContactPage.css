@@ -1,0 +1,310 @@
+/* =====================================================
+   CARE4KIDS — CONTACT PAGE
+   Editorial Humanitarian
+   ===================================================== */
+
+.cp-page {
+  background: var(--c4k-white);
+}
+
+/* ─── HERO ─── */
+
+.cp-hero {
+  background: var(--c4k-teal);
+  padding: var(--space-10) 0 var(--space-9);
+  color: var(--c4k-white);
+  text-align: center;
+}
+
+.cp-hero-content {
+  max-width: 680px;
+}
+
+.cp-hero .eyebrow {
+  display: block;
+  color: rgba(255,255,255,0.7) !important;
+  margin-bottom: var(--space-3);
+}
+
+.cp-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.25rem, 4.5vw, 3.25rem);
+  font-weight: 700;
+  color: var(--c4k-white);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-5);
+}
+
+.cp-hero-sub {
+  font-size: var(--fs-body-l);
+  color: rgba(255,255,255,0.8);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ─── CHANNELS ─── */
+
+.cp-channels {
+  background: var(--c4k-off-white);
+  padding: var(--space-9) 0;
+  margin-top: calc(-1 * var(--space-6));
+  position: relative;
+  z-index: 2;
+}
+
+.cp-channels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+@media (max-width: 991.98px) {
+  .cp-channels-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .cp-channels-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cp-channel-card {
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  text-align: center;
+  height: 100%;
+  transition: all var(--t-base);
+}
+
+.cp-channel-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c4k-gray-300);
+}
+
+.cp-channel-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--c4k-coral-soft);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c4k-coral);
+  margin-bottom: var(--space-4);
+  transition: all var(--t-base);
+}
+
+.cp-channel-card:hover .cp-channel-icon {
+  background: var(--c4k-coral);
+  color: var(--c4k-white);
+  transform: scale(1.08);
+}
+
+.cp-channel-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h4);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-4);
+  letter-spacing: -0.02em;
+}
+
+.cp-channel-line {
+  font-size: var(--fs-body);
+  color: var(--c4k-gray-600);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ─── FORM SECTION ─── */
+
+.cp-form-section {
+  padding: var(--space-9) 0 var(--space-10);
+  background: var(--c4k-white);
+}
+
+.cp-form-row {
+  gap: var(--space-7);
+  align-items: flex-start;
+}
+
+/* ─── Form Card ─── */
+
+.cp-form-card {
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-7);
+}
+
+.cp-form-card .eyebrow {
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.cp-form-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-3);
+  letter-spacing: -0.02em;
+}
+
+.cp-form-desc {
+  font-size: var(--fs-body);
+  color: var(--c4k-gray-600);
+  line-height: 1.65;
+  margin-bottom: var(--space-6);
+}
+
+.cp-label {
+  display: block;
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-2);
+}
+
+.cp-input {
+  display: block;
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  color: var(--c4k-gray-800);
+  background-color: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-300);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.cp-input:focus {
+  outline: none;
+  border-color: var(--c4k-teal);
+  box-shadow: 0 0 0 3px var(--c4k-teal-light);
+}
+
+.cp-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.cp-help {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-500);
+}
+
+.cp-submit {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.cp-form .alert {
+  margin-bottom: var(--space-5);
+}
+
+/* ─── Sidebar ─── */
+
+.cp-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  position: sticky;
+  top: calc(var(--navbar-h) + var(--space-5));
+}
+
+.cp-info-card {
+  background: var(--c4k-off-white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.cp-info-card .eyebrow {
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.cp-cms-content {
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  color: var(--c4k-gray-700);
+}
+
+.cp-cms-content p { margin-bottom: var(--space-3); }
+.cp-cms-content h3 { font-family: var(--font-serif); margin-bottom: var(--space-3); color: var(--c4k-charcoal); }
+.cp-cms-content a { color: var(--c4k-teal); }
+
+/* ─── Map Card ─── */
+
+.cp-map-card {
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.cp-map-card .eyebrow {
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.cp-map-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h4);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin-bottom: var(--space-5);
+  letter-spacing: -0.02em;
+}
+
+.cp-map {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ─── RESPONSIVE ─── */
+
+@media (max-width: 991px) {
+  .cp-sidebar {
+    position: relative;
+    top: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .cp-hero {
+    padding: var(--space-8) 0 var(--space-7);
+  }
+
+  .cp-channels {
+    padding: var(--space-7) 0;
+    margin-top: calc(-1 * var(--space-4));
+  }
+
+  .cp-form-section {
+    padding: var(--space-7) 0 var(--space-9);
+  }
+
+  .cp-form-card {
+    padding: var(--space-5);
+  }
+
+  .cp-info-card,
+  .cp-map-card {
+    padding: var(--space-5);
+  }
+}

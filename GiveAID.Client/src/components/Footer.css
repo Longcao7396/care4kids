@@ -1,0 +1,177 @@
+/* =====================================================
+   CARE4KIDS — FOOTER (Editorial Humanitarian)
+   ===================================================== */
+
+.c4k-footer {
+  margin-top: auto;
+}
+
+/* ─── MAIN FOOTER ─── */
+
+.c4k-footer-main {
+  background-color: var(--c4k-charcoal);
+  padding: 72px 0 56px;
+}
+
+.c4k-footer-grid {
+  row-gap: 48px;
+}
+
+.c4k-footer-col {}
+
+/* ─── BRAND + MISSION ─── */
+
+.c4k-footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--c4k-white);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+
+.c4k-footer-brand:hover {
+  color: var(--c4k-white);
+  opacity: 0.85;
+}
+
+.c4k-footer-brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: rgba(231, 111, 81, 0.15);
+  color: var(--c4k-coral);
+  border-radius: var(--radius-md);
+}
+
+.c4k-footer-mission {
+  font-size: var(--fs-body);
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
+  margin-bottom: 24px;
+  max-width: 320px;
+}
+
+/* ─── SOCIAL LINKS ─── */
+
+.c4k-footer-social {
+  display: flex;
+  gap: 12px;
+}
+
+.c4k-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background-color: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.65);
+  border-radius: var(--radius-md);
+  transition: all var(--t-base);
+}
+
+.c4k-social-link:hover {
+  background-color: var(--c4k-coral);
+  color: var(--c4k-white);
+  transform: translateY(-2px);
+}
+
+/* ─── HEADINGS ─── */
+
+.c4k-footer-heading {
+  font-family: var(--font-sans);
+  font-size: var(--fs-eyebrow);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c4k-white);
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.c4k-footer-heading-legal {
+  margin-top: 32px;
+}
+
+/* ─── LINKS ─── */
+
+.c4k-footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.c4k-footer-links li {
+  margin-bottom: 10px;
+}
+
+.c4k-footer-links li a {
+  font-size: var(--fs-body);
+  color: rgba(255,255,255,0.55);
+  transition: color var(--t-fast);
+  text-decoration: none;
+}
+
+.c4k-footer-links li a:hover {
+  color: var(--c4k-coral);
+}
+
+/* ─── BOTTOM BAR ─── */
+
+.c4k-footer-bottom {
+  background-color: #111111;
+  padding: 20px 0;
+}
+
+.c4k-footer-bottom-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.c4k-footer-copy,
+.c4k-footer-tagline {
+  font-size: var(--fs-body-s);
+  color: rgba(255,255,255,0.35);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.c4k-footer-tagline {
+  font-style: italic;
+  font-family: var(--font-serif);
+  color: rgba(255,255,255,0.45);
+}
+
+/* ─── RESPONSIVE ─── */
+
+@media (max-width: 991px) {
+  .c4k-footer-main {
+    padding: 56px 0 40px;
+  }
+
+  .c4k-footer-bottom-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .c4k-footer-main {
+    padding: 40px 0 32px;
+  }
+
+  .c4k-footer-heading {
+    margin-top: 8px;
+  }
+}
