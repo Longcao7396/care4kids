@@ -71,7 +71,8 @@
 }
 
 .dp-user-stats {
-  gap: var(--space-5);
+  --bs-gutter-x: var(--space-5);
+  --bs-gutter-y: var(--space-5);
 }
 
 .dp-user-stat-col {
@@ -157,7 +158,8 @@
 }
 
 .dp-user-actions {
-  gap: var(--space-5);
+  --bs-gutter-x: var(--space-5);
+  --bs-gutter-y: var(--space-5);
 }
 
 .dp-user-action-col {
@@ -265,7 +267,8 @@
 }
 
 .dp-user-activity {
-  gap: var(--space-5);
+  --bs-gutter-x: var(--space-5);
+  --bs-gutter-y: var(--space-5);
 }
 
 .dp-user-activity-col {
