@@ -4,12 +4,15 @@ import { Link } from 'react-router-dom';
 import { campaignsService } from '../services';
 
 /**
- * Programmes / Events page.
+ * Programmes / Events page (LEGACY wrapper).
  *
  * Programmes have been merged into Campaigns on the backend. This page
  * reads from the unified /api/campaigns endpoint with `eventsOnly=true`
  * so users still see the same registration-based events (formerly
  * Programmes) in one familiar view.
+ *
+ * @deprecated Prefer /campaigns (CampaignsPage) — this page exists only as
+ * a fallback for any links that still point at /programmes.
  */
 const ProgrammesPage = () => {
   const [events, setEvents] = useState([]);

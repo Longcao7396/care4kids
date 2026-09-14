@@ -6,12 +6,14 @@ import { useAuth } from '../contexts/AuthContext';
 import './ProgrammeDetailPage.css';
 
 /**
- * Programme Detail (now Event Detail).
+ * Programme Detail (now Event Detail) — LEGACY wrapper.
  *
  * Programmes were merged into Campaigns on the backend. This page reads
  * the unified Campaign record (which may carry programmeType and
  * RegistrationRequired) so the UX stays familiar — but the URL still
  * responds to /programmes/:id for backward compatibility.
+ *
+ * @deprecated Prefer /campaigns/:id (CampaignDetailPage).
  */
 const ProgrammeDetailPage = () => {
   const { id } = useParams();

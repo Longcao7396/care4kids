@@ -26,8 +26,14 @@ function validate(data, isUpdate = false) {
     errs.goalAmount = 'Goal amount is required.';
   if (data.goalAmount && isNaN(Number(data.goalAmount)))
     errs.goalAmount = 'Must be a valid number.';
+  // startDate is [Required] on the backend entity so it must be supplied by
+  // the form for both create and update paths.
+  if (!data.startDate)
+    errs.startDate = 'Start date is required.';
   if (data.startDate && data.endDate && new Date(data.endDate) < new Date(data.startDate))
     errs.endDate = 'End date must be after start date.';
+  if (data.status && !CAMPAIGN_STATUSES.includes(data.status))
+    errs.status = 'Invalid status value.';
   return errs;
 }
 
@@ -35,7 +41,7 @@ const EMPTY_FORM = {
   causeId: '', campaignName: '', campaignCode: '', description: '',
   goalAmount: '', startDate: '', endDate: '', imageUrl: '',
   beneficiariesCount: '', location: '',
-  isFeatured: false, displayOrder: 0,
+  status: 'Active', isFeatured: false, displayOrder: 0,
 };
 
 /* ── Campaign Form Modal ────────────────────── */
@@ -52,8 +58,10 @@ function CampaignFormModal({ show, editing, initial, causes, onSave, onClose }) 
         causeId: initial.causeId ?? '',
         goalAmount: initial.goalAmount ?? '',
         beneficiariesCount: initial.beneficiariesCount ?? '',
+        targetBeneficiaries: initial.targetBeneficiaries ?? '',
         startDate: initial.startDate ? initial.startDate.slice(0, 10) : '',
         endDate: initial.endDate ? initial.endDate.slice(0, 10) : '',
+        status: initial.status ?? 'Active',
       } : EMPTY_FORM);
       setErrors({});
     }
@@ -74,6 +82,7 @@ function CampaignFormModal({ show, editing, initial, causes, onSave, onClose }) 
         beneficiariesCount: form.beneficiariesCount ? parseInt(form.beneficiariesCount) : null,
         targetBeneficiaries: form.targetBeneficiaries ? parseInt(form.targetBeneficiaries) : null,
         displayOrder: parseInt(form.displayOrder) || 0,
+        status: form.status || 'Active',
       });
     } finally {
       setSaving(false);
@@ -126,7 +135,7 @@ function CampaignFormModal({ show, editing, initial, causes, onSave, onClose }) 
           </Row>
           {field('Description', 'description', 'textarea', 'Describe the campaign goals and impact...')}
           <Row>
-            <Col md={4}>{field('Start Date', 'startDate', 'date')}</Col>
+            <Col md={4}>{field('Start Date *', 'startDate', 'date')}</Col>
             <Col md={4}>{field('End Date', 'endDate', 'date')}</Col>
             <Col md={4}>{field('Location', 'location', 'text', 'Ho Chi Minh City')}</Col>
           </Row>
@@ -134,12 +143,33 @@ function CampaignFormModal({ show, editing, initial, causes, onSave, onClose }) 
             <Col md={6}>{field('Image URL', 'imageUrl', 'url', 'https://...')}</Col>
             <Col md={3}>{field('Beneficiaries', 'beneficiariesCount', 'number', '500')}</Col>
             <Col md={3}>{field('Target Beneficiaries', 'targetBeneficiaries', 'number', '1000')}</Col>
-            <Col md={3}>
+          </Row>
+          <Row>
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                <Form.Label>Status</Form.Label>
+                <Form.Select
+                  value={form.status}
+                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                  isInvalid={!!errors.status}
+                >
+                  {CAMPAIGN_STATUSES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </Form.Select>
+                {errors.status && <Form.Control.Feedback type="invalid">{errors.status}</Form.Control.Feedback>}
+                <Form.Text className="text-muted">
+                  Set to Completed/Cancelled once the campaign ends to hide it from active listings.
+                </Form.Text>
+              </Form.Group>
+            </Col>
+            <Col md={3}>{field('Display Order', 'displayOrder', 'number', '0')}</Col>
+            <Col md={5} className="d-flex align-items-end">
               <Form.Check
-                type="switch" id="camp-is-featured" label="Featured"
+                type="switch" id="camp-is-featured" label="Featured on homepage"
                 checked={form.isFeatured}
                 onChange={(e) => setForm((f) => ({ ...f, isFeatured: e.target.checked }))}
-                className="mt-4"
+                className="mb-3"
               />
             </Col>
           </Row>

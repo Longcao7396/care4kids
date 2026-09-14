@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Web.Http;
 using GiveAID.Web.Data;
@@ -8,7 +8,7 @@ using GiveAID.Web.Models;
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
-    /// User-to-Admin conversations â€” also used for "Raise Query" so users can
+    /// User-to-Admin conversations — also used for "Raise Query" so users can
     /// create a question and view its status, while admins reply in-thread.
     /// Uses the existing Conversations + ConversationMessages tables.
     /// </summary>
@@ -22,7 +22,7 @@ namespace GiveAID.Web.Controllers
             _context = new GiveAIDContext();
         }
 
-        // POST: api/conversations  (any authenticated user) â€” raises a new query
+        // POST: api/conversations  (any authenticated user) — raises a new query
         [HttpPost]
         [Route("")]
         [JwtAuthorize]
@@ -51,7 +51,7 @@ namespace GiveAID.Web.Controllers
                 _context.Conversations.Add(conv);
                 _context.SaveChanges();
 
-                // First message â€” the user's question
+                // First message — the user's question
                 var firstMsg = new ConversationMessage
                 {
                     ConversationId = conv.ConversationId,
@@ -83,7 +83,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // POST: api/conversations/{id}/messages  â€” user or admin replies
+        // POST: api/conversations/{id}/messages  — user or admin replies
         [HttpPost]
         [Route("{id:int}/messages")]
         [JwtAuthorize]
@@ -125,7 +125,7 @@ namespace GiveAID.Web.Controllers
                 }
                 else
                 {
-                    // user replied â€” keep status but bump updated_at
+                    // user replied — keep status but bump updated_at
                 }
 
                 conv.UpdatedAt = DateTime.Now;
@@ -149,7 +149,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // POST: api/conversations/{id}/close â€” admin or original user
+        // POST: api/conversations/{id}/close — admin or original user
         [HttpPost]
         [Route("{id:int}/close")]
         [JwtAuthorize]
@@ -182,7 +182,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/conversations/mine â€” current user's queries
+        // GET: api/conversations/mine — current user's queries
         [HttpGet]
         [Route("mine")]
         [JwtAuthorize]
@@ -220,7 +220,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/conversations/{id} â€” detail incl. messages
+        // GET: api/conversations/{id} — detail incl. messages
         [HttpGet]
         [Route("{id:int}")]
         [JwtAuthorize]
@@ -281,10 +281,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/conversations â€” admin list
+        // GET: api/conversations — admin list
         [HttpGet]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetAll(string status = null, string priority = null,
             string type = null, int page = 1, int pageSize = 20)
         {
@@ -309,7 +309,7 @@ namespace GiveAID.Web.Controllers
                     {
                         conversationId = c.ConversationId,
                         userId = c.UserId,
-                        userName = c.UserId.HasValue ? ResolveSenderName(c.UserId.Value) : "â€”",
+                        userName = c.UserId.HasValue ? ResolveSenderName(c.UserId.Value) : "—",
                         subject = c.Subject,
                         conversationType = c.ConversationType,
                         status = c.Status,
@@ -345,10 +345,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/conversations/stats â€” admin
+        // GET: api/conversations/stats — admin
         [HttpGet]
         [Route("stats")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetStats()
         {
             try
@@ -374,10 +374,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // POST: api/conversations/{id}/assign â€” admin only
+        // POST: api/conversations/{id}/assign — admin only
         [HttpPost]
         [Route("{id:int}/assign")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Assign(int id, AssignRequest request)
         {
             try
@@ -397,7 +397,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        /* â”€â”€ helpers â”€â”€ */
+        /* ── helpers ── */
         private static string[] ValidateCreate(ConversationCreateRequest req)
         {
             var errs = new System.Collections.Generic.List<string>();

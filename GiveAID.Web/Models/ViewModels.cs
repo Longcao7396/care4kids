@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -93,7 +93,8 @@ namespace GiveAID.Web.Models
         [StringLength(100)]
         public string CauseName { get; set; }
 
-        [Required]
+        // Optional. Auto-generated from CauseName (uppercased, slugified)
+        // server-side when blank. Frontend no longer needs to compute a code.
         [StringLength(20)]
         public string CauseCode { get; set; }
 

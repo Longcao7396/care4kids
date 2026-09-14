@@ -83,11 +83,26 @@ namespace GiveAID.Web.Controllers
                 var userId = JwtHelper.GetUserIdFromToken(Request);
                 var donation = _context.Donations
                     .Include(d => d.Cause)
-                    .FirstOrDefault(d => d.DonationId == id && d.UserId == userId);
+                    .FirstOrDefault(d => d.DonationId == id);
 
                 if (donation == null)
                 {
                     return NotFound();
+                }
+
+                // IDOR protection: a regular user may only read their own
+                // donations. Admin/SuperAdmin may read any donation (for support
+                // and moderation). Returning 403 (not 404) makes the access
+                // boundary explicit.
+                var caller = _context.Users.Find(userId);
+                var isAdmin = caller != null && (caller.Role == "Admin" || caller.Role == "SuperAdmin");
+                if (!isAdmin && donation.UserId != userId)
+                {
+                    return Content(System.Net.HttpStatusCode.Forbidden, new ApiResponse
+                    {
+                        Success = false,
+                        Message = "You may only view your own donations."
+                    });
                 }
 
                 return Ok(new ApiResponse
@@ -96,6 +111,7 @@ namespace GiveAID.Web.Controllers
                     Data = new
                     {
                         donationId = donation.DonationId,
+                        userId = donation.UserId,
                         causeId = donation.CauseId,
                         causeName = donation.Cause.CauseName,
                         amount = donation.Amount,
@@ -227,7 +243,7 @@ namespace GiveAID.Web.Controllers
         // GET: api/donations/stats
         [HttpGet]
         [Route("stats")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetStats()
         {
             try
@@ -309,6 +325,13 @@ namespace GiveAID.Web.Controllers
         [MaxLength(500)]
         public string Message { get; set; }
         public bool IsAnonymous { get; set; }
+
+        // Optional client-generated idempotency key. If supplied and a donation
+        // already exists with the same TransactionId for this user, the existing
+        // donation is returned instead of creating a duplicate. Recommended for
+        // mobile clients to survive retries / double-tap.
+        [MaxLength(100)]
+        public string IdempotencyKey { get; set; }
     }
 }
 

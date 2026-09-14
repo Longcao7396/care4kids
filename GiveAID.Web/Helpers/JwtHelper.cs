@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
@@ -6,11 +6,16 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using GiveAID.Web.Models;
+using GiveAID.Web.Data;
 
 namespace GiveAID.Web.Helpers
 {
     public static class JwtHelper
     {
+        // Cached GiveAIDContext instance used for token validation lookups.
+        // Disposed when the AppDomain shuts down (one per process lifetime is fine).
+        private static readonly GiveAIDContext _validationContext = new GiveAIDContext();
+
         public static string GenerateToken(User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSettings.Secret));
@@ -84,6 +89,20 @@ namespace GiveAID.Web.Helpers
             try
             {
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+
+                // SECURITY: Reject tokens belonging to deactivated users so that an
+                // admin disabling an account immediately invalidates all outstanding
+                // tokens for that user (until JWT expiry).
+                var userIdClaim = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var userId))
+                {
+                    var user = _validationContext.Users.Find(userId);
+                    if (user == null || !user.IsActive)
+                    {
+                        return null;
+                    }
+                }
+
                 return principal;
             }
             catch

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Web.Http;
 using GiveAID.Web.Data;
@@ -8,9 +8,9 @@ using GiveAID.Web.Models;
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
-    /// User Invite Friends â€” records referral invitations and queues them
+    /// User Invite Friends — records referral invitations and queues them
     /// for sending. The actual email send is delegated to <see cref="EmailService"/>
-    /// which currently logs the message (mock) â€” once a real SMTP / provider
+    /// which currently logs the message (mock) — once a real SMTP / provider
     /// is configured, only that helper needs to change.
     /// </summary>
     [RoutePrefix("api/invitations")]
@@ -109,7 +109,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/invitations/mine â€” current user's sent invitations
+        // GET: api/invitations/mine — current user's sent invitations
         [HttpGet]
         [Route("mine")]
         public IHttpActionResult GetMine()
@@ -142,10 +142,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/invitations/stats â€” admin view
+        // GET: api/invitations/stats — admin view
         [HttpGet]
         [Route("stats")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetStats()
         {
             try
@@ -172,10 +172,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // GET: api/invitations â€” admin list
+        // GET: api/invitations — admin list
         [HttpGet]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetAll(string status = null, int page = 1, int pageSize = 30)
         {
             try
@@ -197,7 +197,7 @@ namespace GiveAID.Web.Controllers
                     {
                         invitationId = i.InvitationId,
                         inviterUserId = i.InviterUserId,
-                        inviterName = i.Inviter != null ? i.Inviter.FullName : "â€”",
+                        inviterName = i.Inviter != null ? i.Inviter.FullName : "—",
                         inviteeName = i.InviteeName,
                         inviteeEmail = i.InviteeEmail,
                         personalMessage = i.PersonalMessage,
@@ -231,10 +231,10 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // POST: api/invitations/{id}/cancel â€” admin only
+        // POST: api/invitations/{id}/cancel — admin only
         [HttpPost]
         [Route("{id:int}/cancel")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Cancel(int id)
         {
             try
@@ -259,7 +259,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // POST: api/invitations/accept/{token}  â€” public, called when recipient signs up
+        // POST: api/invitations/accept/{token}  — public, called when recipient signs up
         [HttpPost]
         [Route("accept/{token}")]
         [AllowAnonymous]
@@ -285,7 +285,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        /* â”€â”€ helpers â”€â”€ */
+        /* ── helpers ── */
         private static string[] Validate(InvitationRequest req)
         {
             var errs = new System.Collections.Generic.List<string>();

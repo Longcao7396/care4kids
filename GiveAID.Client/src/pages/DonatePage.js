@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Form, Alert } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { causesService, donationsService } from '../services';
 import api from '../services/api';
@@ -15,12 +15,7 @@ const DonatePage = () => {
     causeId: location.state?.causeId || '',
     campaignId: location.state?.campaignId || '',
     amount: '500000',
-    isRecurring: false,
-    paymentMethod: 'CreditCard',
-    cardHolderName: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
+    paymentMethod: 'BankTransfer',
     message: '',
     isAnonymous: false
   });
@@ -38,24 +33,6 @@ const DonatePage = () => {
       loadCampaignsByCause(formData.causeId);
     }
   }, [formData.causeId]);
-
-  const loadCauses = async () => {
-    try {
-      const response = await causesService.getAll(true);
-      if (response.success) setCauses(response.data);
-    } catch (error) {
-      console.error('Error loading causes:', error);
-    }
-  };
-
-  const loadCampaigns = async () => {
-    try {
-      const response = await api.get('/campaigns', { params: { status: 'Active' } });
-      if (response.data.success) setCampaigns(response.data.data);
-    } catch (error) {
-      console.error('Error loading campaigns:', error);
-    }
-  };
 
   const loadCampaignsByCause = async (causeId) => {
     try {
@@ -96,18 +73,18 @@ const DonatePage = () => {
 
     setLoading(true);
     try {
+      // Generate a client-side idempotency key so a retry (network blip,
+      // double-tap) doesn't create a duplicate donation.
+      const idempotencyKey = `don-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
       const donationData = {
         causeId: parseInt(formData.causeId),
         campaignId: formData.campaignId ? parseInt(formData.campaignId) : null,
         amount: parseFloat(formData.amount),
-        isRecurring: formData.isRecurring,
         paymentMethod: formData.paymentMethod,
-        cardHolderName: formData.cardHolderName,
-        cardNumber: formData.cardNumber,
-        expiryDate: formData.expiryDate,
-        cvv: formData.cvv,
         message: formData.message || null,
-        isAnonymous: formData.isAnonymous
+        isAnonymous: formData.isAnonymous,
+        idempotencyKey
       };
 
       const response = await donationsService.create(donationData);
@@ -257,24 +234,6 @@ const DonatePage = () => {
                         className="dp-input dp-input-large"
                       />
                     </Form.Group>
-
-                    <div className="dp-recurring">
-                      <label className="dp-checkbox">
-                        <input
-                          type="checkbox"
-                          name="isRecurring"
-                          checked={formData.isRecurring}
-                          onChange={handleChange}
-                        />
-                        <span className="dp-checkbox-mark"></span>
-                        <span className="dp-checkbox-label">
-                          Make this a <strong>monthly donation</strong>
-                        </span>
-                      </label>
-                      <p className="dp-checkbox-help">
-                        Monthly donations provide steady support that helps us plan long-term programmes.
-                      </p>
-                    </div>
                   </div>
 
                   {/* Step 4 — Donor Info */}
@@ -290,71 +249,13 @@ const DonatePage = () => {
                         onChange={handleChange}
                         className="dp-select"
                       >
-                        <option value="CreditCard">Credit Card</option>
-                        <option value="DebitCard">Debit Card</option>
+                        <option value="BankTransfer">Bank Transfer</option>
                         <option value="NetBanking">Net Banking</option>
                       </Form.Select>
+                      <Form.Text className="text-muted">
+                        Card payments are processed through our PCI-compliant gateway; we never see or store your card details.
+                      </Form.Text>
                     </Form.Group>
-
-                    <Form.Group className="mb-3">
-                      <Form.Label className="dp-label">Cardholder Name</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="cardHolderName"
-                        placeholder="Name as it appears on card"
-                        value={formData.cardHolderName}
-                        onChange={handleChange}
-                        required
-                        className="dp-input"
-                      />
-                    </Form.Group>
-
-                    <Form.Group className="mb-3">
-                      <Form.Label className="dp-label">Card Number</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="cardNumber"
-                        placeholder="1234 5678 9012 3456"
-                        value={formData.cardNumber}
-                        onChange={handleChange}
-                        maxLength="19"
-                        required
-                        className="dp-input"
-                      />
-                    </Form.Group>
-
-                    <Row>
-                      <Col md={6}>
-                        <Form.Group className="mb-3">
-                          <Form.Label className="dp-label">Expiry Date</Form.Label>
-                          <Form.Control
-                            type="text"
-                            name="expiryDate"
-                            placeholder="MM/YY"
-                            value={formData.expiryDate}
-                            onChange={handleChange}
-                            maxLength="5"
-                            required
-                            className="dp-input"
-                          />
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group className="mb-3">
-                          <Form.Label className="dp-label">CVV</Form.Label>
-                          <Form.Control
-                            type="text"
-                            name="cvv"
-                            placeholder="123"
-                            value={formData.cvv}
-                            onChange={handleChange}
-                            maxLength="4"
-                            required
-                            className="dp-input"
-                          />
-                        </Form.Group>
-                      </Col>
-                    </Row>
 
                     <Form.Group className="mb-3">
                       <Form.Label className="dp-label">Add a Message (Optional)</Form.Label>
@@ -411,9 +312,6 @@ const DonatePage = () => {
                   <div className="dp-summary-amount">
                     {formatCurrency(parseFloat(formData.amount) || 0)}
                   </div>
-                  {formData.isRecurring && (
-                    <span className="badge badge-coral">Monthly</span>
-                  )}
                 </div>
 
                 <div className="dp-summary-detail">
@@ -431,10 +329,6 @@ const DonatePage = () => {
                       </span>
                     </div>
                   )}
-                  <div className="dp-summary-row">
-                    <span className="dp-summary-label">Frequency</span>
-                    <span className="dp-summary-value">{formData.isRecurring ? 'Monthly' : 'One-time'}</span>
-                  </div>
                 </div>
 
                 {impactPreview && impactPreview.meals > 0 && (

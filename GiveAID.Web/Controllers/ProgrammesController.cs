@@ -11,7 +11,17 @@ using GiveAID.Web.Controllers;
 
 namespace GiveAID.Web.Controllers
 {
+    /// <summary>
+    /// LEGACY: ProgrammesController is kept for backward compatibility with
+    /// existing data in the Programmes table. New work should target the
+    /// Campaign entity (CampaignsController), which has absorbed the programme
+    /// fields (programmeType, registrationRequired, maxParticipants, etc.) via
+    /// the CampaignProgramme_Merge.sql migration.
+    ///
+    /// All write endpoints require Admin/SuperAdmin role via [JwtAuthorize].
+    /// </summary>
     [RoutePrefix("api/programmes")]
+    [Obsolete("Use CampaignsController. Programmes data has been merged into Campaigns.")]
     public class ProgrammesController : ApiController
     {
         private readonly GiveAIDContext _context;
@@ -273,7 +283,7 @@ namespace GiveAID.Web.Controllers
         // GET: api/programmes/{id}/registrations
         [HttpGet]
         [Route("{id:int}/registrations")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult GetRegistrations(int id)
         {
             try
@@ -308,7 +318,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/programmes
         [HttpPost]
         [Route("")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Create(Programme programme)
         {
             try
@@ -339,7 +349,7 @@ namespace GiveAID.Web.Controllers
         // PUT: api/programmes/5
         [HttpPut]
         [Route("{id:int}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
         public IHttpActionResult Update(int id, Programme programme)
         {
             try
