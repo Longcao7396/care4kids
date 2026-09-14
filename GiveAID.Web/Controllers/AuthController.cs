@@ -125,6 +125,73 @@ namespace GiveAID.Web.Controllers
             }
         }
 
+        // POST: api/auth/register
+        [HttpPost]
+        [Route("register")]
+        public IHttpActionResult Register([FromBody] RegisterViewModel request)
+        {
+            try
+            {
+                if (request == null)
+                    return BadRequest("Invalid request data.");
+
+                // Basic server-side validation
+                if (string.IsNullOrWhiteSpace(request.Username))
+                    return BadRequest("Username is required.");
+                if (request.Username.Length < 3)
+                    return BadRequest("Username must be at least 3 characters.");
+                if (string.IsNullOrWhiteSpace(request.Email))
+                    return BadRequest("Email is required.");
+                if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(request.Email))
+                    return BadRequest("Invalid email address.");
+                if (string.IsNullOrWhiteSpace(request.Password))
+                    return BadRequest("Password is required.");
+                if (request.Password.Length < 6)
+                    return BadRequest("Password must be at least 6 characters.");
+                if (string.IsNullOrWhiteSpace(request.FullName))
+                    return BadRequest("Full name is required.");
+
+                // Check duplicate email
+                if (_context.Users.Any(u => u.Email == request.Email.Trim()))
+                    return BadRequest("An account with this email already exists.");
+
+                // Check duplicate username
+                if (_context.Users.Any(u => u.Username == request.Username.Trim()))
+                    return BadRequest("This username is already taken.");
+
+                var user = new User
+                {
+                    Username = request.Username.Trim(),
+                    Email = request.Email.Trim(),
+                    PasswordHash = PasswordHasher.Hash(request.Password),
+                    FullName = request.FullName.Trim(),
+                    Phone = request.Phone?.Trim(),
+                    Address = request.Address?.Trim(),
+                    Profession = request.Profession?.Trim(),
+                    DateOfBirth = request.DateOfBirth,
+                    Gender = request.Gender,
+                    Role = "User",
+                    IsActive = true,
+                    IsVerified = false,
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.Users.Add(user);
+                _context.SaveChanges();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Account created successfully! Please login."
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[AuthController.Register] " + ex);
+                return BadRequest("Registration failed: " + ex.Message);
+            }
+        }
+
         // POST: api/auth/logout (client-side: drop token; this just acknowledges)
         [HttpPost]
         [Route("logout")]
