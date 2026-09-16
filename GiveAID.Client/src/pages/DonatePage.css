@@ -513,3 +513,103 @@
     min-width: 60px;
   }
 }
+
+/* ─── CARD FORM ─────────────────────────────────────────── */
+
+.dp-card-form {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius-lg);
+}
+
+.dp-card-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
+}
+
+.dp-card-form-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dp-card-logos {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.dp-card-logo {
+  padding: 2px 8px;
+  background: var(--primary-slate);
+  border: 1px solid var(--border-slate);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-gray);
+}
+
+.dp-card-input-wrap {
+  position: relative;
+}
+
+.dp-card-input-wrap .form-control {
+  padding-right: 80px;
+}
+
+.dp-card-brand-tag {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-sky);
+  pointer-events: none;
+}
+
+.dp-field-error {
+  font-size: 0.8rem;
+  color: #EF4444;
+  margin-top: 0.3rem;
+}
+
+.dp-field-ok {
+  font-size: 0.8rem;
+  color: #10B981;
+  margin-top: 0.3rem;
+}
+
+.dp-card-security-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-gray);
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-md);
+}
+
+.dp-card-security-note svg {
+  color: #10B981;
+  flex-shrink: 0;
+}
+
+/* Override Bootstrap invalid state for card inputs */
+.dp-card-form .form-control.is-invalid {
+  border-color: #EF4444;
+  background-image: none;
+}
+
+.dp-card-form .form-control:focus {
+  border-color: var(--accent-sky);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}

@@ -2,14 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Row, Col, ProgressBar, Alert, Tab, Tabs } from 'react-bootstrap';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import './CampaignDetailPage.css';
 
 function CampaignDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerSuccess, setRegisterSuccess] = useState('');
+  const [registerError, setRegisterError] = useState('');
 
   const fetchCampaignDetail = useCallback(async () => {
     try {
@@ -54,6 +59,37 @@ function CampaignDetailPage() {
         causeId: campaign.cause?.causeId
       }
     });
+  };
+
+  const handleRegister = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: `/campaigns/${id}` } });
+      return;
+    }
+    setRegisterError('');
+    setRegisterSuccess('');
+    setRegisterLoading(true);
+    try {
+      const response = await api.post(`/campaigns/${id}/register`, {
+        notes: ''
+      });
+      if (response.data.success) {
+        setRegisterSuccess('Registration submitted! We will confirm your spot soon.');
+        // Refresh campaign to update participant count
+        fetchCampaignDetail();
+      } else {
+        setRegisterError(response.data.message || 'Registration failed. Please try again.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data?.Message;
+      if (msg && msg.toLowerCase().includes('already')) {
+        setRegisterError('You have already registered for this event.');
+      } else {
+        setRegisterError(msg || 'Registration failed. Please try again.');
+      }
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
   if (loading) {
@@ -328,6 +364,57 @@ function CampaignDetailPage() {
                   <Alert variant="warning" className="cdp-ended-alert">
                     This campaign has {isCompleted ? 'been completed' : 'ended'}
                   </Alert>
+                )}
+
+                {/* ── Programme Registration CTA ── */}
+                {campaign.registrationRequired && (
+                  <div className="cdp-register-section">
+                    {registerSuccess ? (
+                      <Alert variant="success" className="cdp-register-success">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        {registerSuccess}
+                      </Alert>
+                    ) : (
+                      <>
+                        {registerError && (
+                          <Alert variant="danger" className="cdp-register-error">{registerError}</Alert>
+                        )}
+                        {campaign.currentParticipants != null && campaign.maxParticipants && (
+                          <div className="cdp-register-spots">
+                            <div className="cdp-spots-label">
+                              {campaign.maxParticipants - campaign.currentParticipants} spots remaining
+                            </div>
+                            <ProgressBar
+                              now={Math.min((campaign.currentParticipants / campaign.maxParticipants) * 100, 100)}
+                              className="cdp-spots-progress"
+                            />
+                          </div>
+                        )}
+                        <button
+                          className="btn-teal btn-lg w-100 cdp-register-btn"
+                          onClick={handleRegister}
+                          disabled={registerLoading}
+                        >
+                          {registerLoading ? (
+                            <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</>
+                          ) : (
+                            <>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <line x1="20" y1="8" x2="20" y2="14"/>
+                                <line x1="23" y1="11" x2="17" y2="11"/>
+                              </svg>
+                              Register to Participate
+                            </>
+                          )}
+                        </button>
+                        <p className="cdp-register-note">
+                          Free registration — join us in making a difference.
+                        </p>
+                      </>
+                    )}
+                  </div>
                 )}
 
                 <div className="cdp-share">

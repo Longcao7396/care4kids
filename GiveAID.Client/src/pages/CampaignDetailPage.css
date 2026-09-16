@@ -619,3 +619,84 @@
     gap: var(--space-1);
   }
 }
+
+/* ─── REGISTRATION CTA ────────────────────────────────── */
+
+.cdp-register-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(56, 189, 248, 0.07);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-lg);
+}
+
+.cdp-register-spots {
+  margin-bottom: 0.85rem;
+}
+
+.cdp-spots-label {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  margin-bottom: 0.4rem;
+}
+
+.cdp-spots-progress {
+  height: 6px;
+  border-radius: 3px;
+}
+
+.cdp-spots-progress .progress-bar {
+  background: var(--accent-sky);
+}
+
+.cdp-register-btn {
+  width: 100%;
+  background: var(--c4k-teal);
+  border-color: var(--c4k-teal);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1.25rem;
+  font-size: 1rem;
+  border: none;
+  transition: background var(--t-base);
+}
+
+.cdp-register-btn:hover {
+  background: #0ea5c2;
+  border-color: #0ea5c2;
+  color: #fff;
+}
+
+.cdp-register-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.cdp-register-note {
+  font-size: 0.78rem;
+  color: var(--text-gray);
+  text-align: center;
+  margin: 0.5rem 0 0;
+}
+
+.cdp-register-success {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.cdp-register-success svg {
+  flex-shrink: 0;
+  color: #10B981;
+}
+
+.cdp-register-error {
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}

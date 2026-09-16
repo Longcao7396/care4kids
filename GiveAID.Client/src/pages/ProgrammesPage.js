@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Container, Row, Col, Card, Button, Badge, Alert } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
 import { campaignsService } from '../services';
+import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Programmes / Events page (LEGACY wrapper).
@@ -15,9 +17,13 @@ import { campaignsService } from '../services';
  * a fallback for any links that still point at /programmes.
  */
 const ProgrammesPage = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [registeringId, setRegisteringId] = useState(null);
+  const [registerMsg, setRegisterMsg] = useState({ type: '', text: '' }); // 'success' | 'error' | ''
 
   const loadEvents = useCallback(async () => {
     try {
@@ -66,6 +72,34 @@ const ProgrammesPage = () => {
     };
     return map[status] || 'info';
   };
+
+  const handleRegister = async (event) => {
+    if (!user) {
+      navigate('/login', { state: { from: `/campaigns/${event.campaignId}` } });
+      return;
+    }
+    setRegisteringId(event.campaignId);
+    setRegisterMsg({ type: '', text: '' });
+    try {
+      const response = await api.post(`/campaigns/${event.campaignId}/register`, { notes: '' });
+      if (response.data.success) {
+        setRegisterMsg({ type: 'success', text: 'Registered! See you there.' });
+        loadEvents(); // refresh to update counts
+      } else {
+        setRegisterMsg({ type: 'error', text: response.data.message || 'Registration failed.' });
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data?.Message || 'Registration failed.';
+      setRegisterMsg({ type: 'error', text: msg });
+    } finally {
+      setRegisteringId(null);
+    }
+  };
+
+  const canRegister = (event) =>
+    event.registrationRequired &&
+    (event.status === 'Upcoming' || event.status === 'Active') &&
+    (!event.maxParticipants || (event.currentParticipants || 0) < event.maxParticipants);
 
   return (
     <div className="programmes-page">
@@ -153,12 +187,51 @@ const ProgrammesPage = () => {
                       )}
                     </div>
 
-                    <Link
-                      to={`/campaigns/${event.campaignId}`}
-                      className="btn btn-primary w-100 mt-3"
-                    >
-                      View Details
-                    </Link>
+                    {/* Registration / feedback message for this card */}
+                    {event.registrationRequired && (
+                      <div className="mb-2">
+                        {registerMsg.type && registeringId !== event.campaignId && (
+                          <Alert
+                            variant={registerMsg.type === 'success' ? 'success' : 'danger'}
+                            className="py-1 px-2"
+                            style={{ fontSize: '0.8rem' }}
+                          >
+                            {registerMsg.text}
+                          </Alert>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="d-flex gap-2 mt-auto">
+                      {canRegister(event) ? (
+                        <Button
+                          variant="success"
+                          className="flex-grow-1"
+                          onClick={() => handleRegister(event)}
+                          disabled={registeringId === event.campaignId}
+                        >
+                          {registeringId === event.campaignId ? (
+                            <><span className="spinner-border spinner-border-sm me-1"></span>Registering…</>
+                          ) : (
+                            <>
+                              <i className="bi bi-person-plus me-1"></i>
+                              Register
+                            </>
+                          )}
+                        </Button>
+                      ) : event.registrationRequired && !canRegister(event) ? (
+                        <Button variant="secondary" className="flex-grow-1" disabled>
+                          Full
+                        </Button>
+                      ) : null}
+
+                      <Link
+                        to={`/campaigns/${event.campaignId}`}
+                        className="btn btn-outline-primary flex-grow-1 text-center"
+                      >
+                        Details
+                      </Link>
+                    </div>
                   </Card.Body>
                 </Card>
               </Col>

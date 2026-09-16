@@ -5,12 +5,73 @@ import { causesService, donationsService } from '../services';
 import api from '../services/api';
 import './DonatePage.css';
 
+/* ============================================================
+// Card validation utilities (client-side only — PCI-DSS safe)
+// ============================================================ */
+
+/**
+ * Luhn algorithm — validates card number structure.
+ * Does NOT transmit card data; only validates locally.
+ */
+function validateLuhn(cardNumber) {
+  const digits = cardNumber.replace(/\D/g, '');
+  if (!digits) return false;
+  let sum = 0;
+  let isEven = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = parseInt(digits[i], 10);
+    if (isEven) { d *= 2; if (d > 9) d -= 9; }
+    sum += d;
+    isEven = !isEven;
+  }
+  return sum % 10 === 0;
+}
+
+/**
+ * Returns the card brand based on number prefix.
+ */
+function getCardBrand(cardNumber) {
+  const digits = cardNumber.replace(/\D/g, '');
+  if (/^4/.test(digits)) return 'Visa';
+  if (/^5[1-5]/.test(digits) || /^2[2-7]/.test(digits)) return 'Mastercard';
+  if (/^3[47]/.test(digits)) return 'Amex';
+  if (/^6(?:011|5)/.test(digits)) return 'Discover';
+  return null;
+}
+
+/**
+ * Validates card expiry string (MM/YY).
+ * Returns { valid, expired, month, year }.
+ */
+function validateExpiry(expiryStr) {
+  const match = expiryStr.match(/^(\d{2})\/(\d{2})$/);
+  if (!match) return { valid: false, expired: false, month: null, year: null };
+  const month = parseInt(match[1], 10);
+  const year = 2000 + parseInt(match[2], 10);
+  if (month < 1 || month > 12) return { valid: false, expired: false, month, year };
+  const expDate = new Date(year, month);
+  return { valid: true, expired: expDate <= new Date(), month, year };
+}
+
+/**
+ * Validates CVV — 3 digits for most cards, 4 for Amex.
+ */
+function validateCvv(cvv, isAmex) {
+  const digits = cvv.replace(/\D/g, '');
+  if (isAmex) return digits.length === 4;
+  return digits.length >= 3 && digits.length <= 4;
+}
+
+/* ============================================================
+// DonatePage
+// ============================================================ */
+
 const DonatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [causes, setCauses] = useState([]);
-  const [causeTree, setCauseTree] = useState([]); // [{parent, subCauses[]}]
+  const [causeTree, setCauseTree] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [subCauses, setSubCauses] = useState([]);
   const [formData, setFormData] = useState({
@@ -18,20 +79,80 @@ const DonatePage = () => {
     campaignId: location.state?.campaignId || '',
     amount: '500000',
     paymentMethod: 'BankTransfer',
+    // Card fields — PCI-DSS: never sent to server
+    cardNumber: '',
+    cardHolderName: '',
+    expiryDate: '',
+    cvv: '',
+    // ──
     message: '',
     isAnonymous: false
   });
+  const [cardErrors, setCardErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Card brand auto-detection
+  const cardBrand = useMemo(() => getCardBrand(formData.cardNumber), [formData.cardNumber]);
+  const showCardForm = formData.paymentMethod === 'CreditCard' || formData.paymentMethod === 'DebitCard';
+
+  // Auto-format card number: 1234 5678 9012 3456
+  const handleCardNumberChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+    const formatted = digits.replace(/(.{4})/g, '$1 ').trim();
+    setFormData((prev) => ({ ...prev, cardNumber: formatted }));
+    if (cardErrors.cardNumber) setCardErrors((p) => ({ ...p, cardNumber: '' }));
+  };
+
+  // Auto-format expiry: MM/YY
+  const handleExpiryChange = (e) => {
+    let raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+    if (raw.length >= 3) raw = raw.slice(0, 2) + '/' + raw.slice(2);
+    else if (raw.length === 2) raw = raw + '/';
+    setFormData((prev) => ({ ...prev, expiryDate: raw }));
+    if (cardErrors.expiryDate) setCardErrors((p) => ({ ...p, expiryDate: '' }));
+  };
+
+  /* ── Card field validation ────────────────────────────── */
+  const validateCardFields = () => {
+    const errs = {};
+    const { cardNumber, cardHolderName, expiryDate, cvv, paymentMethod } = formData;
+
+    if (paymentMethod === 'CreditCard' || paymentMethod === 'DebitCard') {
+      if (!cardHolderName.trim() || cardHolderName.trim().length < 2) {
+        errs.cardHolderName = 'Enter the name as shown on your card.';
+      }
+      const rawCard = cardNumber.replace(/\s/g, '');
+      if (!rawCard) {
+        errs.cardNumber = 'Card number is required.';
+      } else if (rawCard.length < 13 || rawCard.length > 19) {
+        errs.cardNumber = 'Enter a valid card number.';
+      } else if (!validateLuhn(rawCard)) {
+        errs.cardNumber = 'Card number is invalid (check for typos).';
+      }
+      if (!expiryDate) {
+        errs.expiryDate = 'Expiry date is required.';
+      } else {
+        const exp = validateExpiry(expiryDate);
+        if (!exp.valid) errs.expiryDate = 'Enter expiry as MM/YY.';
+        else if (exp.expired) errs.expiryDate = 'Your card has expired.';
+      }
+      if (!cvv) {
+        errs.cvv = 'CVV is required.';
+      } else if (!validateCvv(cvv, cardBrand === 'Amex')) {
+        errs.cvv = cardBrand === 'Amex' ? 'Amex CVV is 4 digits.' : 'CVV must be 3-4 digits.';
+      }
+    }
+    return errs;
+  };
+
   useEffect(() => {
-    const abortController = new AbortController();
+    const ac = new AbortController();
     const loadTree = async () => {
       try {
         const treeResp = await api.get('/causes/tree', {
-          params: { activeOnly: true },
-          signal: abortController.signal
+          params: { activeOnly: true }, signal: ac.signal
         });
         if (treeResp.data?.success) {
           const treeData = treeResp.data.data || [];
@@ -43,38 +164,34 @@ const DonatePage = () => {
           });
           setCauses(flat);
         } else {
-          // Backwards compatibility: backend without /tree endpoint
-          const response = await causesService.getAll(true, { signal: abortController.signal });
-          if (response.success) setCauses(response.data);
+          const r = await causesService.getAll(true, { signal: ac.signal });
+          if (r.success) setCauses(r.data);
         }
-      } catch (error) {
-        if (error.name !== 'CanceledError') console.error('Error loading causes:', error);
+      } catch (e) {
+        if (e.name !== 'CanceledError') console.error(e);
       }
     };
     const loadCampaigns = async () => {
       try {
-        const response = await api.get('/campaigns', {
-          params: { status: 'Active' },
-          signal: abortController.signal
+        const r = await api.get('/campaigns', {
+          params: { status: 'Active' }, signal: ac.signal
         });
-        if (response.data.success) setCampaigns(response.data.data);
-      } catch (error) {
-        if (error.name !== 'CanceledError') console.error('Error loading campaigns:', error);
+        if (r.data.success) setCampaigns(r.data.data);
+      } catch (e) {
+        if (e.name !== 'CanceledError') console.error(e);
       }
     };
     loadTree();
     loadCampaigns();
-    return () => abortController.abort();
+    return () => ac.abort();
   }, []);
 
   useEffect(() => {
     if (formData.causeId) {
       loadCampaignsByCause(formData.causeId);
-      // Find the cause's sub-items via the tree (so the user can pick
-      // a specific Care4Kids sub-cause rather than just the parent).
-      const selected = causes.find((c) => String(c.causeId) === String(formData.causeId));
-      const parentId = selected?.parentCauseId || selected?.causeId;
-      const subs = causeTree.find((node) => node.parent.causeId === parentId)?.subCauses || [];
+      const sel = causes.find((c) => String(c.causeId) === String(formData.causeId));
+      const parentId = sel?.parentCauseId || sel?.causeId;
+      const subs = causeTree.find((n) => n.parent.causeId === parentId)?.subCauses || [];
       setSubCauses(subs);
     } else {
       setSubCauses([]);
@@ -83,25 +200,19 @@ const DonatePage = () => {
 
   const loadCampaignsByCause = async (causeId) => {
     try {
-      const response = await api.get('/campaigns', {
-        params: { status: 'Active', causeId: causeId }
-      });
-      if (response.data.success) setCampaigns(response.data.data);
-    } catch (error) {
-      console.error('Error loading campaigns:', error);
-    }
+      const r = await api.get('/campaigns', { params: { status: 'Active', causeId } });
+      if (r.data.success) setCampaigns(r.data.data);
+    } catch (e) { console.error(e); }
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (cardErrors[name]) setCardErrors((p) => ({ ...p, [name]: '' }));
   };
 
   const handleQuickAmount = (amount) => {
-    setFormData(prev => ({ ...prev, amount: amount.toString() }));
+    setFormData((prev) => ({ ...prev, amount: amount.toString() }));
   };
 
   const handleSubmit = async (e) => {
@@ -109,21 +220,15 @@ const DonatePage = () => {
     setError('');
     setSuccess('');
 
-    if (!formData.causeId) {
-      setError('Please select a cause to support');
-      return;
-    }
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      setError('Please enter a valid donation amount');
-      return;
-    }
+    if (!formData.causeId) { setError('Please select a cause to support.'); return; }
+    if (!formData.amount || parseFloat(formData.amount) <= 0) { setError('Please enter a valid donation amount.'); return; }
+
+    const errs = validateCardFields();
+    if (Object.keys(errs).length > 0) { setCardErrors(errs); setError('Please correct the payment details below.'); return; }
 
     setLoading(true);
     try {
-      // Generate a client-side idempotency key so a retry (network blip,
-      // double-tap) doesn't create a duplicate donation.
       const idempotencyKey = `don-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-
       const donationData = {
         causeId: parseInt(formData.causeId),
         campaignId: formData.campaignId ? parseInt(formData.campaignId) : null,
@@ -133,9 +238,7 @@ const DonatePage = () => {
         isAnonymous: formData.isAnonymous,
         idempotencyKey
       };
-
       const response = await donationsService.create(donationData);
-
       if (response.success) {
         setSuccess('Thank you for your generous donation. You will receive a receipt via email.');
         setTimeout(() => navigate('/my-donations'), 2000);
@@ -148,21 +251,14 @@ const DonatePage = () => {
   };
 
   const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
+    style: 'currency', currency: 'VND', maximumFractionDigits: 0,
   }).format(amount || 0);
 
   const quickAmounts = [100000, 250000, 500000, 1000000, 2500000, 5000000];
-
-  // Impact preview — calculated dynamically based on amount
   const impactPreview = useMemo(() => {
-    const amount = parseFloat(formData.amount) || 0;
-    if (amount <= 0) return null;
-    const meals = Math.floor(amount / 25000);
-    const supplies = Math.floor(amount / 150000);
-    const healthcare = Math.floor(amount / 500000);
-    return { meals, supplies, healthcare };
+    const a = parseFloat(formData.amount) || 0;
+    if (a <= 0) return null;
+    return { meals: Math.floor(a / 25000), supplies: Math.floor(a / 150000), healthcare: Math.floor(a / 500000) };
   }, [formData.amount]);
 
   return (
@@ -186,48 +282,35 @@ const DonatePage = () => {
         </Container>
       </section>
 
-      {/* ─── DONATION FORM ─── */}
+      {/* ─── FORM ─── */}
       <section className="dp-form-section">
         <Container>
           <Row className="dp-form-row">
 
-            {/* Left column — Form */}
+            {/* Left — Form */}
             <Col lg={7} className="dp-form-col">
               <div className="dp-form-card">
-                {error && (
-                  <Alert variant="danger" className="dp-alert">{error}</Alert>
-                )}
-                {success && (
-                  <Alert variant="success" className="dp-alert">{success}</Alert>
-                )}
+                {error && <Alert variant="danger" className="dp-alert">{error}</Alert>}
+                {success && <Alert variant="success" className="dp-alert">{success}</Alert>}
 
                 <Form onSubmit={handleSubmit}>
 
-                  {/* Step 1 — Choose cause (top-level category) */}
+                  {/* Step 1 — Cause */}
                   <div className="dp-step">
                     <p className="dp-step-num">Step 1</p>
                     <h3 className="dp-step-title">Choose a Cause</h3>
-                    <p className="dp-step-desc">
-                      Select the area you'd like your donation to support.
-                    </p>
-
+                    <p className="dp-step-desc">Select the area you'd like your donation to support.</p>
                     <Form.Select
                       name="parentCauseId"
                       value={
-                        // resolve current parent selection (top-level cause chosen)
-                        causeTree.find((node) =>
-                          (node.parent.causeId === formData.causeId) ||
-                          (node.subCauses || []).some((s) => s.causeId === formData.causeId)
+                        causeTree.find((n) =>
+                          n.parent.causeId === formData.causeId ||
+                          (n.subCauses || []).some((s) => s.causeId === formData.causeId)
                         )?.parent.causeId || ''
                       }
                       onChange={(e) => {
-                        const parentId = e.target.value;
-                        const parent = causeTree.find((n) => n.parent.causeId === Number(parentId))?.parent;
-                        setFormData((prev) => ({
-                          ...prev,
-                          causeId: parent?.causeId || '',
-                          campaignId: ''
-                        }));
+                        const parent = causeTree.find((n) => n.parent.causeId === Number(e.target.value))?.parent;
+                        setFormData((p) => ({ ...p, causeId: parent?.causeId || '', campaignId: '' }));
                       }}
                       required
                       className="dp-select"
@@ -241,48 +324,32 @@ const DonatePage = () => {
                     </Form.Select>
                   </div>
 
-                  {/* Step 1b — Optional sub-cause (specific item) */}
+                  {/* Step 1b — Sub-cause */}
                   {subCauses.length > 0 && (
                     <div className="dp-step dp-step-sub">
                       <p className="dp-step-num">Step 1b · Optional</p>
                       <h3 className="dp-step-title">Specific Need</h3>
-                      <p className="dp-step-desc">
-                        Pick a specific area to direct your donation, or leave blank to support the whole cause.
-                      </p>
-
-                      <Form.Select
-                        name="causeId"
-                        value={formData.causeId}
-                        onChange={handleChange}
-                        className="dp-select"
-                      >
+                      <p className="dp-step-desc">Pick a specific area, or leave blank to support the whole cause.</p>
+                      <Form.Select name="causeId" value={formData.causeId} onChange={handleChange} className="dp-select">
                         <option value="">Support the whole cause</option>
                         {subCauses.map((sub) => (
-                          <option key={sub.causeId} value={sub.causeId}>
-                            {sub.causeName}
-                          </option>
+                          <option key={sub.causeId} value={sub.causeId}>{sub.causeName}</option>
                         ))}
                       </Form.Select>
                     </div>
                   )}
 
-                  {/* Step 2 — Optional Campaign */}
+                  {/* Step 2 — Campaign */}
                   {campaigns.length > 0 && formData.causeId && (
                     <div className="dp-step">
                       <p className="dp-step-num">Step 2 · Optional</p>
                       <h3 className="dp-step-title">Select a Campaign</h3>
-                      <p className="dp-step-desc">Choose a specific campaign, or leave blank for a general donation to this cause.</p>
-
-                      <Form.Select
-                        name="campaignId"
-                        value={formData.campaignId}
-                        onChange={handleChange}
-                        className="dp-select"
-                      >
+                      <p className="dp-step-desc">Choose a specific campaign, or leave blank for a general donation.</p>
+                      <Form.Select name="campaignId" value={formData.campaignId} onChange={handleChange} className="dp-select">
                         <option value="">General donation to this cause</option>
-                        {campaigns.map((campaign) => (
-                          <option key={campaign.campaignId} value={campaign.campaignId}>
-                            {campaign.campaignName} — {campaign.percentageReached?.toFixed(0) || 0}% funded
+                        {campaigns.map((c) => (
+                          <option key={c.campaignId} value={c.campaignId}>
+                            {c.campaignName} — {c.percentageReached?.toFixed(0) || 0}% funded
                           </option>
                         ))}
                       </Form.Select>
@@ -294,77 +361,151 @@ const DonatePage = () => {
                     <p className="dp-step-num">{campaigns.length > 0 && formData.causeId ? 'Step 3' : 'Step 2'}</p>
                     <h3 className="dp-step-title">Donation Amount</h3>
                     <p className="dp-step-desc">Choose a preset amount or enter your own.</p>
-
                     <div className="dp-quick-amounts">
-                      {quickAmounts.map((amount) => (
+                      {quickAmounts.map((a) => (
                         <button
-                          type="button"
-                          key={amount}
-                          className={`dp-quick-btn ${formData.amount === amount.toString() ? 'is-active' : ''}`}
-                          onClick={() => handleQuickAmount(amount)}
+                          type="button" key={a}
+                          className={`dp-quick-btn ${formData.amount === a.toString() ? 'is-active' : ''}`}
+                          onClick={() => handleQuickAmount(a)}
                         >
-                          {formatCurrency(amount)}
+                          {formatCurrency(a)}
                         </button>
                       ))}
                     </div>
-
                     <Form.Group className="mt-3">
                       <Form.Label className="dp-label">Custom amount (VND)</Form.Label>
                       <Form.Control
-                        type="number"
-                        name="amount"
+                        type="number" name="amount"
                         placeholder="Enter any amount"
                         value={formData.amount}
                         onChange={handleChange}
-                        min="1000"
-                        step="1000"
-                        required
-                        className="dp-input dp-input-large"
+                        min="1000" step="1000"
+                        required className="dp-input dp-input-large"
                       />
                     </Form.Group>
                   </div>
 
-                  {/* Step 4 — Donor Info */}
+                  {/* Step 4 — Payment Method + Card */}
                   <div className="dp-step">
-                    <p className="dp-step-num">Donor Information</p>
-                    <h3 className="dp-step-title">Your Details</h3>
+                    <p className="dp-step-num">Payment Information</p>
+                    <h3 className="dp-step-title">Choose Payment Method</h3>
+                    <Form.Select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange} className="dp-select">
+                      <option value="BankTransfer">Bank Transfer (Recommended)</option>
+                      <option value="NetBanking">Net Banking</option>
+                      <option value="CreditCard">Credit Card</option>
+                      <option value="DebitCard">Debit Card</option>
+                    </Form.Select>
+                    <Form.Text className="text-muted">
+                      Card details are validated locally and never transmitted or stored.
+                    </Form.Text>
 
-                    <Form.Group className="mb-3">
-                      <Form.Label className="dp-label">Payment Method</Form.Label>
-                      <Form.Select
-                        name="paymentMethod"
-                        value={formData.paymentMethod}
-                        onChange={handleChange}
-                        className="dp-select"
-                      >
-                        <option value="BankTransfer">Bank Transfer</option>
-                        <option value="NetBanking">Net Banking</option>
-                      </Form.Select>
-                      <Form.Text className="text-muted">
-                        Card payments are processed through our PCI-compliant gateway; we never see or store your card details.
-                      </Form.Text>
-                    </Form.Group>
+                    {/* ── Card form (only for Credit/Debit) ── */}
+                    {showCardForm && (
+                      <div className="dp-card-form">
+                        <div className="dp-card-form-header">
+                          <span className="dp-card-form-title">Card Details</span>
+                          <div className="dp-card-logos">
+                            <span className="dp-card-logo">Visa</span>
+                            <span className="dp-card-logo">MC</span>
+                            <span className="dp-card-logo">Amex</span>
+                            <span className="dp-card-logo">Disc</span>
+                          </div>
+                        </div>
 
+                        {/* Card number */}
+                        <Form.Group className="mb-3">
+                          <Form.Label className="dp-label">Card Number</Form.Label>
+                          <div className="dp-card-input-wrap">
+                            <Form.Control
+                              type="text" inputMode="numeric"
+                              placeholder="1234 5678 9012 3456"
+                              value={formData.cardNumber}
+                              onChange={handleCardNumberChange}
+                              className={`dp-input ${cardErrors.cardNumber ? 'is-invalid' : ''}`}
+                              maxLength={19} autoComplete="cc-number"
+                            />
+                            {cardBrand && <span className="dp-card-brand-tag">{cardBrand}</span>}
+                          </div>
+                          {cardErrors.cardNumber && <div className="dp-field-error">{cardErrors.cardNumber}</div>}
+                          {formData.cardNumber && !cardErrors.cardNumber && (
+                            <div className="dp-field-ok">Valid format</div>
+                          )}
+                        </Form.Group>
+
+                        {/* Cardholder name */}
+                        <Form.Group className="mb-3">
+                          <Form.Label className="dp-label">Cardholder Name</Form.Label>
+                          <Form.Control
+                            type="text" placeholder="NGUYEN VAN A"
+                            value={formData.cardHolderName}
+                            onChange={handleChange}
+                            name="cardHolderName"
+                            className={`dp-input ${cardErrors.cardHolderName ? 'is-invalid' : ''}`}
+                            autoComplete="cc-name"
+                          />
+                          {cardErrors.cardHolderName && <div className="dp-field-error">{cardErrors.cardHolderName}</div>}
+                        </Form.Group>
+
+                        <Row>
+                          {/* Expiry */}
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label className="dp-label">Expiry Date (MM/YY)</Form.Label>
+                              <Form.Control
+                                type="text" inputMode="numeric" placeholder="MM/YY"
+                                value={formData.expiryDate}
+                                onChange={handleExpiryChange}
+                                className={`dp-input ${cardErrors.expiryDate ? 'is-invalid' : ''}`}
+                                maxLength={5} autoComplete="cc-exp"
+                              />
+                              {cardErrors.expiryDate && <div className="dp-field-error">{cardErrors.expiryDate}</div>}
+                            </Form.Group>
+                          </Col>
+                          {/* CVV */}
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label className="dp-label">
+                                CVV {cardBrand === 'Amex' ? '(4 digits)' : '(3 digits)'}
+                              </Form.Label>
+                              <Form.Control
+                                type="password" inputMode="numeric"
+                                placeholder={cardBrand === 'Amex' ? '1234' : '123'}
+                                value={formData.cvv}
+                                onChange={handleChange}
+                                name="cvv"
+                                className={`dp-input ${cardErrors.cvv ? 'is-invalid' : ''}`}
+                                maxLength={4} autoComplete="cc-csc"
+                              />
+                              {cardErrors.cvv && <div className="dp-field-error">{cardErrors.cvv}</div>}
+                            </Form.Group>
+                          </Col>
+                        </Row>
+
+                        <div className="dp-card-security-note">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                          </svg>
+                          Your card details are encrypted and never stored on our servers.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 5 — Message */}
+                  <div className="dp-step">
+                    <p className="dp-step-num">Final Touch</p>
+                    <h3 className="dp-step-title">Add a Message</h3>
                     <Form.Group className="mb-3">
-                      <Form.Label className="dp-label">Add a Message (Optional)</Form.Label>
                       <Form.Control
-                        as="textarea"
-                        rows={3}
-                        name="message"
+                        as="textarea" rows={3} name="message"
                         placeholder="Share why you're supporting this cause..."
                         value={formData.message}
-                        onChange={handleChange}
-                        className="dp-input"
+                        onChange={handleChange} className="dp-input"
                       />
                     </Form.Group>
-
                     <label className="dp-checkbox dp-checkbox-small">
-                      <input
-                        type="checkbox"
-                        name="isAnonymous"
-                        checked={formData.isAnonymous}
-                        onChange={handleChange}
-                      />
+                      <input type="checkbox" name="isAnonymous" checked={formData.isAnonymous} onChange={handleChange} />
                       <span className="dp-checkbox-mark"></span>
                       <span className="dp-checkbox-label">Display my donation anonymously</span>
                     </label>
@@ -372,15 +513,11 @@ const DonatePage = () => {
 
                   <button type="submit" className="btn-coral btn-lg dp-submit" disabled={loading}>
                     {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2"></span>
-                        Processing your donation...
-                      </>
+                      <><span className="spinner-border spinner-border-sm me-2"></span>Processing...</>
                     ) : (
                       <>Complete Donation — {formatCurrency(parseFloat(formData.amount) || 0)}</>
                     )}
                   </button>
-
                   <p className="dp-secure-note">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -392,7 +529,7 @@ const DonatePage = () => {
               </div>
             </Col>
 
-            {/* Right column — Summary + Impact */}
+            {/* Right — Summary */}
             <Col lg={5} className="dp-summary-col">
               <div className="dp-summary-card">
                 <div className="dp-summary-header">
@@ -401,19 +538,18 @@ const DonatePage = () => {
                     {formatCurrency(parseFloat(formData.amount) || 0)}
                   </div>
                 </div>
-
                 <div className="dp-summary-detail">
                   <div className="dp-summary-row">
                     <span className="dp-summary-label">Cause</span>
                     <span className="dp-summary-value">
-                      {causes.find(c => c.causeId === parseInt(formData.causeId))?.causeName || 'Not selected'}
+                      {causes.find((c) => c.causeId === parseInt(formData.causeId))?.causeName || 'Not selected'}
                     </span>
                   </div>
                   {formData.campaignId && (
                     <div className="dp-summary-row">
                       <span className="dp-summary-label">Campaign</span>
                       <span className="dp-summary-value">
-                        {campaigns.find(c => c.campaignId === parseInt(formData.campaignId))?.campaignName || '—'}
+                        {campaigns.find((c) => c.campaignId === parseInt(formData.campaignId))?.campaignName || '—'}
                       </span>
                     </div>
                   )}
@@ -443,7 +579,7 @@ const DonatePage = () => {
                       )}
                     </div>
                     <p className="dp-impact-note">
-                      Estimated impact based on average programme costs. Final allocation is decided by programme managers.
+                      Estimated impact based on average programme costs.
                     </p>
                   </div>
                 )}

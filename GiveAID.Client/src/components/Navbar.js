@@ -39,6 +39,8 @@ const Navbar = () => {
             <Nav.Link as={Link} to="/campaigns" className="c4k-nav-link">Campaigns</Nav.Link>
             <Nav.Link as={Link} to="/gallery" className="c4k-nav-link">Gallery</Nav.Link>
             <Nav.Link as={Link} to="/about" className="c4k-nav-link">About</Nav.Link>
+            <Nav.Link as={Link} to="/about/partners" className="c4k-nav-link">Our Partners</Nav.Link>
+            <Nav.Link as={Link} to="/help-centre" className="c4k-nav-link">Help Centre</Nav.Link>
             <Nav.Link as={Link} to="/contact" className="c4k-nav-link">Contact</Nav.Link>
 
             {isAuthenticated ? (
