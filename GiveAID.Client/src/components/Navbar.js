@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Navbar as BsNavbar, Nav, NavDropdown } from 'react-bootstrap';
+import { Navbar as BsNavbar, Nav, NavDropdown, Container } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import './Navbar.css';
 
@@ -92,7 +92,7 @@ const Navbar = () => {
 
   return (
     <BsNavbar expand="lg" className="c4k-navbar" fixed="top">
-      <div className="c4k-navbar-container">
+      <Container className="c4k-navbar-container">
 
         {/* Brand */}
         <BsNavbar.Brand as={Link} to="/" className="c4k-brand">
@@ -203,7 +203,7 @@ const Navbar = () => {
             )}
           </Nav>
         </BsNavbar.Collapse>
-      </div>
+      </Container>
     </BsNavbar>
   );
 };

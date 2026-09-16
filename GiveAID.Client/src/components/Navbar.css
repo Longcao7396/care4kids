@@ -1,6 +1,14 @@
 /* =====================================================
    CARE4KIDS — NAVBAR (Editorial Humanitarian)
+   Single-row, centered, NGO-style.
+   ── System:
+      • height: var(--navbar-h) = 76px (set in App.css)
+      • Container (Bootstrap) provides horizontal padding
+      • Flexbox align-items: center for every row
+      • Fixed line-height + padding box for all CTAs
    ===================================================== */
+
+/* ─── ROOT BAR ─────────────────────────────────── */
 
 .c4k-navbar {
   background-color: var(--c4k-white);
@@ -9,34 +17,56 @@
   height: var(--navbar-h);
   box-shadow: var(--shadow-xs);
   transition: box-shadow var(--t-base);
+  /* Reset Bootstrap defaults for a single-row layout */
+  flex-wrap: nowrap;
+  align-items: stretch;
 }
 
-.c4k-navbar.scrolled {
-  box-shadow: var(--shadow-md);
+.c4k-navbar > .container,
+.c4k-navbar > .container-fluid {
+  /* Bootstrap Container provides responsive padding automatically */
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  height: 100%;
+  max-width: var(--container-max);
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
+  gap: 0;            /* gap controlled inside children */
 }
 
+/* The custom container class kept for any non-Container usage */
 .c4k-navbar-container {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   height: 100%;
+  width: 100%;
   max-width: var(--container-max);
+  margin: 0 auto;
 }
 
-/* ─── BRAND ─── */
+/* ─── BRAND ───────────────────────────────────── */
 
 .c4k-brand {
   display: inline-flex !important;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   font-family: var(--font-serif) !important;
-  font-size: 1.375rem !important;
+  font-size: 1.25rem !important;     /* 20px, balanced with 76px bar */
   font-weight: 700 !important;
+  line-height: 1.2;
   color: var(--c4k-charcoal) !important;
   text-decoration: none !important;
   letter-spacing: -0.01em;
+  flex-shrink: 0;
+  height: 40px;                     /* match brand-icon box */
+  margin-right: var(--space-6);     /* breathing room before menu */
 }
 
-.c4k-brand:hover {
+.c4k-brand:hover,
+.c4k-brand:focus-visible {
   color: var(--c4k-teal-dark) !important;
 }
 
@@ -44,16 +74,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background-color: var(--c4k-coral-soft);
   color: var(--c4k-coral);
   border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 
+.c4k-brand-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
 .c4k-brand-text {
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  /* Reset line-height so baseline matches icon */
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .c4k-brand-accent {
@@ -61,34 +100,59 @@
   font-weight: 700;
 }
 
-/* ─── TOGGLER ─── */
+/* ─── TOGGLER (mobile) ───────────────────────── */
 
 .c4k-toggler {
   border: 1px solid var(--c4k-gray-300) !important;
   padding: 6px 10px !important;
   border-radius: var(--radius-md) !important;
+  align-self: center;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .c4k-toggler:focus {
   box-shadow: 0 0 0 3px var(--c4k-teal-light) !important;
 }
 
-/* ─── NAV LIST ─── */
+/* ─── COLLAPSE (desktop single row) ─────────── */
 
-.c4k-nav-list {
-  gap: 4px;
-  align-items: center !important;
+.c4k-navbar .navbar-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
 }
 
+/* ─── NAV LIST ───────────────────────────────── */
+
+.c4k-nav-list {
+  display: flex;
+  align-items: center !important;
+  gap: var(--space-2);            /* 8px between items; nav-link/CTA each have own padding */
+  flex-wrap: nowrap;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── NAV LINKS ──────────────────────────────── */
+
 .c4k-nav-link {
+  display: inline-flex !important;
+  align-items: center;
   font-family: var(--font-sans) !important;
-  font-size: var(--fs-body) !important;
+  font-size: var(--fs-body-s) !important;   /* 14px */
   font-weight: 500 !important;
+  line-height: 1.2;
   color: var(--c4k-gray-800) !important;
-  padding: 8px 14px !important;
+  padding: 8px 12px !important;
   border-radius: var(--radius-md) !important;
   position: relative;
+  white-space: nowrap;
   transition: color var(--t-fast), background-color var(--t-fast);
+  height: 36px;                              /* fixed height to align with CTAs */
 }
 
 .c4k-nav-link:hover,
@@ -97,6 +161,7 @@
   background-color: var(--c4k-teal-light) !important;
 }
 
+/* Active state — slim coral underline aligned to baseline */
 .c4k-nav-link.active {
   color: var(--c4k-teal-dark) !important;
   font-weight: 600 !important;
@@ -105,28 +170,64 @@
 .c4k-nav-link.active::after {
   content: '';
   position: absolute;
-  bottom: 4px;
-  left: 14px;
-  right: 14px;
+  left: 12px;
+  right: 12px;
+  bottom: -2px;                /* underline sits just below the link baseline */
   height: 2px;
   background-color: var(--c4k-coral);
   border-radius: 1px;
 }
 
-/* ─── NEW DROPDOWN MENU ────────────────────────────────── */
+/* ─── DROPDOWN (USER MENU) ────────────────────── */
+
+.c4k-nav-dropdown {
+  position: relative;
+}
+
+.c4k-nav-dropdown > .dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;                /* match brand height for vertical alignment */
+  padding: 0 12px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-s);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--c4k-gray-800);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.c4k-nav-dropdown > .dropdown-toggle:hover,
+.c4k-nav-dropdown > .dropdown-toggle:focus,
+.c4k-nav-dropdown > .dropdown-toggle[aria-expanded="true"] {
+  color: var(--c4k-teal) !important;
+  background-color: var(--c4k-teal-light);
+  border-color: var(--c4k-gray-200);
+}
+
+.c4k-nav-dropdown > .dropdown-toggle::after {
+  display: none;
+}
 
 .c4k-nav-dropdown .dropdown-menu {
   border: 1px solid var(--c4k-gray-200);
   border-radius: var(--radius-xl);
-  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.10), 0 4px 12px rgba(15, 23, 42, 0.06);
-  padding: 6px 6px 8px;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.10),
+              0 4px 12px rgba(15, 23, 42, 0.06);
+  padding: 6px;
   min-width: 248px;
-  margin-top: 6px;
-  max-height: calc(100vh - 80px);
+  margin-top: 6px !important;
+  max-height: calc(100vh - 96px);
   overflow-y: auto;
 }
 
-/* ── Trigger button (avatar + name) ── */
+/* ── Dropdown trigger pieces ── */
 .c4k-dd-trigger-wrap {
   display: inline-flex;
   align-items: center;
@@ -137,20 +238,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(135deg, var(--c4k-teal, #0E7490) 0%, var(--c4k-teal-dark, #0A5C73) 100%);
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--c4k-teal) 0%, var(--c4k-teal-dark) 100%);
   color: #fff;
   font-size: 0.75rem;
   font-weight: 700;
   border-radius: 50%;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .c4k-dd-trigger-name {
-  font-size: var(--fs-body);
+  font-size: var(--fs-body-s);
   font-weight: 600;
   color: var(--c4k-gray-800);
+  line-height: 1;
 }
 
 /* ── Section header ── */
@@ -232,13 +335,11 @@
   opacity: 1;
 }
 
-/* ── Item label ── */
 .c4k-dd-label {
   flex: 1;
   min-width: 0;
 }
 
-/* ── Arrow ── */
 .c4k-dd-arrow {
   display: inline-flex;
   align-items: center;
@@ -253,7 +354,6 @@
   opacity: 1;
 }
 
-/* ── Badge ── */
 .c4k-dd-badge {
   display: inline-flex;
   align-items: center;
@@ -268,146 +368,147 @@
   border-radius: 9px;
 }
 
-/* ── Divider ── */
 .c4k-dd-divider {
   height: 1px;
   background: var(--c4k-gray-100);
   margin: 6px 6px;
 }
 
-/* ── Dropdown toggle ── */
-.c4k-nav-dropdown > .dropdown-toggle {
-  font-family: var(--font-sans);
-  font-size: var(--fs-body);
-  font-weight: 500;
-  color: var(--c4k-gray-800) !important;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  transition: all 0.15s ease;
-}
-
-.c4k-nav-dropdown > .dropdown-toggle:hover,
-.c4k-nav-dropdown > .dropdown-toggle:focus {
-  color: var(--c4k-teal) !important;
-  background-color: var(--c4k-teal-light);
-  border-color: var(--c4k-gray-200);
-}
-
-.c4k-nav-dropdown > .dropdown-toggle::after {
-  display: none;
-}
-
-/* ─── NAV CTA (Donate / Register buttons) ─── */
+/* ─── CTA BUTTONS (Login / Register / Donate) ─── */
+/* Common system: same height (40px), same border-radius, same typography. */
 
 .c4k-nav-cta {
-  font-family: var(--font-sans);
-  font-size: var(--fs-body-s);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  padding: 10px 20px !important;
-  border-radius: var(--radius-md);
-  margin-left: 8px;
-  text-decoration: none !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  height: 40px;                           /* fixed CTA height = brand height */
+  padding: 0 20px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-s);            /* 14px */
+  font-weight: 600;
   line-height: 1;
-  border: 2px solid transparent;
+  letter-spacing: 0.005em;
+  border-radius: var(--radius-md);        /* 6px */
+  margin: 0;
+  text-decoration: none !important;
+  white-space: nowrap;
+  border: 1.5px solid transparent;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--t-base),
+              color var(--t-base),
+              border-color var(--t-base),
+              box-shadow var(--t-base);
+  /* Removed: position: relative; overflow: hidden; (was clipping focus ring) */
 }
 
 .c4k-nav-cta svg {
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  width: 14px;
+  height: 14px;
 }
 
-.c4k-nav-cta:hover {
-  transform: translateY(-2px);
+.c4k-nav-cta:focus-visible {
+  outline: 2px solid var(--c4k-teal);
+  outline-offset: 2px;
 }
 
 .c4k-nav-cta:active {
-  transform: translateY(0);
+  transform: translateY(0.5px);
 }
 
-/* Register — Teal Gradient Button (Secondary) */
+/* All CTAs share a 12px gap (controlled by .c4k-nav-list gap) */
+/* No margin-left on individual CTAs — gap on parent handles spacing */
+
+/* ── Register — Outline Teal (Secondary) ── */
 .c4k-nav-cta-secondary {
-  background: linear-gradient(135deg, #E8F5F8 0%, #C5E8EF 100%);
-  color: var(--c4k-teal-dark) !important;
+  background-color: transparent;
+  color: var(--c4k-teal) !important;
   border-color: var(--c4k-teal);
-  box-shadow: 
-    0 1px 3px rgba(14, 116, 144, 0.08),
-    0 1px 2px rgba(14, 116, 144, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .c4k-nav-cta-secondary:hover {
-  background: linear-gradient(135deg, var(--c4k-teal) 0%, var(--c4k-teal-dark) 100%);
-  color: var(--c4k-white) !important;
+  background-color: var(--c4k-teal-light);
+  color: var(--c4k-teal-dark) !important;
   border-color: var(--c4k-teal-dark);
-  box-shadow: 
-    0 8px 20px rgba(14, 116, 144, 0.30),
-    0 4px 8px rgba(14, 116, 144, 0.20);
 }
 
-.c4k-nav-cta-secondary:hover svg {
-  transform: scale(1.1);
-}
-
-/* Donate — Coral Gradient Button (Primary) */
+/* ── Donate — Coral Solid (Primary) ── */
 .c4k-nav-cta-primary {
-  background: linear-gradient(135deg, var(--c4k-coral) 0%, #D66B4E 100%);
+  background-color: var(--c4k-coral);
   color: var(--c4k-white) !important;
   border-color: var(--c4k-coral);
-  box-shadow: 
-    0 4px 12px rgba(232, 122, 90, 0.35),
-    0 2px 4px rgba(232, 122, 90, 0.20);
 }
 
 .c4k-nav-cta-primary:hover {
-  background: linear-gradient(135deg, #D66B4E 0%, #C55A3D 100%);
-  border-color: #C55A3D;
-  box-shadow: 
-    0 10px 28px rgba(232, 122, 90, 0.45),
-    0 4px 10px rgba(232, 122, 90, 0.30);
+  background-color: var(--c4k-coral-dark);
+  border-color: var(--c4k-coral-dark);
+  color: var(--c4k-white) !important;
 }
 
-.c4k-nav-cta-primary:hover svg {
-  transform: scale(1.1);
+/* Plain Donate (when authenticated — used with .btn-coral) */
+.btn-coral.c4k-nav-cta {
+  background-color: var(--c4k-coral);
+  color: var(--c4k-white) !important;
+  border-color: var(--c4k-coral);
+}
+
+.btn-coral.c4k-nav-cta:hover {
+  background-color: var(--c4k-coral-dark);
+  border-color: var(--c4k-coral-dark);
 }
 
 /* =====================================================
-   MOBILE
+   MOBILE — single-column menu, full-width CTAs
    ===================================================== */
 
 @media (max-width: 991px) {
   .c4k-navbar { height: 64px; }
 
+  .c4k-navbar > .container,
+  .c4k-navbar > .container-fluid {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .c4k-brand {
+    font-size: 1.125rem !important;
+    height: 36px;
+    margin-right: var(--space-3);
+  }
+
+  .c4k-brand-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .c4k-brand-icon svg { width: 18px; height: 18px; }
+
   .c4k-navbar-collapse {
     background-color: var(--c4k-white);
     border-top: 1px solid var(--c4k-gray-200);
     margin-top: 0;
-    padding: 16px 0;
+    padding: var(--space-4) 0;
     box-shadow: var(--shadow-md);
+    display: block;             /* Bootstrap default stack */
+    flex: 0 0 auto;
+    height: auto;
   }
 
   .c4k-nav-list {
-    gap: 0;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 2px;
   }
 
   .c4k-nav-link {
+    height: auto;
     padding: 12px 16px !important;
     width: 100%;
     border-radius: 0 !important;
   }
 
-  .c4k-nav-link.active::after {
-    display: none;
-  }
+  .c4k-nav-link.active::after { display: none; }
 
   .c4k-nav-link.active {
     background-color: var(--c4k-teal-light);
@@ -415,14 +516,36 @@
   }
 
   .c4k-nav-cta {
-    margin: 8px 16px 0 !important;
-    justify-content: center;
     width: calc(100% - 32px);
+    height: 44px;
+    margin: 8px 16px 0;
+    justify-content: center;
   }
 
   .c4k-nav-dropdown > .dropdown-toggle {
-    padding: 12px 16px;
     width: 100%;
+    height: auto;
+    padding: 12px 16px;
     justify-content: space-between;
   }
+
+  .c4k-nav-dropdown .dropdown-menu {
+    position: static !important;
+    transform: none !important;
+    box-shadow: none;
+    border: none;
+    background: var(--c4k-gray-50);
+    margin: 4px 16px 0 !important;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 575px) {
+  .c4k-navbar > .container,
+  .c4k-navbar > .container-fluid {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+
+  .c4k-brand-text { font-size: 1rem; }
 }
