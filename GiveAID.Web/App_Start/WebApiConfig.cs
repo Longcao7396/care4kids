@@ -1,4 +1,3 @@
-using System.Configuration;
 using System.Web.Http;
 using System.Web.Http.Cors;
 
@@ -8,19 +7,14 @@ namespace GiveAID.Web
     {
         public static void Register(HttpConfiguration config)
         {
-            // CORS: prefer the comma-separated `Cors:AllowedOrigins` appSetting
-            // (production deployments). Fall back to the dev allowlist so the
-            // project still runs out of the box. Must list specific origins
-            // (cannot use "*") because axios sends withCredentials=true which
-            // forbids wildcard Access-Control-Allow-Origin.
-            var allowedOrigins = ConfigurationManager.AppSettings["Cors:AllowedOrigins"];
-            if (string.IsNullOrWhiteSpace(allowedOrigins))
-            {
-                allowedOrigins = "http://localhost:3000, http://localhost:3001, http://localhost:3002, http://localhost:61508, http://localhost:44300, https://localhost:44300";
-            }
-
+            // SECURITY: CORS allowlist is now resolved once in Global.asax and
+            // shared with Application_BeginRequest. Previously this file had its
+            // own hardcoded dev list AND a parallel echo-anywhere code path in
+            // Global.asax, which together allowed credentialed cross-origin from
+            // arbitrary sites (CSRF). Both layers now use the validated allowlist.
+            var allowedOrigins = WebApiApplication.CorsAllowedOrigins;
             var cors = new EnableCorsAttribute(
-                origins: allowedOrigins,
+                origins: string.Join(",", allowedOrigins),
                 headers: "*",
                 methods: "*");
             cors.SupportsCredentials = true;

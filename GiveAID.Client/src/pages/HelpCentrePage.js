@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Row, Col, Form, Alert, Spinner, Collapse, Button
 } from 'react-bootstrap';
-import api from '../services/api';
+import { faqService } from '../services';
+import { sanitizeHtml } from '../utils/safeHtml';
 import '../styles/AboutPages.css';
 
 function FaqItem({ item, onSelect }) {
@@ -24,7 +25,9 @@ function FaqItem({ item, onSelect }) {
       </button>
       <Collapse in={open}>
         <div className="faq-answer">
-          <div dangerouslySetInnerHTML={{ __html: item.answer }} />
+          {/* SECURITY: server already sanitizes, but client-side sanitize
+              again in case a stale row predates the backend fix. */}
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.answer) }} />
         </div>
       </Collapse>
     </div>
@@ -52,9 +55,9 @@ function HelpCentrePage() {
       const params = { activeOnly: true };
       if (activeCategory) params.category = activeCategory;
       if (debouncedSearch) params.search = debouncedSearch;
-      const response = await api.get('/faqs', { params });
-      if (response.data.success) {
-        setFaqs(response.data.data || []);
+      const response = await faqService.getAll(params);
+      if (response.success) {
+        setFaqs(response.data || []);
       }
     } catch (err) {
       setError('Failed to load FAQs.');
@@ -65,9 +68,9 @@ function HelpCentrePage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await api.get('/faqs/categories');
-      if (response.data.success) {
-        setCategories(response.data.data || []);
+      const response = await faqService.getCategories();
+      if (response.success) {
+        setCategories(response.data || []);
       }
     } catch (err) {
       // Non-fatal

@@ -173,7 +173,11 @@ namespace GiveAID.Web.Controllers
                     Role = "User",
                     IsActive = true,
                     IsVerified = false,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    // SECURITY: mark when the password was last set so any
+                    // tokens issued before this point are rejected after a
+                    // later password change.
+                    PasswordChangedAt = DateTime.UtcNow
                 };
 
                 _context.Users.Add(user);

@@ -97,6 +97,18 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
+                // SECURITY: rate-limit career applications per IP. 3 per 5 minutes
+                // prevents drive-by application floods.
+                if (RateLimiter.IsLimited("careers-apply", maxRequests: 3, windowSeconds: 300))
+                {
+                        return Content((System.Net.HttpStatusCode)429,
+                        new ApiResponse
+                        {
+                            Success = false,
+                            Message = "Too many applications submitted from your IP. Please try again later."
+                        });
+                }
+
                 if (request == null ||
                     string.IsNullOrWhiteSpace(request.ApplicantName) ||
                     string.IsNullOrWhiteSpace(request.Email))

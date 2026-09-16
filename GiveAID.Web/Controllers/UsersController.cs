@@ -105,6 +105,10 @@ namespace GiveAID.Web.Controllers
                     if (request.NewPassword.Length < 6)
                         return BadRequest("New password must be at least 6 characters.");
                     user.PasswordHash = PasswordHasher.Hash(request.NewPassword);
+                    // SECURITY: bump PasswordChangedAt so any token issued before
+                    // this moment becomes invalid on the next request — forcing
+                    // the user (and any session hijacker) to log in again.
+                    user.PasswordChangedAt = DateTime.UtcNow;
                 }
 
                 user.UpdatedAt = DateTime.Now;

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Web.Http;
 using GiveAID.Web.Data;
@@ -80,14 +80,41 @@ namespace GiveAID.Web.Controllers
                 var campaigns = query
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .ToList()
-                    .Select(c => MapCampaign(c, causeLookup))
                     .ToList();
+
+                // PERF: pre-compute donor counts + participant counts + organization
+                // names in 3 grouped/lookup queries instead of one COUNT + one
+                // FIND per campaign. Old code did 3 queries per campaign row.
+                var campaignIds = campaigns.Select(c => c.CampaignId).ToList();
+
+                var donorCounts = db.Donations
+                    .Where(d => campaignIds.Contains(d.CampaignId ?? 0)
+                                && d.PaymentStatus == "Completed")
+                    .GroupBy(d => d.CampaignId.Value)
+                    .Select(g => new { CampaignId = g.Key, Count = g.Select(d => d.UserId).Distinct().Count() })
+                    .ToDictionary(x => x.CampaignId, x => x.Count);
+
+                var participantCounts = db.CampaignRegistrations
+                    .Where(r => campaignIds.Contains(r.CampaignId)
+                                && r.Status != "Cancelled")
+                    .GroupBy(r => r.CampaignId)
+                    .Select(g => new { CampaignId = g.Key, Count = g.Count() })
+                    .ToDictionary(x => x.CampaignId, x => x.Count);
+
+                var organizationIds = campaigns
+                    .Where(c => c.OrganizationId.HasValue)
+                    .Select(c => c.OrganizationId.Value)
+                    .Distinct()
+                    .ToList();
+                var organizationNames = db.Organizations
+                    .Where(o => organizationIds.Contains(o.OrganizationId))
+                    .ToDictionary(o => o.OrganizationId, o => o.OrganizationName);
 
                 return Ok(new
                 {
                     success = true,
-                    data = campaigns,
+                    data = campaigns.Select(c => MapCampaign(
+                        c, causeLookup, donorCounts, participantCounts, organizationNames)).ToList(),
                     pagination = new
                     {
                         total,
@@ -388,66 +415,72 @@ namespace GiveAID.Web.Controllers
             {
                 var userId = JwtHelper.GetUserIdFromToken(Request);
 
-                using (var transaction = db.Database.BeginTransaction(IsolationLevel.Serializable))
+                // PERF: see ProgrammesController.Register — drop the Serializable
+                // transaction; rely on the unique (CampaignId, UserId) index on
+                // CampaignRegistrations to catch duplicate registrations.
+                var campaign = db.Campaigns.Find(id);
+                if (campaign == null)
                 {
-                    var campaign = db.Campaigns.Find(id);
-                    if (campaign == null)
-                    {
-                        return NotFound();
-                    }
+                    return NotFound();
+                }
 
-                    if (!campaign.RegistrationRequired)
-                    {
-                        return BadRequest("This campaign does not require registration");
-                    }
+                if (!campaign.RegistrationRequired)
+                {
+                    return BadRequest("This campaign does not require registration");
+                }
 
-                    // Accept registration in any non-cancelled status
-                    if (campaign.Status == "Cancelled")
-                    {
-                        return BadRequest("Registration is closed for this campaign");
-                    }
+                // Accept registration in any non-cancelled status
+                if (campaign.Status == "Cancelled")
+                {
+                    return BadRequest("Registration is closed for this campaign");
+                }
 
-                    if (db.CampaignRegistrations.Any(r =>
-                        r.CampaignId == id && r.UserId == userId))
-                    {
-                        return BadRequest("You are already registered for this campaign");
-                    }
+                if (db.CampaignRegistrations.Any(r =>
+                    r.CampaignId == id && r.UserId == userId))
+                {
+                    return BadRequest("You are already registered for this campaign");
+                }
 
-                    var currentParticipants = db.CampaignRegistrations.Count(r =>
-                        r.CampaignId == id && r.Status != "Cancelled");
-                    if (campaign.MaxParticipants.HasValue &&
-                        currentParticipants >= campaign.MaxParticipants.Value)
-                    {
-                        return BadRequest("This campaign is full");
-                    }
+                var currentParticipants = db.CampaignRegistrations.Count(r =>
+                    r.CampaignId == id && r.Status != "Cancelled");
+                if (campaign.MaxParticipants.HasValue &&
+                    currentParticipants >= campaign.MaxParticipants.Value)
+                {
+                    return BadRequest("This campaign is full");
+                }
 
-                    var registration = new CampaignRegistration
-                    {
-                        CampaignId = id,
-                        UserId = userId,
-                        Status = "Registered",
-                        Notes = request?.Notes,
-                        AttendanceConfirmed = false,
-                        RegistrationDate = DateTime.Now
-                    };
+                var registration = new CampaignRegistration
+                {
+                    CampaignId = id,
+                    UserId = userId,
+                    Status = "Registered",
+                    Notes = request?.Notes?.Trim(),
+                    AttendanceConfirmed = false,
+                    RegistrationDate = DateTime.Now
+                };
 
+                try
+                {
                     db.CampaignRegistrations.Add(registration);
                     db.SaveChanges();
-                    transaction.Commit();
-
-                    return Ok(new
-                    {
-                        success = true,
-                        message = "Successfully registered for the campaign",
-                        data = new
-                        {
-                            registrationId = registration.RegistrationId,
-                            campaignId = campaign.CampaignId,
-                            campaignName = campaign.CampaignName,
-                            registrationDate = registration.RegistrationDate
-                        }
-                    });
                 }
+                catch (DbUpdateException)
+                {
+                    return BadRequest("You are already registered for this campaign");
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Successfully registered for the campaign",
+                    data = new
+                    {
+                        registrationId = registration.RegistrationId,
+                        campaignId = campaign.CampaignId,
+                        campaignName = campaign.CampaignName,
+                        registrationDate = registration.RegistrationDate
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -540,13 +573,44 @@ namespace GiveAID.Web.Controllers
 
         // Returns a unified shape that the frontend can render for both
         // donation campaigns and event-style (registration-based) campaigns.
-        private CampaignDto MapCampaign(Campaign c, Dictionary<int, Cause> causeLookup)
+        // The donorCounts / participantCounts / organizationNames dictionaries
+        // are pre-fetched by the caller in a single grouped query to avoid
+        // N+1 round-trips (one COUNT + one FIND per row).
+        private CampaignDto MapCampaign(
+            Campaign c,
+            Dictionary<int, Cause> causeLookup,
+            Dictionary<int, int> donorCounts = null,
+            Dictionary<int, int> participantCounts = null,
+            Dictionary<int, string> organizationNames = null)
         {
             int? currentParticipants = null;
             if (c.RegistrationRequired)
             {
-                currentParticipants = db.CampaignRegistrations.Count(r =>
-                    r.CampaignId == c.CampaignId && r.Status != "Cancelled");
+                if (participantCounts != null && participantCounts.ContainsKey(c.CampaignId))
+                {
+                    currentParticipants = participantCounts[c.CampaignId];
+                }
+                else
+                {
+                    // Fallback: single-campaign callers (e.g. GetById) don't pass
+                    // the dict, so we just query directly.
+                    currentParticipants = db.CampaignRegistrations.Count(r =>
+                        r.CampaignId == c.CampaignId && r.Status != "Cancelled");
+                }
+            }
+
+            int donorCount = 0;
+            if (donorCounts != null && donorCounts.ContainsKey(c.CampaignId))
+            {
+                donorCount = donorCounts[c.CampaignId];
+            }
+            else
+            {
+                donorCount = db.Donations
+                    .Where(d => d.CampaignId == c.CampaignId && d.PaymentStatus == "Completed")
+                    .Select(d => d.UserId)
+                    .Distinct()
+                    .Count();
             }
 
             return new CampaignDto
@@ -575,11 +639,7 @@ namespace GiveAID.Web.Controllers
                 status = c.Status,
                 isFeatured = c.IsFeatured,
                 displayOrder = c.DisplayOrder,
-                donorCount = db.Donations
-                    .Where(d => d.CampaignId == c.CampaignId && d.PaymentStatus == "Completed")
-                    .Select(d => d.UserId)
-                    .Distinct()
-                    .Count(),
+                donorCount = donorCount,
                 createdAt = c.CreatedAt,
 
                 // Merged Programme fields (always present, even if null/false)
@@ -591,10 +651,14 @@ namespace GiveAID.Web.Controllers
                 expectedBudget = c.ExpectedBudget,
                 actualBudget = c.ActualBudget,
                 organizationId = c.OrganizationId,
-                organizationName = c.OrganizationId.HasValue
-                    ? db.Organizations.Where(o => o.OrganizationId == c.OrganizationId.Value)
-                        .Select(o => o.OrganizationName).FirstOrDefault()
-                    : null,
+                organizationName = (organizationNames != null
+                    && c.OrganizationId.HasValue
+                    && organizationNames.ContainsKey(c.OrganizationId.Value))
+                    ? organizationNames[c.OrganizationId.Value]
+                    : (c.OrganizationId.HasValue
+                        ? db.Organizations.Where(o => o.OrganizationId == c.OrganizationId.Value)
+                            .Select(o => o.OrganizationName).FirstOrDefault()
+                        : null),
 
                 // Convenience discriminator for frontend Ã¢â¬â 'donation' vs 'event'
                 campaignKind = c.RegistrationRequired ? "event" : "donation"

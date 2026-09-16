@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { sanitizeHtml } from '../utils/safeHtml';
 import './AboutPage.css';
 
 /* ── Icon set (inline SVG) ─────────────────────────────── */
@@ -244,7 +245,7 @@ function AboutPage() {
               <p className="ap-eyebrow">Mission, Vision &amp; Promise</p>
               <h2 className="ap-section-title">{getCms('our_mission').pageTitle || 'Our Mission'}</h2>
             </div>
-            <div className="ap-mission-cms-body" dangerouslySetInnerHTML={{ __html: getCms('our_mission').content }} />
+            <div className="ap-mission-cms-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCms('our_mission').content) }} />
           </Container>
         </section>
       ) : (
@@ -356,7 +357,7 @@ function AboutPage() {
               <p className="ap-eyebrow">Our Work</p>
               <h2 className="ap-section-title">{getCms('what_we_do').pageTitle || 'What We Do'}</h2>
             </div>
-            <div className="ap-pillars-cms-body" dangerouslySetInnerHTML={{ __html: getCms('what_we_do').content }} />
+            <div className="ap-pillars-cms-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCms('what_we_do').content) }} />
             <div className="ap-pillars-cta">
               <Link to="/campaigns" className="c4k-btn-primary-solid">
                 <span>See all campaigns</span>
@@ -584,7 +585,7 @@ function AboutPage() {
               </Link>
             </div>
           </div>
-        </Container>
+      </Container>
       </section>
 
     </div>

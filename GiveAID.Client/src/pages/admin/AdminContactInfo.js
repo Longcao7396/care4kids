@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Alert, Button, Form, Spinner, Card } from 'react-bootstrap';
 import api from '../../services/api';
+import { sanitizeHtml } from '../../utils/safeHtml';
 
 /* ── Admin Contact Info ─────────────────────── */
 export default function AdminContactInfo({ pageKey = 'contact_info', title = 'Contact Information' }) {
@@ -149,7 +150,7 @@ export default function AdminContactInfo({ pageKey = 'contact_info', title = 'Co
                 <Card.Body>
                   <div
                     className="contact-info-preview"
-                    dangerouslySetInnerHTML={{ __html: content || '<em class="text-muted">(empty)</em>' }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) || '<em class="text-muted">(empty)</em>' }}
                   />
                 </Card.Body>
               </Card>

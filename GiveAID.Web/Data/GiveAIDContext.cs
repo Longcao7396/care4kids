@@ -63,6 +63,29 @@ namespace GiveAID.Web.Data
                 .Property(d => d.Amount)
                 .HasPrecision(18, 2);
 
+            // Idempotency: (UserId, IdempotencyKey) is unique when IdempotencyKey
+            // is non-null. EF6 does not support filtered indexes, so we use a
+            // composite index and rely on application logic to set IdempotencyKey
+            // only when the client provides one. Multiple null keys per user are
+            // still allowed.
+            modelBuilder.Entity<Donation>()
+                .HasIndex(d => new { d.UserId, d.IdempotencyKey })
+                .IsUnique();
+
+            // Programme registration: prevent double-booking at the DB level.
+            // (ProgrammeId, UserId) composite unique index lets two concurrent
+            // Register requests race and one fails cleanly with DbUpdateException,
+            // which the controller converts to a 400 instead of an unsafe
+            // Serializable transaction.
+            modelBuilder.Entity<ProgrammeRegistration>()
+                .HasIndex(r => new { r.ProgrammeId, r.UserId })
+                .IsUnique();
+
+            // Same for CampaignRegistrations: (CampaignId, UserId) unique.
+            modelBuilder.Entity<CampaignRegistration>()
+                .HasIndex(r => new { r.CampaignId, r.UserId })
+                .IsUnique();
+
             // Cause configurations
             modelBuilder.Entity<Cause>()
                 .Property(c => c.TargetAmount)

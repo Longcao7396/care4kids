@@ -57,6 +57,11 @@ namespace GiveAID.Web.Models
 
         public DateTime? LastLogin { get; set; }
 
+        // SECURITY: tokens issued before this timestamp are rejected on every
+        // authenticated request. Updated whenever the user changes their password
+        // so any leaked token is invalidated at the next request.
+        public DateTime? PasswordChangedAt { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
@@ -376,6 +381,26 @@ namespace GiveAID.Web.Models
         public DateTime DonationDate { get; set; } = DateTime.Now;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        // Idempotency key — client-supplied; if a Donation already exists for
+        // (UserId, IdempotencyKey), that donation is returned instead of creating
+        // a duplicate. Prevents double-tap / double-submit / network retry bugs.
+        // See DonationsController.Create for the duplicate-check logic.
+        [MaxLength(100)]
+        public string IdempotencyKey { get; set; }
+
+        // ── Payment-gateway tracking (PCI-DSS friendly) ──
+        // External transaction id from the payment processor (Stripe / VNPay / MoMo).
+        // Null until the gateway webhook confirms the charge.
+        [MaxLength(100)]
+        public string GatewayTransactionId { get; set; }
+
+        // Pending until gateway webhook flips it. The old behaviour of immediately
+        // marking "Completed" was a financial-reporting bug: donations were counted
+        // as money received even though no payment gateway had charged anything.
+        // Now: POST /api/donations creates a "Pending" row, the gateway webhook
+        // (or a manual admin confirm) flips it to "Completed" or "Failed".
+        public DateTime? PaymentConfirmedAt { get; set; }
     }
 
     [Table("Programmes")]
@@ -844,6 +869,11 @@ namespace GiveAID.Web.Models
         public string FailureReason { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        // SECURITY/AUDIT: UpdatedAt added so Cancel / status mutations can be
+        // audited. Previously the controller tried to call a non-existent
+        // UpdatedAtSafe() method on this entity, throwing at runtime.
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 
     /// <summary>

@@ -7,8 +7,8 @@ import './Navbar.css';
 /* ═══════════════════════════════════════════════════════════════
    NAVBAR — Care4Kids
    Dropdown menu:
-     • Authenticated user  → USER menu only
-     • Admin / SuperAdmin → USER menu + full ADMIN menu
+    • Normal user            → USER menu only (Dashboard, My Donations, etc.)
+    • Admin / SuperAdmin     → ADMIN menu only (no personal-account items)
    All route protection is handled by ProtectedRoute + backend JWT.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -88,7 +88,7 @@ const Navbar = () => {
     catch (e) { console.error('Logout error:', e); }
   };
 
-  const admin = isAdmin();
+  const admin = isAdmin; // boolean (was: isAdmin())
 
   return (
     <BsNavbar expand="lg" className="c4k-navbar" fixed="top">
@@ -135,13 +135,17 @@ const Navbar = () => {
                   className="c4k-nav-dropdown"
                   align="end"
                 >
-                  {/* ── USER SECTION (always visible when logged in) ── */}
-                  <SectionHeader label="MY ACCOUNT" />
+                  {/* ── USER SECTION (only for non-admin users) ── */}
+                  {!admin && (
+                    <>
+                      <SectionHeader label="MY ACCOUNT" />
 
-                  <MenuItem to="/dashboard" icon="dashboard" label="Dashboard" />
-                  <MenuItem to="/my-donations" icon="wallet" label="My Donations" />
-                  <MenuItem to="/my-registrations" icon="calendar" label="My Registrations" />
-                  <MenuItem to="/raise-query" icon="chat" label="Raise a Query" />
+                      <MenuItem to="/dashboard" icon="dashboard" label="Dashboard" />
+                      <MenuItem to="/my-donations" icon="wallet" label="My Donations" />
+                      <MenuItem to="/my-registrations" icon="calendar" label="My Registrations" />
+                      <MenuItem to="/raise-query" icon="chat" label="Raise a Query" />
+                    </>
+                  )}
 
                   {/* ── ADMIN SECTION (only for Admin / SuperAdmin) ── */}
                   {admin && (

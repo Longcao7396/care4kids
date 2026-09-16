@@ -215,10 +215,20 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var totalCauses = _context.Causes.Count();
-                var activeCauses = _context.Causes.Count(c => c.IsActive);
-                var totalRaised = _context.Causes.Sum(c => (decimal?)c.RaisedAmount) ?? 0;
-                var totalTarget = _context.Causes.Sum(c => (decimal?)c.TargetAmount) ?? 0;
+                // PERF: previously 4 separate aggregate calls = 4 round-trips.
+                // Now a single anonymous-aggregate query gives all four in one.
+                var stats = _context.Causes.GroupBy(c => 1).Select(g => new
+                {
+                    TotalCauses = g.Count(),
+                    ActiveCauses = g.Count(c => c.IsActive),
+                    TotalRaised = g.Sum(c => (decimal?)c.RaisedAmount) ?? 0,
+                    TotalTarget = g.Sum(c => (decimal?)c.TargetAmount) ?? 0
+                }).FirstOrDefault();
+
+                var totalCauses = stats?.TotalCauses ?? 0;
+                var activeCauses = stats?.ActiveCauses ?? 0;
+                var totalRaised = stats?.TotalRaised ?? 0;
+                var totalTarget = stats?.TotalTarget ?? 0;
 
                 return Ok(new ApiResponse
                 {
@@ -229,7 +239,9 @@ namespace GiveAID.Web.Controllers
                         activeCauses,
                         totalRaised,
                         totalTarget,
-                        overallPercentage = totalTarget > 0 ? (totalRaised / totalTarget) * 100 : 0
+                        overallPercentage = totalTarget > 0
+                            ? Math.Round((double)((totalRaised / totalTarget) * 100m), 1)
+                            : 0
                     }
                 });
             }

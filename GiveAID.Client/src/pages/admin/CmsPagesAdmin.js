@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Alert, Button, Modal, Form, Spinner, Badge, InputGroup } from 'react-bootstrap';
 import api from '../../services/api';
+import { sanitizeHtml } from '../../utils/safeHtml';
 
 /* ── Validation ────────────────────────────── */
 function validate(data) {
@@ -179,8 +180,8 @@ export default function CmsPagesAdmin() {
                 <div
                   className="cms-page-preview"
                   dangerouslySetInnerHTML={{
-                    __html: (p.content || '<em>(empty)</em>').slice(0, 240) +
-                      (p.content && p.content.length > 240 ? '…' : ''),
+                    __html: sanitizeHtml((p.content || '<em>(empty)</em>').slice(0, 240) +
+                      (p.content && p.content.length > 240 ? '…' : '')),
                   }}
                 />
                 <div className="mt-3 d-flex gap-2">

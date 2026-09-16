@@ -85,15 +85,24 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var query = _context.Achievements.Where(a => a.IsActive);
-                var total = query.Count();
-                var featured = query.Count(a => a.IsFeatured);
-                var totalBeneficiaries = query.Sum(a => (int?)a.Beneficiaries) ?? 0;
+                // PERF: previously 3 separate aggregate calls (Total, Featured,
+                // Sum) + 1 FirstOrDefault = 4 round-trips. Now a single grouped
+                // aggregate query + a small lookup gives all four in 2
+                // round-trips.
+                var stats = _context.Achievements.Where(a => a.IsActive)
+                    .GroupBy(a => 1)
+                    .Select(g => new
+                    {
+                        Total = g.Count(),
+                        Featured = g.Count(a => a.IsFeatured),
+                        Beneficiaries = g.Sum(a => (int?)a.Beneficiaries) ?? 0
+                    })
+                    .FirstOrDefault();
 
-                // Highest metric value (for hero card)
-                var headline = query
-                    .Where(a => a.MetricValue.HasValue)
+                var headline = _context.Achievements
+                    .Where(a => a.IsActive && a.MetricValue.HasValue)
                     .OrderByDescending(a => a.MetricValue)
+                    .Select(a => new { a.Title, a.MetricLabel, a.MetricValue, a.MetricSuffix })
                     .FirstOrDefault();
 
                 return Ok(new ApiResponse
@@ -101,9 +110,9 @@ namespace GiveAID.Web.Controllers
                     Success = true,
                     Data = new
                     {
-                        totalAchievements = total,
-                        featuredAchievements = featured,
-                        totalBeneficiaries,
+                        totalAchievements = stats?.Total ?? 0,
+                        featuredAchievements = stats?.Featured ?? 0,
+                        totalBeneficiaries = stats?.Beneficiaries ?? 0,
                         headline = headline == null ? null : new
                         {
                             headline.Title,

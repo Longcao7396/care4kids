@@ -245,7 +245,7 @@ function AdminDashboard() {
                         <div className="ad-campaign-bar-track">
                           <div className="ad-campaign-bar-fill" style={{ width: `${Math.min(c.percentageReached || 0, 100)}%` }} />
                         </div>
-                        <div className="ad-campaign-pct">{(c.percentageReached || 0).toFixed(0)}%</div>
+                        <div className="ad-campaign-pct">{(c.percentageReached || 0).toFixed(c.percentageReached < 10 ? 1 : 0)}%</div>
                       </div>
                     </Link>
                   </li>

@@ -30,9 +30,9 @@ function ProtectedRoute({ children, roles }) {
   /* Defense in depth: check localStorage directly so we don't bounce back
    * to /login if React state hasn't propagated yet (e.g. immediately after
    * a fresh login, before AuthContext.login's setUser has committed). */
-  let authed = typeof isAuthenticated === 'function'
-    ? isAuthenticated()
-    : !!isAuthenticated;
+  // isAuthenticated is now a boolean (was a function in some prior versions).
+  // Coerce defensively in case a build still has the function shape.
+  let authed = typeof isAuthenticated === 'function' ? !!isAuthenticated() : !!isAuthenticated;
   if (!authed) {
     try {
       const hasToken = !!localStorage.getItem('giveaid_token');

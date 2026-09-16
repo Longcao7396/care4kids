@@ -146,7 +146,7 @@ function CampaignsPage() {
                 </svg>
               </a>
             </div>
-          </div>
+      </div>
         </Container>
       </section>
 
@@ -202,32 +202,32 @@ function CampaignsPage() {
 
             {/* Category */}
             <div className="cp-filter-select-wrap">
-              <Form.Select
+                <Form.Select
                 className="cp-filter-select"
-                value={selectedCause}
-                onChange={(e) => setSelectedCause(e.target.value)}
-              >
-                <option value="">All Categories</option>
-                {causes.map(cause => (
-                  <option key={cause.causeId} value={cause.causeId}>
-                    {cause.causeName}
-                  </option>
-                ))}
-              </Form.Select>
+                  value={selectedCause}
+                  onChange={(e) => setSelectedCause(e.target.value)}
+                >
+                  <option value="">All Categories</option>
+                  {causes.map(cause => (
+                    <option key={cause.causeId} value={cause.causeId}>
+                      {cause.causeName}
+                    </option>
+                  ))}
+                </Form.Select>
             </div>
 
             {/* Status */}
             <div className="cp-filter-select-wrap">
-              <Form.Select
+                <Form.Select
                 className="cp-filter-select"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                >
                 <option value="All">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Completed">Completed</option>
+                  <option value="Active">Active</option>
+                  <option value="Completed">Completed</option>
                 <option value="Paused">Paused</option>
-              </Form.Select>
+                </Form.Select>
             </div>
 
             {/* Reset */}
@@ -248,7 +248,7 @@ function CampaignsPage() {
               Showing <strong>{campaigns.length}</strong> campaign{campaigns.length !== 1 ? 's' : ''}
               {searchTerm && ` matching "${searchTerm}"`}
             </span>
-          </div>
+        </div>
         </Container>
       </section>
 
@@ -275,7 +275,7 @@ function CampaignsPage() {
                       <Badge className="cp-cause-badge">
                         {featuredCampaign.cause?.causeName || 'Child Welfare'}
                       </Badge>
-                    </div>
+                  </div>
                   </div>
                 </Col>
                 <Col lg={6}>
@@ -289,7 +289,7 @@ function CampaignsPage() {
                         <span className="cp-meta-beneficiaries">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                           {featuredCampaign.beneficiariesCount}+ children
-                        </span>
+                      </span>
                       )}
                     </div>
                     <h3 className="cp-featured-title">{featuredCampaign.campaignName}</h3>
@@ -463,13 +463,13 @@ function CampaignsPage() {
                           {campaign.daysRemaining != null && campaign.daysRemaining >= 0 && (
                             <span>{campaign.daysRemaining} days left</span>
                           )}
-                        </div>
-                      </div>
+                          </div>
+                  </div>
 
                       {/* Actions */}
                       <div className="cp-card-actions">
-                        <Link
-                          to={`/campaigns/${campaign.campaignId}`}
+                  <Link
+                    to={`/campaigns/${campaign.campaignId}`}
                           className="btn-teal btn-sm"
                         >
                           View Campaign
@@ -479,14 +479,14 @@ function CampaignsPage() {
                           className="btn-outline-coral btn-sm"
                         >
                           Donate
-                        </Link>
+                  </Link>
                       </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          )}
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      )}
         </Container>
       </section>
 
@@ -603,9 +603,9 @@ function CampaignsPage() {
                 <line x1="5" y1="12" x2="19" y2="12"/>
                 <polyline points="12 5 19 12 12 19"/>
               </svg>
-            </Link>
-          </div>
-        </Container>
+        </Link>
+      </div>
+    </Container>
       </section>
 
     </div>

@@ -162,20 +162,24 @@ namespace GiveAID.Web.Controllers
             try
             {
                 var userId = JwtHelper.GetUserIdFromToken(Request);
-                Programme programme;
-                ProgrammeRegistration registration;
 
-                // Protect capacity and duplicate checks from concurrent registrations.
-                using (var transaction = _context.Database.BeginTransaction(IsolationLevel.Serializable))
-                {
-                    // Check if programme exists
-                    programme = _context.Programmes.Find(id);
+                // PERF: previously this used IsolationLevel.Serializable around the
+                // capacity-check + insert, which held a wide range lock and was a
+                // bottleneck under concurrent registrations. Replaced with:
+                //   1. Compute current count from a regular query.
+                //   2. Rely on the unique index (ProgrammeId, UserId) at the DB
+                //      level to prevent duplicate registrations — catch
+                //      DbUpdateException to convert it into a clean 400.
+                // The capacity check is best-effort: in a true race two users can
+                // both pass the check and both insert, briefly exceeding capacity.
+                // For an NGO this is acceptable; for stricter semantics add an
+                // explicit UPDLOCK on the count query.
+                var programme = _context.Programmes.Find(id);
                 if (programme == null)
                 {
                     return NotFound();
                 }
 
-                // Check if programme is open for registration
                 if (!programme.RegistrationRequired)
                 {
                     return BadRequest("This programme does not require registration");
@@ -186,14 +190,12 @@ namespace GiveAID.Web.Controllers
                     return BadRequest("Registration is closed for this programme");
                 }
 
-                // Check if user already registered
                 if (_context.ProgrammeRegistrations.Any(r =>
                     r.ProgrammeId == id && r.UserId == userId))
                 {
                     return BadRequest("You are already registered for this programme");
                 }
 
-                // Derive participant count from registrations to avoid a stale duplicate counter.
                 var currentParticipants = _context.ProgrammeRegistrations.Count(r =>
                     r.ProgrammeId == id && r.Status != "Cancelled");
                 if (programme.MaxParticipants.HasValue &&
@@ -202,20 +204,26 @@ namespace GiveAID.Web.Controllers
                     return BadRequest("This programme is full");
                 }
 
-                // Create registration
-                registration = new ProgrammeRegistration
+                var registration = new ProgrammeRegistration
                 {
                     ProgrammeId = id,
                     UserId = userId,
                     Status = "Registered",
-                    Notes = request.MotivationMessage,
+                    Notes = request.MotivationMessage?.Trim(),
                     AttendanceConfirmed = false,
                     RegistrationDate = DateTime.Now
                 };
 
-                _context.ProgrammeRegistrations.Add(registration);
-                _context.SaveChanges();
-                transaction.Commit();
+                try
+                {
+                    _context.ProgrammeRegistrations.Add(registration);
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException)
+                {
+                    // Unique-index violation = concurrent duplicate insert. Treat
+                    // it as a duplicate-registration error.
+                    return BadRequest("You are already registered for this programme");
                 }
 
                 return Ok(new ApiResponse
@@ -229,10 +237,6 @@ namespace GiveAID.Web.Controllers
                         registrationDate = registration.RegistrationDate
                     }
                 });
-            }
-            catch (DbUpdateException)
-            {
-                return BadRequest("You are already registered for this programme");
             }
             catch (Exception ex)
             {

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Alert, Button, Modal, Form, Spinner, Badge, InputGroup,
 } from 'react-bootstrap';
-import api from '../../services/api';
+import { faqService } from '../../services';
+import { sanitizeHtml } from '../../utils/safeHtml';
 
 /* ── Validation ────────────────────────────── */
 function validate(data) {
@@ -47,8 +48,8 @@ export default function AdminFaqManager() {
     try {
       setLoading(true);
       // activeOnly = false so admin sees inactive FAQs too
-      const response = await api.get('/faqs');
-      if (response.data.success) setItems(response.data.data || []);
+      const response = await faqService.getAll();
+      if (response.success) setItems(response.data || []);
     } catch (err) {
       setError('Failed to load FAQs.');
     } finally {
@@ -90,9 +91,9 @@ export default function AdminFaqManager() {
         displayOrder: parseInt(form.displayOrder) || 0,
       };
       const response = editing
-        ? await api.put(`/faqs/${editing.faqId}`, payload)
-        : await api.post('/faqs', payload);
-      if (response.data.success) {
+        ? await faqService.update(editing.faqId, payload)
+        : await faqService.create(payload);
+      if (response.success) {
         setSuccess(editing ? 'FAQ updated.' : 'FAQ added.');
         setShowForm(false);
         load();
@@ -107,7 +108,7 @@ export default function AdminFaqManager() {
   const handleDelete = async () => {
     if (!deleteConfirm) return;
     try {
-      await api.delete(`/faqs/${deleteConfirm}`);
+      await faqService.remove(deleteConfirm);
       setSuccess('FAQ deleted.');
     } catch (err) {
       setError('Delete failed.');
@@ -203,8 +204,8 @@ export default function AdminFaqManager() {
                     <div
                       className="faq-admin-a-text"
                       dangerouslySetInnerHTML={{
-                        __html: (item.answer || '').slice(0, 180) +
-                          ((item.answer || '').length > 180 ? '…' : ''),
+                        __html: sanitizeHtml((item.answer || '').slice(0, 180) +
+                          ((item.answer || '').length > 180 ? '…' : '')),
                       }}
                     />
                   </div>

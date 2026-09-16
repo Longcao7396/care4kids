@@ -128,6 +128,12 @@ namespace GiveAID.Web.Controllers
 
                 var userId = JwtHelper.GetUserIdFromToken(Request);
 
+                // SECURITY: CMS Content is rendered with dangerouslySetInnerHTML on
+                // the public site. Sanitize at write time so any malicious payload
+                // (XSS, javascript: URIs, event handlers) is stripped before it
+                // can reach visitors.
+                var safeContent = HtmlSanitizer.Sanitize(request.Content ?? string.Empty);
+
                 var page = new CmsPage
                 {
                     PageKey = key,
@@ -135,7 +141,7 @@ namespace GiveAID.Web.Controllers
                         ? key
                         : request.PageSlug.Trim().ToLowerInvariant(),
                     PageTitle = request.PageTitle.Trim(),
-                    Content = request.Content,
+                    Content = safeContent,
                     MetaDescription = request.MetaDescription,
                     MetaKeywords = request.MetaKeywords,
                     IsActive = true,
@@ -177,7 +183,8 @@ namespace GiveAID.Web.Controllers
                 }
 
                 if (request.PageTitle != null) page.PageTitle = request.PageTitle;
-                if (request.Content != null) page.Content = request.Content;
+                // SECURITY: sanitize content at write time — see HtmlSanitizer for rationale.
+                if (request.Content != null) page.Content = HtmlSanitizer.Sanitize(request.Content);
                 if (request.MetaDescription != null) page.MetaDescription = request.MetaDescription;
                 if (request.MetaKeywords != null) page.MetaKeywords = request.MetaKeywords;
                 if (request.IsInMenu.HasValue) page.IsInMenu = request.IsInMenu.Value;

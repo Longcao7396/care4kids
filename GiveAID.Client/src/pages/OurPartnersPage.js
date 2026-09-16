@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Row, Col, Alert, Spinner, Modal,
 } from 'react-bootstrap';
-import api from '../services/api';
+import { supportersService } from '../services';
 import '../styles/AboutPages.css';
 
 /* ── Helpers ──────────────────────────────────────── */
@@ -266,8 +266,8 @@ function OurPartnersPage() {
       setLoading(true);
       const params = { activeOnly: true };
       if (type) params.type = type;
-      const response = await api.get('/supporters', { params });
-      if (response.data.success) setItems(response.data.data || []);
+      const response = await supportersService.getAll(params);
+      if (response.success) setItems(response.data || []);
     } catch {
       setError('Failed to load partners.');
     } finally {
@@ -277,8 +277,8 @@ function OurPartnersPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await api.get('/supporters/stats');
-      if (response.data.success) setStats(response.data.data);
+      const response = await supportersService.getStats();
+      if (response.success) setStats(response.data);
     } catch { /* non-fatal */ }
   }, []);
 

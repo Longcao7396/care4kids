@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Alert, Spinner } from 'react-bootstrap';
 import { contactService } from '../services';
 import api from '../services/api';
+import { sanitizeHtml } from '../utils/safeHtml';
 import './ContactPage.css';
 
 const ContactPage = () => {
@@ -262,7 +263,7 @@ const ContactPage = () => {
                     <p className="eyebrow">{cmsPage.pageTitle || 'Additional Information'}</p>
                     <div
                       className="cp-cms-content"
-                      dangerouslySetInnerHTML={{ __html: cmsPage.content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(cmsPage.content) }}
                     />
                   </div>
                 )}

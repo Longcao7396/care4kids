@@ -84,26 +84,38 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var all = _context.Organizations.AsQueryable();
-                var active = _context.Organizations.Where(o => o.IsActive);
+                // PERF: previously 6 separate Count() calls (1 + 1 + 5 byType + 1 Sum)
+                // — each was a separate round-trip to SQL Server. Now a single
+                // grouped query gives us every count + the active sum in one
+                // round-trip.
+                var byTypeCounts = _context.Organizations
+                    .Where(o => o.IsActive)
+                    .GroupBy(o => o.OrganizationType)
+                    .Select(g => new { Type = g.Key, Count = g.Count() })
+                    .ToList();
+                var byType = byTypeCounts.ToDictionary(x => x.Type ?? "Other", x => x.Count);
+
+                var totalActive = byTypeCounts.Sum(x => x.Count);
 
                 return Ok(new ApiResponse
                 {
                     Success = true,
                     Data = new
                     {
-                        total = all.Count(),
-                        active = active.Count(),
+                        total = totalActive,
+                        active = totalActive,
                         byType = new
                         {
-                            NGO = all.Count(o => o.OrganizationType == "NGO"),
-                            Partner = all.Count(o => o.OrganizationType == "Partner"),
-                            Supporter = all.Count(o => o.OrganizationType == "Supporter"),
-                            Corporate = all.Count(o => o.OrganizationType == "Corporate"),
-                            Government = all.Count(o => o.OrganizationType == "Government"),
-                            Other = all.Count(o => o.OrganizationType == "Other"),
+                            NGO = byType.TryGetValue("NGO", out var c1) ? c1 : 0,
+                            Partner = byType.TryGetValue("Partner", out var c2) ? c2 : 0,
+                            Supporter = byType.TryGetValue("Supporter", out var c3) ? c3 : 0,
+                            Corporate = byType.TryGetValue("Corporate", out var c4) ? c4 : 0,
+                            Government = byType.TryGetValue("Government", out var c5) ? c5 : 0,
+                            Other = byType.TryGetValue("Other", out var c6) ? c6 : 0,
                         },
-                        totalContribution = active.Sum(o => (decimal?)o.ContributionAmount) ?? 0
+                        totalContribution = _context.Organizations
+                            .Where(o => o.IsActive)
+                            .Sum(o => (decimal?)o.ContributionAmount) ?? 0
                     }
                 });
             }

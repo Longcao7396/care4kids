@@ -24,9 +24,35 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors
+// Response interceptor - normalize PascalCase -> camelCase.
+// IMPORTANT: We must NOT touch keys that are already camelCase — only the
+// first character that is UPPERCASE should be lowercased. Previous version
+// lowercased every first char unconditionally, turning `userId` into
+// `userid` and breaking all frontend destructuring.
+const toCamel = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(toCamel);
+  if (typeof obj !== 'object' || obj instanceof Date || obj instanceof Blob || obj instanceof File) return obj;
+  const out = {};
+  for (const key of Object.keys(obj)) {
+    // Only rewrite keys whose FIRST character is uppercase (i.e. PascalCase).
+    // Already-camelCase keys (userId, fullName) start lowercase and stay as-is.
+    const camel = /^[A-Z]/.test(key)
+      ? key.charAt(0).toLowerCase() + key.slice(1)
+      : key;
+    out[camel] = toCamel(obj[key]);
+  }
+  return out;
+};
+
 api.interceptors.response.use(
   (response) => {
+    // Normalize response.data keys from PascalCase (Success, Data, Message, Errors)
+    // to camelCase (success, data, message, errors) so React code can use the
+    // standard { success, data } shape.
+    if (response && response.data && typeof response.data === 'object') {
+      response.data = toCamel(response.data);
+    }
     return response;
   },
   (error) => {

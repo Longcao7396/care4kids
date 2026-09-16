@@ -22,13 +22,26 @@ namespace GiveAID.Web.Controllers
             _context = new GiveAIDContext();
         }
 
-        // POST: api/contacts  â€” PUBLIC: submit contact form
+        // POST: api/contacts  — PUBLIC: submit contact form
         [HttpPost]
         [Route("")]
         public IHttpActionResult Submit(ContactSubmitRequest request)
         {
             try
             {
+                // SECURITY: rate-limit public submissions per IP to deter spam
+                // abuse. 5 submits per IP per 60s is generous for humans but
+                // breaks naive bots.
+                if (RateLimiter.IsLimited("contacts-submit", maxRequests: 5, windowSeconds: 60))
+                {
+                        return Content((System.Net.HttpStatusCode)429,
+                        new ApiResponse
+                        {
+                            Success = false,
+                            Message = "Too many submissions. Please wait a minute and try again."
+                        });
+                }
+
                 if (request == null ||
                     string.IsNullOrWhiteSpace(request.Name) ||
                     string.IsNullOrWhiteSpace(request.Email) ||

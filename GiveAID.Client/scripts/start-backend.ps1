@@ -95,6 +95,14 @@ if ($iisExpress) {
     # Remove any stale IIS_USER_HOME so /userhome is not confused with /config
     $null = $psi.EnvironmentVariables.Remove('IIS_USER_HOME')
 
+    # SECURITY: Set the JWT secret as a process env var so it doesn't need to be
+    # committed to Web.config. JwtSettings reads GIVEAID_JWT_SECRET first.
+    # Override GIVEAID_JWT_SECRET in CI/CD to rotate the secret per environment.
+    $psi.EnvironmentVariables['GIVEAID_JWT_SECRET'] = $env:GIVEAID_JWT_SECRET
+    if ([string]::IsNullOrWhiteSpace($env:GIVEAID_JWT_SECRET)) {
+        Write-Host "[start-backend] WARNING: GIVEAID_JWT_SECRET not set; falling back to Web.config JwtSecret." -ForegroundColor Yellow
+    }
+
     $proc = [System.Diagnostics.Process]::Start($psi)
     Set-Content -Path $pidFile -Value $proc.Id
     Write-Host "[start-backend] IIS Express started, PID $($proc.Id), logging to $logFile" -ForegroundColor Green

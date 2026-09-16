@@ -74,16 +74,27 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var organizations = _context.Organizations.Where(o => o.IsActive &&
-                    (o.OrganizationType == "Supporter" ||
-                     o.OrganizationType == "Partner" ||
-                     o.OrganizationType == "NGO"));
+                // PERF: previously 4 separate Count() + 1 Sum = 5 round-trips.
+                // Now a single grouped query gives every count + sum in one
+                // round-trip.
+                var grouped = _context.Organizations
+                    .Where(o => o.IsActive &&
+                        (o.OrganizationType == "Supporter" ||
+                         o.OrganizationType == "Partner" ||
+                         o.OrganizationType == "NGO"))
+                    .GroupBy(o => o.OrganizationType)
+                    .Select(g => new {
+                        Type = g.Key,
+                        Count = g.Count(),
+                        Sum = g.Sum(o => (decimal?)o.ContributionAmount) ?? 0
+                    })
+                    .ToList();
 
-                var total = organizations.Count();
-                var supporters = organizations.Count(o => o.OrganizationType == "Supporter");
-                var partners = organizations.Count(o => o.OrganizationType == "Partner");
-                var ngos = organizations.Count(o => o.OrganizationType == "NGO");
-                var totalContribution = organizations.Sum(o => (decimal?)o.ContributionAmount) ?? 0;
+                int total = grouped.Sum(x => x.Count);
+                int supporters = grouped.FirstOrDefault(g => g.Type == "Supporter")?.Count ?? 0;
+                int partners = grouped.FirstOrDefault(g => g.Type == "Partner")?.Count ?? 0;
+                int ngos = grouped.FirstOrDefault(g => g.Type == "NGO")?.Count ?? 0;
+                decimal totalContribution = grouped.Sum(x => x.Sum);
 
                 return Ok(new ApiResponse
                 {

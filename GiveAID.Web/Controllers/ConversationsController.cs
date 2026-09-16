@@ -195,22 +195,32 @@ namespace GiveAID.Web.Controllers
                 if (!string.IsNullOrEmpty(status))
                     query = query.Where(c => c.Status == status);
 
-                var items = query
+                var conversations = query
                     .OrderByDescending(c => c.UpdatedAt)
-                    .ToList()
-                    .Select(c => new
-                    {
-                        conversationId = c.ConversationId,
-                        subject = c.Subject,
-                        conversationType = c.ConversationType,
-                        status = c.Status,
-                        priority = c.Priority,
-                        messageCount = _context.ConversationMessages.Count(m => m.ConversationId == c.ConversationId),
-                        lastMessageAt = c.UpdatedAt,
-                        createdAt = c.CreatedAt,
-                        closedAt = c.ClosedAt
-                    })
                     .ToList();
+
+                // PERF: pre-compute message counts in a single grouped query
+                // instead of one Count() per row (which was N+1). For 50
+                // conversations this drops 50 round-trips down to 1.
+                var conversationIds = conversations.Select(c => c.ConversationId).ToList();
+                var messageCounts = _context.ConversationMessages
+                    .Where(m => conversationIds.Contains(m.ConversationId))
+                    .GroupBy(m => m.ConversationId)
+                    .Select(g => new { ConversationId = g.Key, Count = g.Count() })
+                    .ToDictionary(x => x.ConversationId, x => x.Count);
+
+                var items = conversations.Select(c => new
+                {
+                    conversationId = c.ConversationId,
+                    subject = c.Subject,
+                    conversationType = c.ConversationType,
+                    status = c.Status,
+                    priority = c.Priority,
+                    messageCount = messageCounts.ContainsKey(c.ConversationId) ? messageCounts[c.ConversationId] : 0,
+                    lastMessageAt = c.UpdatedAt,
+                    createdAt = c.CreatedAt,
+                    closedAt = c.ClosedAt
+                }).ToList();
 
                 return Ok(new ApiResponse { Success = true, Data = new { items, total = items.Count } });
             }
@@ -300,28 +310,49 @@ namespace GiveAID.Web.Controllers
                     query = query.Where(c => c.ConversationType == type);
 
                 var total = query.Count();
-                var items = query
+                var conversations = query
                     .OrderByDescending(c => c.UpdatedAt)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .ToList()
-                    .Select(c => new
-                    {
-                        conversationId = c.ConversationId,
-                        userId = c.UserId,
-                        userName = c.UserId.HasValue ? ResolveSenderName(c.UserId.Value) : "—",
-                        subject = c.Subject,
-                        conversationType = c.ConversationType,
-                        status = c.Status,
-                        priority = c.Priority,
-                        assignedTo = c.AssignedTo,
-                        assignedToName = c.AssignedTo.HasValue ? ResolveSenderName(c.AssignedTo.Value) : null,
-                        messageCount = _context.ConversationMessages.Count(m => m.ConversationId == c.ConversationId),
-                        createdAt = c.CreatedAt,
-                        updatedAt = c.UpdatedAt,
-                        closedAt = c.ClosedAt
-                    })
                     .ToList();
+
+                // PERF: pre-compute message counts + sender names in 2 grouped
+                // queries instead of one Count() + two Find() per row.
+                var conversationIds = conversations.Select(c => c.ConversationId).ToList();
+                var userIds = conversations
+                    .SelectMany(c => new[] { c.UserId ?? 0, c.AssignedTo ?? 0 })
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+
+                var messageCounts = _context.ConversationMessages
+                    .Where(m => conversationIds.Contains(m.ConversationId))
+                    .GroupBy(m => m.ConversationId)
+                    .Select(g => new { ConversationId = g.Key, Count = g.Count() })
+                    .ToDictionary(x => x.ConversationId, x => x.Count);
+
+                var userNames = _context.Users
+                    .Where(u => userIds.Contains(u.UserId))
+                    .ToDictionary(u => u.UserId, u => u.FullName);
+
+                var items = conversations.Select(c => new
+                {
+                    conversationId = c.ConversationId,
+                    userId = c.UserId,
+                    userName = c.UserId.HasValue && userNames.ContainsKey(c.UserId.Value)
+                        ? userNames[c.UserId.Value] : "—",
+                    subject = c.Subject,
+                    conversationType = c.ConversationType,
+                    status = c.Status,
+                    priority = c.Priority,
+                    assignedTo = c.AssignedTo,
+                    assignedToName = c.AssignedTo.HasValue && userNames.ContainsKey(c.AssignedTo.Value)
+                        ? userNames[c.AssignedTo.Value] : null,
+                    messageCount = messageCounts.ContainsKey(c.ConversationId) ? messageCounts[c.ConversationId] : 0,
+                    createdAt = c.CreatedAt,
+                    updatedAt = c.UpdatedAt,
+                    closedAt = c.ClosedAt
+                }).ToList();
 
                 return Ok(new ApiResponse
                 {

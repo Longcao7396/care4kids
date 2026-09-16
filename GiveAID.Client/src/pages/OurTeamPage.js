@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Form, Alert, Spinner } from 'react-bootstrap';
 import api from '../services/api';
+import { sanitizeHtml } from '../utils/safeHtml';
 import '../styles/AboutPages.css';
 
 const DEPARTMENTS = [
@@ -99,7 +100,7 @@ function OurTeamPage() {
             <Col lg={10} className="mx-auto">
               <div
                 className="about-admin-card"
-                dangerouslySetInnerHTML={{ __html: cmsPage.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(cmsPage.content) }}
               />
             </Col>
           </Row>

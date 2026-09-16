@@ -12,9 +12,14 @@ namespace GiveAID.Web.Controllers
     /// for sending. The actual email send is delegated to <see cref="EmailService"/>
     /// which currently logs the message (mock) — once a real SMTP / provider
     /// is configured, only that helper needs to change.
+    ///
+    /// SECURITY: [JwtAuthorize] is applied per-method rather than at the class
+    /// level because one endpoint (accept-by-token) MUST be public — the email
+    /// recipient clicks the invite link without being logged in. Per-method
+    /// [JwtAuthorize] lets us mark just that one action [AllowAnonymous] while
+    /// keeping the rest of the surface area authenticated.
     /// </summary>
     [RoutePrefix("api/invitations")]
-    [JwtAuthorize]
     public class InvitationsController : ApiController
     {
         private readonly GiveAIDContext _context;
@@ -27,6 +32,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/invitations  (any authenticated user)
         [HttpPost]
         [Route("")]
+        [JwtAuthorize]
         public IHttpActionResult Send(InvitationRequest request)
         {
             try
@@ -112,6 +118,7 @@ namespace GiveAID.Web.Controllers
         // GET: api/invitations/mine — current user's sent invitations
         [HttpGet]
         [Route("mine")]
+        [JwtAuthorize]
         public IHttpActionResult GetMine()
         {
             try
@@ -244,7 +251,7 @@ namespace GiveAID.Web.Controllers
                 if (inv.Status == "Registered") return BadRequest("Cannot cancel a registered invitation.");
 
                 inv.Status = "Cancelled";
-                inv.UpdatedAtSafe();
+                inv.UpdatedAt = DateTime.UtcNow;
                 _context.SaveChanges();
 
                 return Ok(new ApiResponse
@@ -274,7 +281,7 @@ namespace GiveAID.Web.Controllers
 
                 inv.Status = "Registered";
                 inv.RegisteredAt = DateTime.Now;
-                inv.UpdatedAtSafe();
+                inv.UpdatedAt = DateTime.UtcNow;
                 _context.SaveChanges();
 
                 return Ok(new ApiResponse { Success = true, Message = "Invitation accepted." });
@@ -303,7 +310,19 @@ namespace GiveAID.Web.Controllers
 
         private static string GenerateToken()
         {
-            return Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N").Substring(0, 8);
+            // SECURITY: Previously used a concatenation of two Guids. Guid is
+            // not a cryptographically-secure random source; collision probability
+            // is non-negligible at scale. Use RandomNumberGenerator to produce
+            // 32 bytes (256 bits) of entropy and base64url-encode.
+            var bytes = new byte[32];
+            using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(bytes);
+            }
+            return Convert.ToBase64String(bytes)
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
         }
 
         protected override void Dispose(bool disposing)

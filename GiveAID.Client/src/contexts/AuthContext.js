@@ -61,13 +61,21 @@ export const AuthProvider = ({ children }) => {
     return Promise.resolve(storedUser);
   }, []);
 
-  const isAdmin = useCallback(() => {
-    return user && (user.role === 'Admin' || user.role === 'SuperAdmin');
-  }, [user]);
-
-  const isSuperAdmin = useCallback(() => {
-    return user && user.role === 'SuperAdmin';
-  }, [user]);
+  // SECURITY/CONSISTENCY: isAuthenticated/isAdmin/isSuperAdmin are all boolean
+  // values now (previously isAdmin/isSuperAdmin were functions, isAuthenticated
+  // was a boolean). Mixing callable and non-callable variants caused ProtectedRoute
+  // to render different things depending on which it consumed. Standardising on
+  // plain booleans makes call sites read consistently:
+  //
+  //   {isAdmin && <AdminNav />}                // no parens
+  //   if (isAdmin) { ... }                     // no parens
+  //   (vs. isAdmin() before, which would silently always be truthy if you forgot parens)
+  //
+  // If you previously wrote `isAdmin()` or `isAuthenticated()` with parens,
+  // remove the parens — `isAdmin && ...` and `if (isAdmin) {...}` are now correct.
+  const isAuthenticated = !!user;
+  const isAdmin = !!(user && (user.role === 'Admin' || user.role === 'SuperAdmin'));
+  const isSuperAdmin = !!(user && user.role === 'SuperAdmin');
 
   const value = useMemo(() => ({
     user,
@@ -76,10 +84,10 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     refreshUser,
-    isAuthenticated: !!user,
+    isAuthenticated,
     isAdmin,
     isSuperAdmin,
-  }), [user, loading, login, register, logout, refreshUser, isAdmin, isSuperAdmin]);
+  }), [user, loading, login, register, logout, refreshUser, isAuthenticated, isAdmin, isSuperAdmin]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

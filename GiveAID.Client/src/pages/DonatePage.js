@@ -198,6 +198,27 @@ const DonatePage = () => {
     }
   }, [formData.causeId, causeTree, causes]);
 
+  // SECURITY/PCI-DSS: zero out sensitive form state (card number, CVV, expiry,
+  // amount) when the component unmounts. The state lives in React memory; if
+  // the user navigates away mid-form, those values would otherwise stay in JS
+  // heap until garbage collection. Wiping them now shrinks the window where a
+  // browser extension or XSS payload could read them.
+  //
+  // Only clears when the user is NOT staying on the form (i.e. on unmount).
+  useEffect(() => {
+    return () => {
+      setFormData((prev) => ({
+        ...prev,
+        cardNumber: '',
+        cardHolderName: '',
+        expiryDate: '',
+        cvv: '',
+        amount: '',
+      }));
+      setCardErrors({});
+    };
+  }, []);
+
   const loadCampaignsByCause = async (causeId) => {
     try {
       const r = await api.get('/campaigns', { params: { status: 'Active', causeId } });

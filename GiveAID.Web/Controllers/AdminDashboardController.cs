@@ -83,8 +83,12 @@ namespace GiveAID.Web.Controllers
                         causeName = c.Cause.CauseName,
                         goalAmount = c.GoalAmount,
                         raisedAmount = c.RaisedAmount,
+                        // Cast to (double?) to force SQL floating-point division —
+                        // otherwise (decimal / decimal) returns integer truncation
+                        // when goal < raised, showing "0%" for partially-funded
+                        // campaigns. We round to 0.1 precision on the client.
                         percentageReached = c.GoalAmount > 0
-                            ? (c.RaisedAmount / c.GoalAmount) * 100
+                            ? Math.Round((double)((c.RaisedAmount / c.GoalAmount) * 100m), 1)
                             : 0,
                         donorCount = 0
                     })

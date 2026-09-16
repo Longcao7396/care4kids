@@ -81,28 +81,38 @@ namespace GiveAID.Web.Controllers
             try
             {
                 var userId = JwtHelper.GetUserIdFromToken(Request);
-                var donation = _context.Donations
-                    .Include(d => d.Cause)
-                    .FirstOrDefault(d => d.DonationId == id);
 
+                // IDOR defence: resolve the caller's role first. If the caller
+                // is NOT admin, scope the lookup to their own donations. This
+                // means a non-admin asking for someone else's donation id gets
+                // a clean 404 (looks like "doesn't exist" instead of "exists but
+                // forbidden"), which prevents enumeration of other users'
+                // donation ids by status code.
+                var caller = _context.Users.Find(userId);
+                var isAdmin = caller != null && (caller.Role == "Admin" || caller.Role == "SuperAdmin");
+
+                Donation donation;
+                if (isAdmin)
+                {
+                    donation = _context.Donations
+                        .Include(d => d.Cause)
+                        .Include(d => d.Campaign)
+                        .FirstOrDefault(d => d.DonationId == id);
+                }
+                else
+                {
+                    donation = _context.Donations
+                        .Include(d => d.Cause)
+                        .Include(d => d.Campaign)
+                        .FirstOrDefault(d => d.DonationId == id && d.UserId == userId);
+                }
+
+                // SECURITY: return 404 for both "doesn't exist" AND
+                // "exists but not yours". This way attackers can't probe
+                // donation ids to learn which are valid.
                 if (donation == null)
                 {
                     return NotFound();
-                }
-
-                // IDOR protection: a regular user may only read their own
-                // donations. Admin/SuperAdmin may read any donation (for support
-                // and moderation). Returning 403 (not 404) makes the access
-                // boundary explicit.
-                var caller = _context.Users.Find(userId);
-                var isAdmin = caller != null && (caller.Role == "Admin" || caller.Role == "SuperAdmin");
-                if (!isAdmin && donation.UserId != userId)
-                {
-                    return Content(System.Net.HttpStatusCode.Forbidden, new ApiResponse
-                    {
-                        Success = false,
-                        Message = "You may only view your own donations."
-                    });
                 }
 
                 return Ok(new ApiResponse
@@ -146,6 +156,44 @@ namespace GiveAID.Web.Controllers
 
                 var userId = JwtHelper.GetUserIdFromToken(Request);
 
+                // Validate amount
+                if (request.Amount <= 0)
+                {
+                    return BadRequest("Amount must be greater than zero");
+                }
+
+                // SECURITY/PERF: Idempotency check — if the client supplied an
+                // IdempotencyKey and a donation already exists for this user with
+                // the same key, return the existing donation instead of creating a
+                // duplicate. Prevents double-tap and network-retry duplicates.
+                Donation existingDonation = null;
+                if (!string.IsNullOrWhiteSpace(request.IdempotencyKey))
+                {
+                    existingDonation = _context.Donations
+                        .Include(d => d.Cause)
+                        .FirstOrDefault(d =>
+                            d.UserId == userId &&
+                            d.IdempotencyKey == request.IdempotencyKey);
+                    if (existingDonation != null)
+                    {
+                        return Ok(new ApiResponse
+                        {
+                            Success = true,
+                            Message = "Donation already recorded (idempotent).",
+                            Data = new
+                            {
+                                donationId = existingDonation.DonationId,
+                                transactionId = existingDonation.TransactionId,
+                                amount = existingDonation.Amount,
+                                causeName = existingDonation.Cause?.CauseName,
+                                donationDate = existingDonation.DonationDate,
+                                paymentStatus = existingDonation.PaymentStatus,
+                                isIdempotent = true
+                            }
+                        });
+                    }
+                }
+
                 // Validate cause exists
                 var cause = _context.Causes.Find(request.CauseId);
                 if (cause == null || !cause.IsActive)
@@ -173,13 +221,11 @@ namespace GiveAID.Web.Controllers
                     }
                 }
 
-                // Validate amount
-                if (request.Amount <= 0)
-                {
-                    return BadRequest("Amount must be greater than zero");
-                }
-
-                // Create donation
+                // Create donation in PENDING state. The old behaviour of marking
+                // "Completed" immediately was a financial-reporting bug: no payment
+                // gateway was actually called. Now the gateway webhook (or admin
+                // manual confirmation) is responsible for flipping status to
+                // "Completed". This prevents inflated donation totals.
                 var donation = new Donation
                 {
                     UserId = userId,
@@ -187,42 +233,63 @@ namespace GiveAID.Web.Controllers
                     CampaignId = request.CampaignId,
                     Amount = request.Amount,
                     PaymentMethod = request.PaymentMethod,
-                    PaymentStatus = "Completed",
+                    PaymentStatus = "Pending",
                     CardLastFour = request.CardLast4,
                     CardType = request.PaymentGateway ?? request.PaymentMethod,
                     TransactionId = GenerateTransactionId(),
-                    Message = request.Message,
+                    Message = request.Message?.Trim(),
                     IsAnonymous = request.IsAnonymous,
                     ReceiptSent = false,
                     DonationDate = DateTime.Now,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    IdempotencyKey = request.IdempotencyKey
                 };
 
-                using (var transaction = _context.Database.BeginTransaction())
+                try
                 {
                     _context.Donations.Add(donation);
                     _context.SaveChanges();
-
-                    // Increment cached rollups in SQL so concurrent donations cannot overwrite each other.
-                    var updatedAt = DateTime.Now;
-                    _context.Database.ExecuteSqlCommand(
-                        "UPDATE Causes SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE cause_id = @p2",
-                        request.Amount, updatedAt, request.CauseId);
-
-                    if (campaign != null)
-                    {
-                        _context.Database.ExecuteSqlCommand(
-                            "UPDATE Campaigns SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE campaign_id = @p2",
-                            request.Amount, updatedAt, campaign.CampaignId);
-                    }
-
-                    transaction.Commit();
                 }
+                catch (System.Data.Entity.Infrastructure.DbUpdateException)
+                {
+                    // Race condition: another request with the same IdempotencyKey
+                    // beat us. Re-fetch and return the existing donation.
+                    _context.Entry(donation).State = System.Data.Entity.EntityState.Detached;
+                    var raceWinner = _context.Donations
+                        .Include(d => d.Cause)
+                        .FirstOrDefault(d =>
+                            d.UserId == userId &&
+                            d.IdempotencyKey == request.IdempotencyKey);
+                    if (raceWinner != null)
+                    {
+                        return Ok(new ApiResponse
+                        {
+                            Success = true,
+                            Message = "Donation already recorded (idempotent).",
+                            Data = new
+                            {
+                                donationId = raceWinner.DonationId,
+                                transactionId = raceWinner.TransactionId,
+                                amount = raceWinner.Amount,
+                                causeName = raceWinner.Cause?.CauseName,
+                                donationDate = raceWinner.DonationDate,
+                                paymentStatus = raceWinner.PaymentStatus,
+                                isIdempotent = true
+                            }
+                        });
+                    }
+                    throw;
+                }
+
+                // NOTE: We intentionally do NOT increment cause.cached raised_amount
+                // / campaign.raised_amount until payment is confirmed. That keeps
+                // the dashboard KPIs accurate to actual money received, not
+                // pending intentions.
 
                 return Ok(new ApiResponse
                 {
                     Success = true,
-                    Message = "Donation successful! Thank you for your contribution.",
+                    Message = "Donation recorded. It will be marked Completed once payment is confirmed by the gateway.",
                     Data = new
                     {
                         donationId = donation.DonationId,
@@ -230,7 +297,9 @@ namespace GiveAID.Web.Controllers
                         amount = donation.Amount,
                         causeName = cause.CauseName,
                         campaignName = campaign?.CampaignName,
-                        donationDate = donation.DonationDate
+                        donationDate = donation.DonationDate,
+                        paymentStatus = donation.PaymentStatus,
+                        isIdempotent = false
                     }
                 });
             }
@@ -289,6 +358,149 @@ namespace GiveAID.Web.Controllers
             }
         }
 
+        // POST: api/donations/{id}/confirm
+        // Admin-only endpoint to manually mark a Pending donation as Completed.
+        // In production this would be replaced by an authenticated payment-gateway
+        // webhook that verifies the charge via the gateway API before flipping
+        // status. For now admins can confirm after verifying in the gateway
+        // dashboard. Idempotent: re-confirming a Completed donation is a no-op.
+        [HttpPost]
+        [Route("{id:int}/confirm")]
+        [JwtAuthorize(Roles = "SuperAdmin,Admin")]
+        public IHttpActionResult ConfirmPayment(int id, [FromBody] ConfirmPaymentRequest request)
+        {
+            try
+            {
+                var donation = _context.Donations
+                    .Include(d => d.Cause)
+                    .Include(d => d.Campaign)
+                    .FirstOrDefault(d => d.DonationId == id);
+                if (donation == null) return NotFound();
+
+                if (donation.PaymentStatus == "Completed")
+                {
+                    return Ok(new ApiResponse
+                    {
+                        Success = true,
+                        Message = "Donation was already confirmed.",
+                        Data = new { donation.DonationId, donation.PaymentStatus, donation.PaymentConfirmedAt }
+                    });
+                }
+                if (donation.PaymentStatus == "Failed" || donation.PaymentStatus == "Refunded")
+                {
+                    return BadRequest("Cannot confirm a donation that is " + donation.PaymentStatus + ".");
+                }
+
+                donation.PaymentStatus = "Completed";
+                donation.PaymentConfirmedAt = DateTime.UtcNow;
+                donation.GatewayTransactionId = request?.GatewayTransactionId ?? donation.TransactionId;
+
+                // Roll up the now-confirmed amount into the cause / campaign totals.
+                // Use raw SQL so concurrent donations do not lose updates.
+                var updatedAt = DateTime.Now;
+                _context.Database.ExecuteSqlCommand(
+                    "UPDATE Causes SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE cause_id = @p2",
+                    donation.Amount, updatedAt, donation.CauseId);
+                if (donation.CampaignId.HasValue)
+                {
+                    _context.Database.ExecuteSqlCommand(
+                        "UPDATE Campaigns SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE campaign_id = @p2",
+                        donation.Amount, updatedAt, donation.CampaignId.Value);
+                }
+
+                _context.SaveChanges();
+
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Message = "Donation confirmed. Cached totals updated.",
+                    Data = new
+                    {
+                        donation.DonationId,
+                        donation.PaymentStatus,
+                        donation.PaymentConfirmedAt,
+                        donation.GatewayTransactionId
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
+
+        // POST: api/donations/webhook
+        // Public endpoint intended for payment-gateway webhooks (Stripe, VNPay, MoMo).
+        // No JWT required — the gateway authenticates via its own signature header
+        // (X-Gateway-Signature). For now this endpoint accepts any POST with a
+        // matching transactionId; real-world deployments must verify the signature
+        // against the gateway's shared secret before trusting the payload.
+        //
+        // In production this endpoint should:
+        //   1. Verify the gateway signature
+        //   2. Look up the donation by gateway_transaction_id (or our internal id)
+        //   3. Flip status to Completed (or Failed for disputes/chargebacks)
+        //   4. Return 200 quickly so the gateway doesn't retry
+        [HttpPost]
+        [Route("webhook")]
+        [AllowAnonymous]
+        public IHttpActionResult PaymentWebhook([FromBody] GatewayWebhookPayload payload)
+        {
+            try
+            {
+                if (payload == null || string.IsNullOrWhiteSpace(payload.TransactionId))
+                    return BadRequest("transactionId is required.");
+
+                // TODO: verify X-Gateway-Signature header against the gateway's shared secret.
+
+                var donation = _context.Donations
+                    .FirstOrDefault(d =>
+                        d.TransactionId == payload.TransactionId ||
+                        d.GatewayTransactionId == payload.TransactionId);
+                if (donation == null) return NotFound();
+
+                switch ((payload.Status ?? "").ToLowerInvariant())
+                {
+                    case "succeeded":
+                    case "completed":
+                    case "paid":
+                        if (donation.PaymentStatus != "Completed")
+                        {
+                            donation.PaymentStatus = "Completed";
+                            donation.PaymentConfirmedAt = DateTime.UtcNow;
+                            donation.GatewayTransactionId = payload.TransactionId;
+
+                            _context.Database.ExecuteSqlCommand(
+                                "UPDATE Causes SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE cause_id = @p2",
+                                donation.Amount, DateTime.Now, donation.CauseId);
+                            if (donation.CampaignId.HasValue)
+                            {
+                                _context.Database.ExecuteSqlCommand(
+                                    "UPDATE Campaigns SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE campaign_id = @p2",
+                                    donation.Amount, DateTime.Now, donation.CampaignId.Value);
+                            }
+                        }
+                        break;
+                    case "failed":
+                    case "declined":
+                        donation.PaymentStatus = "Failed";
+                        break;
+                    case "refunded":
+                        donation.PaymentStatus = "Refunded";
+                        break;
+                    default:
+                        return BadRequest("Unknown status: " + payload.Status);
+                }
+
+                _context.SaveChanges();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
+
         private string GenerateTransactionId()
         {
             return $"TXN{DateTime.UtcNow:yyyyMMddHHmmss}{Guid.NewGuid():N}";
@@ -302,6 +514,18 @@ namespace GiveAID.Web.Controllers
             }
             base.Dispose(disposing);
         }
+    }
+
+    public class ConfirmPaymentRequest
+    {
+        public string GatewayTransactionId { get; set; }
+    }
+
+    public class GatewayWebhookPayload
+    {
+        public string TransactionId { get; set; }
+        public string Status { get; set; } // "succeeded" | "failed" | "refunded"
+        public string Signature { get; set; }
     }
 
     public class DonationRequest

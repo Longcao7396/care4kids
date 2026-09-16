@@ -116,9 +116,13 @@ namespace GiveAID.Web.Controllers
                     return NotFound();
                 }
 
-                // Increment view count
-                faq.ViewCount++;
-                _context.SaveChanges();
+                // SECURITY/PERF: increment view_count atomically with raw SQL
+                // so concurrent viewers can't lose updates (the old read-modify-
+                // -write path had a race condition under load). We don't read
+                // the new value back — the response only needs the FAQ payload.
+                _context.Database.ExecuteSqlCommand(
+                    "UPDATE Faqs SET view_count = COALESCE(view_count, 0) + 1 WHERE faq_id = @p0",
+                    id);
 
                 return Ok(new ApiResponse
                 {
@@ -160,6 +164,8 @@ namespace GiveAID.Web.Controllers
                 faq.UpdatedAt = DateTime.Now;
                 faq.ViewCount = 0;
                 faq.IsActive = true;
+                // SECURITY: sanitize the answer field — FAQ answer renders as HTML.
+                faq.Answer = HtmlSanitizer.Sanitize(faq.Answer ?? string.Empty);
 
                 _context.Faqs.Add(faq);
                 _context.SaveChanges();
@@ -197,7 +203,9 @@ namespace GiveAID.Web.Controllers
                 }
 
                 existing.Question = faq.Question;
-                existing.Answer = faq.Answer;
+                // SECURITY: FAQ answers render with dangerouslySetInnerHTML on the
+                // public Help Centre page. Sanitize at write time to neutralise XSS.
+                existing.Answer = HtmlSanitizer.Sanitize(faq.Answer ?? string.Empty);
                 existing.Category = faq.Category;
                 existing.DisplayOrder = faq.DisplayOrder;
                 existing.IsActive = faq.IsActive;

@@ -8,22 +8,23 @@ const HomePage = () => {
   const [featuredCampaigns, setFeaturedCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
+useEffect(() => {
+  let cancelled = false;
   const loadData = async () => {
     try {
       const campaignsRes = await api.get('/campaigns/featured', { params: { count: 3 } });
-      if (campaignsRes.data.success) {
+      if (!cancelled && campaignsRes.data.success) {
         setFeaturedCampaigns(campaignsRes.data.data || []);
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      if (!cancelled) console.error('Error loading data:', error);
     } finally {
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
   };
+  loadData();
+  return () => { cancelled = true; };
+}, []);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
