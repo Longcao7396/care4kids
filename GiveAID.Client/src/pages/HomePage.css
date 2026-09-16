@@ -535,6 +535,24 @@
   position: absolute;
   top: var(--space-3);
   left: var(--space-3);
+  z-index: 1;
+}
+
+/* Badge sits on top of an image → needs solid bg + white text for contrast */
+.c4k-campaign-image-overlay .badge {
+  background-color: var(--c4k-teal-dark);
+  color: var(--c4k-white);
+  border: none;
+  padding: 6px 12px;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+
+.c4k-campaign-image-overlay .badge.badge-coral {
+  background-color: var(--c4k-coral);
+  color: var(--c4k-white);
 }
 
 .c4k-campaign-body {
@@ -719,8 +737,8 @@
 }
 
 .c4k-story-attribution {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
   margin-bottom: var(--space-6);
 }
 
