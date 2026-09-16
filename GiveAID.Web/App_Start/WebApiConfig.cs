@@ -1,3 +1,4 @@
+using System.Configuration;
 using System.Web.Http;
 using System.Web.Http.Cors;
 
@@ -7,11 +8,19 @@ namespace GiveAID.Web
     {
         public static void Register(HttpConfiguration config)
         {
-            // Enable CORS - allow all common local dev ports
-            // Must list specific origins (cannot use "*") because axios sends
-            // withCredentials=true which forbids wildcard Access-Control-Allow-Origin.
+            // CORS: prefer the comma-separated `Cors:AllowedOrigins` appSetting
+            // (production deployments). Fall back to the dev allowlist so the
+            // project still runs out of the box. Must list specific origins
+            // (cannot use "*") because axios sends withCredentials=true which
+            // forbids wildcard Access-Control-Allow-Origin.
+            var allowedOrigins = ConfigurationManager.AppSettings["Cors:AllowedOrigins"];
+            if (string.IsNullOrWhiteSpace(allowedOrigins))
+            {
+                allowedOrigins = "http://localhost:3000, http://localhost:3001, http://localhost:3002, http://localhost:61508, http://localhost:44300, https://localhost:44300";
+            }
+
             var cors = new EnableCorsAttribute(
-                origins: "http://localhost:3000, http://localhost:3001, http://localhost:3002, http://localhost:61508, http://localhost:44300, https://localhost:44300",
+                origins: allowedOrigins,
                 headers: "*",
                 methods: "*");
             cors.SupportsCredentials = true;

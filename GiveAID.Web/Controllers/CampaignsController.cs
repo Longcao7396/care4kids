@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
@@ -16,7 +16,7 @@ namespace GiveAID.Web.Controllers
         private GiveAIDContext db = new GiveAIDContext();
 
         // GET: api/campaigns
-        // Unified list â€” supports donation campaigns AND merged programme-style events.
+        // Unified list Ã¢â¬â supports donation campaigns AND merged programme-style events.
         [HttpGet]
         [Route("")]
         public IHttpActionResult GetAll(
@@ -147,10 +147,10 @@ namespace GiveAID.Web.Controllers
 
                 var donationBreakdown = db.Donations
                     .Where(d => d.CampaignId == id && d.PaymentStatus == "Completed")
-                    .GroupBy(d => d.Amount >= 5000000 ? "5,000,000+ VNÄ" :
-                                  d.Amount >= 1000000 ? "1,000,000 - 4,999,999 VNÄ" :
-                                  d.Amount >= 500000 ? "500,000 - 999,999 VNÄ" :
-                                  d.Amount >= 100000 ? "100,000 - 499,999 VNÄ" : "< 100,000 VNÄ")
+                    .GroupBy(d => d.Amount >= 5000000 ? "5,000,000+ VND" :
+                                  d.Amount >= 1000000 ? "1,000,000 - 4,999,999 VND" :
+                                  d.Amount >= 500000 ? "500,000 - 999,999 VND" :
+                                  d.Amount >= 100000 ? "100,000 - 499,999 VND" : "< 100,000 VND")
                     .Select(g => new CampaignDonationBreakdown
                     {
                         range = g.Key,
@@ -536,7 +536,7 @@ namespace GiveAID.Web.Controllers
             }
         }
 
-        // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬ Helpers Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬Ã¢ââ¬
 
         // Returns a unified shape that the frontend can render for both
         // donation campaigns and event-style (registration-based) campaigns.
@@ -596,7 +596,7 @@ namespace GiveAID.Web.Controllers
                         .Select(o => o.OrganizationName).FirstOrDefault()
                     : null,
 
-                // Convenience discriminator for frontend â€” 'donation' vs 'event'
+                // Convenience discriminator for frontend Ã¢â¬â 'donation' vs 'event'
                 campaignKind = c.RegistrationRequired ? "event" : "donation"
             };
         }

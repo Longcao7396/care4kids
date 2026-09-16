@@ -13,7 +13,6 @@ const ContactPage = () => {
     message: ''
   });
   const [cmsPage, setCmsPage] = useState(null);
-  const [cmsLoading, setCmsLoading] = useState(true);
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +28,9 @@ const ContactPage = () => {
       } catch {
         // Non-fatal
       } finally {
-        if (!cancelled) setCmsLoading(false);
+        if (!cancelled) {
+          // intentionally no UI feedback for CMS load; page falls back to defaults
+        }
       }
     })();
     return () => { cancelled = true; };

@@ -1,21 +1,54 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Collapse, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { causesService } from '../services';
+import './CausesPage.css';
 
+/**
+ * CausesPage
+ *
+ * Renders the 2-level cause taxonomy from the backend:
+ *   - Top-level causes (e.g. "Giáo dục cho trẻ em")
+ *     - Sub-causes (e.g. "Mua sách vở, đồng phục, dụng cụ học tập")
+ *
+ * Sub-causes are revealed via Bootstrap Collapse so users can either donate
+ * to the whole category (top-level) or pick a specific sub-item that maps
+ * to one of the items in the Care4Kids brief.
+ */
 const CausesPage = () => {
-  const [causes, setCauses] = useState([]);
+  const [tree, setTree] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState({}); // causeId -> bool
 
   useEffect(() => {
-    loadCauses();
+    loadTree();
   }, []);
 
-  const loadCauses = async () => {
+  const loadTree = async () => {
     try {
-      const response = await causesService.getAll(true);
+      // New tree endpoint returns [{ parent, subCauses: [...] }, ...]
+      const response = await causesService.getTree(true);
       if (response.success) {
-        setCauses(response.data);
+        setTree(response.data || []);
+        // Expand all parents by default so the user immediately sees the brief
+        const initial = {};
+        (response.data || []).forEach((node) => {
+          if (node.subCauses?.length) initial[node.parent.causeId] = true;
+        });
+        setExpanded(initial);
+      } else {
+        // Backwards compatibility: older backends may only expose /api/causes
+        const flat = await causesService.getAll(true);
+        if (flat.success) {
+          const parents = (flat.data || []).filter((c) => !c.parentCauseId);
+          const subs = (flat.data || []).filter((c) => c.parentCauseId);
+          setTree(
+            parents.map((p) => ({
+              parent: p,
+              subCauses: subs.filter((s) => s.parentCauseId === p.causeId)
+            }))
+          );
+        }
       }
     } catch (error) {
       console.error('Error loading causes:', error);
@@ -24,13 +57,15 @@ const CausesPage = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
+  const toggle = (id) =>
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
       maximumFractionDigits: 0
-    }).format(amount);
-  };
+    }).format(amount || 0);
 
   return (
     <div className="causes-page">
@@ -38,7 +73,8 @@ const CausesPage = () => {
         <Container>
           <h1 className="page-title">Our Causes</h1>
           <p className="page-subtitle">
-            Support child welfare causes that make a real difference
+            Support child welfare causes that make a real difference.
+            Pick a top-level category or a specific sub-item below.
           </p>
         </Container>
       </section>
@@ -46,58 +82,99 @@ const CausesPage = () => {
       <Container className="py-5">
         {loading ? (
           <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
+            <Spinner animation="border" variant="primary" role="status">
               <span className="visually-hidden">Loading...</span>
-            </div>
+            </Spinner>
           </div>
-        ) : causes.length > 0 ? (
+        ) : tree.length > 0 ? (
           <Row className="g-4">
-            {causes.map((cause) => (
-              <Col key={cause.causeId} md={6} lg={4}>
+            {tree.map(({ parent, subCauses = [] }) => (
+              <Col key={parent.causeId} md={6} lg={6} xl={4}>
                 <Card className="h-100 cause-card">
                   <div className="cause-image">
                     <img
-                      src={cause.imageUrl || '/images/placeholder-cause.jpg'}
-                      alt={cause.causeName}
+                      src={parent.imageUrl || '/images/placeholder-cause.jpg'}
+                      alt={parent.causeName}
                       style={{ width: '100%', height: '200px', objectFit: 'cover' }}
                     />
                     <div className="cause-icon-overlay">
-                      <i className={`bi bi-${cause.icon || 'heart'}`}></i>
+                      <i className={`bi bi-${parent.icon || 'heart'}`}></i>
                     </div>
                   </div>
-                  <Card.Body>
-                    <Card.Title>{cause.causeName}</Card.Title>
+                  <Card.Body className="d-flex flex-column">
+                    <Card.Title>{parent.causeName}</Card.Title>
                     <Card.Text className="text-muted">
-                      {cause.description}
+                      {parent.description}
                     </Card.Text>
 
-                    {cause.targetAmount && (
+                    {parent.targetAmount > 0 && (
                       <div className="mt-3">
                         <div className="d-flex justify-content-between mb-2">
                           <span className="fw-bold text-accent">
-                            {formatCurrency(cause.raisedAmount || 0)}
+                            {formatCurrency(parent.raisedAmount)}
                           </span>
                           <span className="text-muted">
-                            Goal: {formatCurrency(cause.targetAmount)}
+                            Goal: {formatCurrency(parent.targetAmount)}
                           </span>
                         </div>
                         <div className="progress" style={{ height: '8px' }}>
                           <div
                             className="progress-bar"
-                            style={{ width: `${Math.min(cause.percentageReached || 0, 100)}%` }}
+                            style={{
+                              width: `${Math.min(parent.percentageReached || 0, 100)}%`
+                            }}
                           ></div>
                         </div>
                         <small className="text-muted">
-                          {Math.round(cause.percentageReached || 0)}% Funded
+                          {Math.round(parent.percentageReached || 0)}% Funded
                         </small>
+                      </div>
+                    )}
+
+                    {subCauses.length > 0 && (
+                      <div className="sub-cause-block mt-3">
+                        <Button
+                          variant="link"
+                          className="sub-cause-toggle p-0 text-decoration-none"
+                          onClick={() => toggle(parent.causeId)}
+                          aria-expanded={!!expanded[parent.causeId]}
+                          aria-controls={`subs-${parent.causeId}`}
+                        >
+                          <i
+                            className={`bi ${
+                              expanded[parent.causeId] ? 'bi-chevron-down' : 'bi-chevron-right'
+                            } me-2`}
+                          ></i>
+                          {subCauses.length} specific sub-causes
+                        </Button>
+                        <Collapse in={!!expanded[parent.causeId]}>
+                          <ul
+                            id={`subs-${parent.causeId}`}
+                            className="list-unstyled sub-cause-list mt-2"
+                          >
+                            {subCauses.map((sub) => (
+                              <li key={sub.causeId} className="sub-cause-item">
+                                <Link
+                                  to="/donate"
+                                  state={{ causeId: sub.causeId }}
+                                  className="sub-cause-link"
+                                >
+                                  <i className="bi bi-dot"></i>
+                                  {sub.causeName}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </Collapse>
                       </div>
                     )}
 
                     <Button
                       as={Link}
                       to="/donate"
+                      state={{ causeId: parent.causeId }}
                       variant="primary"
-                      className="w-100 mt-3"
+                      className="w-100 mt-auto pt-3"
                     >
                       <i className="bi bi-heart-fill me-2"></i>
                       Donate to this Cause
@@ -111,7 +188,9 @@ const CausesPage = () => {
           <div className="empty-state text-center py-5">
             <i className="bi bi-heart" style={{ fontSize: '3rem', color: 'var(--text-gray)' }}></i>
             <h5 className="mt-3">No causes found</h5>
-            <p className="text-muted">There are currently no causes available. Please check back soon.</p>
+            <p className="text-muted">
+              There are currently no causes available. Please check back soon.
+            </p>
           </div>
         )}
       </Container>

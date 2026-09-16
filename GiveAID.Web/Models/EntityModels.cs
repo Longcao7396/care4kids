@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -95,6 +96,19 @@ namespace GiveAID.Web.Models
 
         public DateTime? UpdatedAt { get; set; }
 
+        // ── 2-level hierarchy: a Cause can be a top-level category
+        //    (ParentCauseId IS NULL) or a sub-item of a parent (e.g.
+        //    "Mua sách vở" under "Giáo dục cho trẻ em").
+        public int? ParentCauseId { get; set; }
+
+        [ForeignKey("ParentCauseId")]
+        public virtual Cause ParentCause { get; set; }
+
+        public virtual ICollection<Cause> SubCauses { get; set; }
+
+        // Campaigns that target THIS cause (only meaningful for leaf causes).
+        public virtual ICollection<Campaign> Campaigns { get; set; }
+
         [NotMapped]
         public decimal PercentageReached
         {
@@ -105,6 +119,9 @@ namespace GiveAID.Web.Models
                 return 0;
             }
         }
+
+        [NotMapped]
+        public bool IsParentCause => ParentCauseId == null;
     }
 
     [Table("Campaigns")]

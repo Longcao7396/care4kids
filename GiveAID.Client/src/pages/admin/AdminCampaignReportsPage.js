@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Container, Row, Col, Card, Alert, Button, Spinner, Badge,
+  Container, Row, Col, Card, Alert, Button, Badge,
   InputGroup, Form, ProgressBar, Table
 } from 'react-bootstrap';
 import api from '../../services/api';

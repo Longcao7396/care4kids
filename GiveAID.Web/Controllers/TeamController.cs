@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -25,10 +25,18 @@ namespace GiveAID.Web.Controllers
         // GET: api/team
         [HttpGet]
         [Route("")]
-        public IHttpActionResult GetAll(bool activeOnly = true, bool featuredOnly = false)
+        public IHttpActionResult GetAll(
+            bool activeOnly = true,
+            bool featuredOnly = false,
+            int page = 1,
+            int pageSize = 20)
         {
             try
             {
+                if (page < 1) page = 1;
+                if (pageSize < 1) pageSize = 20;
+                if (pageSize > 100) pageSize = 100;
+
                 var query = _context.TeamMembers.AsQueryable();
 
                 if (activeOnly)
@@ -41,16 +49,27 @@ namespace GiveAID.Web.Controllers
                     query = query.Where(m => m.IsFeatured);
                 }
 
+                var total = query.Count();
                 var members = query
                     .OrderBy(m => m.DisplayOrder)
                     .ThenBy(m => m.FullName)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .ToList()
-                    .Select(m => ToDto(m));
+                    .Select(m => ToDto(m))
+                    .ToList();
 
                 return Ok(new ApiResponse
                 {
                     Success = true,
-                    Data = members
+                    Data = new
+                    {
+                        items = members,
+                        total,
+                        page,
+                        pageSize,
+                        totalPages = (int)Math.Ceiling((double)total / pageSize)
+                    }
                 });
             }
             catch (Exception ex)

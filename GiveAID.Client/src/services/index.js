@@ -40,8 +40,22 @@ export const authService = {
 // CAUSES SERVICE
 // =====================================================
 export const causesService = {
-  getAll: async (activeOnly = true) => {
-    const response = await api.get(API_ENDPOINTS.CAUSES.LIST, { params: { activeOnly } });
+  getAll: async (activeOnly = true, params = {}) => {
+    const response = await api.get(API_ENDPOINTS.CAUSES.LIST, {
+      params: { activeOnly, ...params }
+    });
+    return response.data;
+  },
+  getTree: async (activeOnly = true) => {
+    const response = await api.get(API_ENDPOINTS.CAUSES.TREE, {
+      params: { activeOnly }
+    });
+    return response.data;
+  },
+  getSubCauses: async (parentId, activeOnly = true) => {
+    const response = await api.get(`/causes/${parentId}/sub-causes`, {
+      params: { activeOnly }
+    });
     return response.data;
   },
   getById: async (id) => {

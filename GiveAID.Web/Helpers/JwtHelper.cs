@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
@@ -108,6 +108,33 @@ namespace GiveAID.Web.Helpers
             catch
             {
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Validates the request's JWT and returns true if the caller holds the
+        /// SuperAdmin or Admin role. Centralizes the role-check pattern used by
+        /// admin-only controllers. Returns false (does not throw) when the
+        /// token is missing, invalid, or the role doesn't match — callers
+        /// should map the return value to a 401/403 response.
+        /// </summary>
+        public static bool CheckAdmin(HttpRequestMessage request)
+        {
+            try
+            {
+                var authHeader = request.Headers.Authorization;
+                if (authHeader == null || string.IsNullOrEmpty(authHeader.Parameter))
+                    return false;
+
+                var principal = ValidateToken(authHeader.Parameter);
+                if (principal == null) return false;
+
+                var role = principal.FindFirst(ClaimTypes.Role)?.Value;
+                return role == "SuperAdmin" || role == "Admin";
+            }
+            catch
+            {
+                return false;
             }
         }
     }

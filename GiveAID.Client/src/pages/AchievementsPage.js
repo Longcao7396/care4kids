@@ -52,11 +52,13 @@ function AchievementsPage() {
   const fetchAchievements = useCallback(async () => {
     try {
       setLoading(true);
-      const params = { activeOnly: true };
+      const params = { activeOnly: true, pageSize: 100 };
       if (category) params.category = category;
       const response = await api.get('/achievements', { params });
       if (response.data.success) {
-        setItems(response.data.data || []);
+        const data = response.data.data;
+        const list = Array.isArray(data) ? data : (data?.items || []);
+        setItems(list);
       }
     } catch (err) {
       setError('Failed to load achievements.');

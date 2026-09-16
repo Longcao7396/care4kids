@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -19,10 +19,19 @@ namespace GiveAID.Web.Controllers
             _context = new GiveAIDContext();
         }
 
-        // GET: api/causes
+        // GET: api/causes?activeOnly=true&parentsOnly=true
+        // GET: api/causes/5
+        // GET: api/causes/5/sub-causes
+        // GET: api/causes/stats
+        // GET: api/causes/tree
+
+        // GET: api/causes — list causes. Supports filters:
+        //   activeOnly    — filter by IsActive
+        //   parentsOnly   — only top-level causes (no parent_cause_id)
+        //   subOf={id}    — only direct sub-causes of the given parent
         [HttpGet]
         [Route("")]
-        public IHttpActionResult GetAll(bool activeOnly = true)
+        public IHttpActionResult GetAll(bool activeOnly = true, bool parentsOnly = false, int? subOf = null)
         {
             try
             {
@@ -33,26 +42,101 @@ namespace GiveAID.Web.Controllers
                     query = query.Where(c => c.IsActive);
                 }
 
+                if (parentsOnly)
+                {
+                    query = query.Where(c => c.ParentCauseId == null);
+                }
+
+                if (subOf.HasValue)
+                {
+                    query = query.Where(c => c.ParentCauseId == subOf.Value);
+                }
+
                 var causes = query.OrderBy(c => c.DisplayOrder).ToList();
 
                 return Ok(new ApiResponse
                 {
                     Success = true,
-                    Data = causes.Select(c => new
-                    {
-                        causeId = c.CauseId,
-                        causeCode = c.CauseCode,
-                        causeName = c.CauseName,
-                        description = c.Description,
-                        imageUrl = c.ImageUrl,
-                        icon = c.Icon,
-                        targetAmount = c.TargetAmount,
-                        raisedAmount = c.RaisedAmount,
-                        percentageReached = c.PercentageReached,
-                        isActive = c.IsActive,
-                        displayOrder = c.DisplayOrder,
-                        createdAt = c.CreatedAt
-                    }).ToList()
+                    Data = causes.Select(MapToDto).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
+
+        // GET: api/causes/tree — full hierarchy (parents with embedded sub-causes).
+        // Convenient for the public CausesPage where one render pass shows the
+        // whole taxonomy. By default filters active parents and active sub-items.
+        [HttpGet]
+        [Route("tree")]
+        public IHttpActionResult GetTree(bool activeOnly = true)
+        {
+            try
+            {
+                var query = _context.Causes.AsQueryable();
+                if (activeOnly)
+                {
+                    query = query.Where(c => c.IsActive);
+                }
+
+                var parents = query
+                    .Where(c => c.ParentCauseId == null)
+                    .OrderBy(c => c.DisplayOrder)
+                    .ToList();
+
+                var allSubs = query
+                    .Where(c => c.ParentCauseId != null)
+                    .OrderBy(c => c.DisplayOrder)
+                    .ToList();
+
+                var tree = parents.Select(p => new
+                {
+                    parent = MapToDto(p),
+                    subCauses = allSubs
+                        .Where(s => s.ParentCauseId == p.CauseId)
+                        .Select(MapToDto)
+                        .ToList()
+                }).ToList();
+
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Data = tree
+                });
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
+
+        // GET: api/causes/5/sub-causes
+        [HttpGet]
+        [Route("{id:int}/sub-causes")]
+        public IHttpActionResult GetSubCauses(int id, bool activeOnly = true)
+        {
+            try
+            {
+                var parent = _context.Causes.Find(id);
+                if (parent == null)
+                {
+                    return NotFound();
+                }
+
+                var query = _context.Causes.Where(c => c.ParentCauseId == id);
+                if (activeOnly)
+                {
+                    query = query.Where(c => c.IsActive);
+                }
+
+                var subs = query.OrderBy(c => c.DisplayOrder).Select(MapToDto).ToList();
+
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Data = subs
                 });
             }
             catch (Exception ex)
@@ -75,23 +159,20 @@ namespace GiveAID.Web.Controllers
                     return NotFound();
                 }
 
+                // Also pull sub-causes so the admin/detail view can show them inline.
+                var subCauses = _context.Causes
+                    .Where(c => c.ParentCauseId == id)
+                    .OrderBy(c => c.DisplayOrder)
+                    .Select(MapToDto)
+                    .ToList();
+
                 return Ok(new ApiResponse
                 {
                     Success = true,
                     Data = new
                     {
-                        causeId = cause.CauseId,
-                        causeCode = cause.CauseCode,
-                        causeName = cause.CauseName,
-                        description = cause.Description,
-                        imageUrl = cause.ImageUrl,
-                        icon = cause.Icon,
-                        targetAmount = cause.TargetAmount,
-                        raisedAmount = cause.RaisedAmount,
-                        percentageReached = cause.PercentageReached,
-                        isActive = cause.IsActive,
-                        displayOrder = cause.DisplayOrder,
-                        createdAt = cause.CreatedAt
+                        cause = MapToDto(cause),
+                        subCauses
                     }
                 });
             }
@@ -99,6 +180,31 @@ namespace GiveAID.Web.Controllers
             {
                 return InternalServerError(ex);
             }
+        }
+
+        /// <summary>
+        /// Shared mapper — anonymous type so we can evolve the wire format
+        /// without breaking entity consumers.
+        /// </summary>
+        private static object MapToDto(Cause c)
+        {
+            return new
+            {
+                causeId = c.CauseId,
+                causeCode = c.CauseCode,
+                causeName = c.CauseName,
+                description = c.Description,
+                imageUrl = c.ImageUrl,
+                icon = c.Icon,
+                targetAmount = c.TargetAmount,
+                raisedAmount = c.RaisedAmount,
+                percentageReached = c.PercentageReached,
+                isActive = c.IsActive,
+                displayOrder = c.DisplayOrder,
+                parentCauseId = c.ParentCauseId,
+                isParentCause = c.ParentCauseId == null,
+                createdAt = c.CreatedAt
+            };
         }
 
         // GET: api/causes/stats
@@ -184,7 +290,13 @@ namespace GiveAID.Web.Controllers
                 existing.TargetAmount = cause.TargetAmount;
                 existing.IsActive = cause.IsActive;
                 existing.DisplayOrder = cause.DisplayOrder;
+                existing.ParentCauseId = cause.ParentCauseId;
                 existing.UpdatedAt = DateTime.Now;
+
+                if (!string.IsNullOrWhiteSpace(cause.CauseCode))
+                {
+                    existing.CauseCode = cause.CauseCode;
+                }
 
                 _context.SaveChanges();
 

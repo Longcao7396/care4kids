@@ -22,6 +22,7 @@ import ProgrammeDetailPage from './pages/ProgrammeDetailPage';
 import DashboardPage from './pages/DashboardPage';
 import MyDonationsPage from './pages/MyDonationsPage';
 import MyRegistrationsPage from './pages/MyRegistrationsPage';
+import ProfilePage from './pages/ProfilePage';
 import AboutPage from './pages/AboutPage';
 import OurTeamPage from './pages/OurTeamPage';
 import CareerPage from './pages/CareerPage';
@@ -158,6 +159,14 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <MyRegistrationsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <ProfilePage />
                           </ProtectedRoute>
                         }
                       />

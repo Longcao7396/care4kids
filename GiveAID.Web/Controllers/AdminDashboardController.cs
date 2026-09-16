@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -19,7 +19,8 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var auth = JwtHelper.CheckAdmin(Request, db);
+                var auth = JwtHelper.CheckAdmin(Request);
+                if (!auth) return Unauthorized();
 
                 // Total Donations
                 var totalDonations = db.Donations
@@ -183,7 +184,8 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var auth = JwtHelper.CheckAdmin(Request, db);
+                var auth = JwtHelper.CheckAdmin(Request);
+                if (!auth) return Unauthorized();
 
                 var donations = db.Donations
                     .Include(d => d.User)
@@ -224,7 +226,8 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var auth = JwtHelper.CheckAdmin(Request, db);
+                var auth = JwtHelper.CheckAdmin(Request);
+                if (!auth) return Unauthorized();
 
                 var totalUsers = db.Users.Count(u => u.Role == "User");
                 var activeUsers = db.Users.Count(u => u.Role == "User" && u.IsActive);
@@ -264,7 +267,8 @@ namespace GiveAID.Web.Controllers
         {
             try
             {
-                var auth = JwtHelper.CheckAdmin(Request, db);
+                var auth = JwtHelper.CheckAdmin(Request);
+                if (!auth) return Unauthorized();
 
                 var query = db.Donations
                     .Include(d => d.User)

@@ -22,11 +22,15 @@ function OurTeamPage() {
   const fetchTeam = useCallback(async () => {
     try {
       setLoading(true);
-      const params = { activeOnly: true };
+      const params = { activeOnly: true, pageSize: 100 };
       if (department) params.department = department;
       const response = await api.get('/team', { params });
       if (response.data.success) {
-        setMembers(response.data.data || []);
+        // Backend returns either {items,...} or a bare array depending on
+        // controller version — normalise both.
+        const data = response.data.data;
+        const list = Array.isArray(data) ? data : (data?.items || []);
+        setMembers(list);
       }
     } catch (err) {
       setError('Failed to load team members.');

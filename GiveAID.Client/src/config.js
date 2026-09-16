@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   // Causes
   CAUSES: {
     LIST: `${API_BASE_URL}/causes`,
+    TREE: `${API_BASE_URL}/causes/tree`,
     DETAIL: (id) => `${API_BASE_URL}/causes/${id}`,
     CREATE: `${API_BASE_URL}/causes`,
     UPDATE: (id) => `${API_BASE_URL}/causes/${id}`,

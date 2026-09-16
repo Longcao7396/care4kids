@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Container, Row, Col, Spinner, Badge, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { donationsService } from '../services';
 import './MyDonationsPage.css';
 
 const MyDonationsPage = () => {
-  const { user } = useAuth();
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -80,14 +78,6 @@ const MyDonationsPage = () => {
       Refunded: 'badge-neutral'
     };
     return map[status] || 'badge-neutral';
-  };
-
-  const getPaymentIcon = (method) => {
-    const m = method?.toLowerCase() || '';
-    if (m.includes('credit')) return 'credit-card';
-    if (m.includes('debit')) return 'credit-card';
-    if (m.includes('bank')) return 'bank';
-    return 'card';
   };
 
   if (loading) {

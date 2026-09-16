@@ -18,7 +18,6 @@ export default function AdminQueriesPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
@@ -27,6 +26,8 @@ export default function AdminQueriesPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [admins, setAdmins] = useState([]);
+  const [assigning, setAssigning] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0 });
 
   const fetchItems = useCallback(async () => {
@@ -60,9 +61,21 @@ export default function AdminQueriesPage() {
     } catch { /* non-fatal */ }
   }, []);
 
+  // Load list of admins for the Assign dropdown.
+  const fetchAdmins = useCallback(async () => {
+    try {
+      const res = await api.get('/admin/users', { params: { role: 'Admin', pageSize: 100 } });
+      if (res.data.success) {
+        const data = res.data.data;
+        const list = Array.isArray(data) ? data : (data?.items || []);
+        setAdmins(list.filter((u) => u.isActive));
+      }
+    } catch { /* non-fatal */ }
+  }, []);
+
   useEffect(() => {
-    if (canAccess) { fetchItems(); fetchStats(); }
-  }, [canAccess, fetchItems, fetchStats]);
+    if (canAccess) { fetchItems(); fetchStats(); fetchAdmins(); }
+  }, [canAccess, fetchItems, fetchStats, fetchAdmins]);
 
   const openDetail = async (id) => {
     setDetail({ loading: true, id });
@@ -107,6 +120,19 @@ export default function AdminQueriesPage() {
     }
   };
 
+  const assignConv = async (userId) => {
+    if (!detail?.conversationId) return;
+    setAssigning(true);
+    try {
+      await api.post(`/conversations/${detail.conversationId}/assign`, { assignedTo: userId || null });
+      openDetail(detail.conversationId);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to assign conversation.');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   const fmt = (d) => d ? new Date(d).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
   const filtered = items.filter((q) => {
@@ -135,7 +161,6 @@ export default function AdminQueriesPage() {
         </Button>
       }
       error={error}
-      success={success}
       loading={loading && filtered.length === 0}
     >
         {stats && (
@@ -337,6 +362,13 @@ export default function AdminQueriesPage() {
                 <span className="text-muted small ms-2">
                   From <strong>{detail.userName}</strong> · Opened {fmt(detail.createdAt)}
                 </span>
+                <span className="text-muted small ms-auto">
+                  {detail.assignedTo ? (
+                    <>Assigned to <strong>{detail.assignedToName || `User #${detail.assignedTo}`}</strong></>
+                  ) : (
+                    'Unassigned'
+                  )}
+                </span>
               </div>
 
               <div className="message-thread">
@@ -369,6 +401,23 @@ export default function AdminQueriesPage() {
         <Modal.Footer>
           {detail && !detail.loading && !detail.error && detail.status !== 'Closed' && (
             <>
+              <div className="me-auto d-flex align-items-center gap-2">
+                <Form.Label className="mb-0 small text-muted">Assign to</Form.Label>
+                <Form.Select
+                  size="sm"
+                  style={{ minWidth: 160 }}
+                  value={detail.assignedTo || ''}
+                  disabled={assigning}
+                  onChange={(e) => assignConv(e.target.value ? parseInt(e.target.value, 10) : null)}
+                >
+                  <option value="">Unassigned</option>
+                  {admins.map((a) => (
+                    <option key={a.userId} value={a.userId}>
+                      {a.fullName || a.username}
+                    </option>
+                  ))}
+                </Form.Select>
+              </div>
               <Button variant="outline-danger" onClick={closeConv}>
                 <i className="bi bi-x-circle me-1"></i>Close
               </Button>

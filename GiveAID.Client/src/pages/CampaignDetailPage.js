@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Container, Row, Col, ProgressBar, Badge, Alert, ListGroup, Tab, Tabs } from 'react-bootstrap';
+import { Container, Row, Col, ProgressBar, Alert, Tab, Tabs } from 'react-bootstrap';
 import api from '../services/api';
 import './CampaignDetailPage.css';
 

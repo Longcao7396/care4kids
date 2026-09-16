@@ -32,7 +32,7 @@ namespace GiveAID.Web
 
             // Seed database — wrap in try/catch so the app still starts
             // if SQL Server is temporarily unreachable. Demo data is owned
-            // by NGO_Database_Schema_V2.sql anyway.
+            // by the SQL migration scripts (Campaigns_DataSeed.sql, etc.) anyway.
             try
             {
                 using (var context = new GiveAIDContext())

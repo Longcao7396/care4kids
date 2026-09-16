@@ -14,6 +14,10 @@ namespace GiveAID.Web.Controllers
     /// (cost 11) for the two known default passwords. Safe to call repeatedly.
     /// Used to recover from any desynchronization between DB and the new
     /// password verification path.
+    ///
+    /// SECURITY: Caller must present a valid SuperAdmin JWT. We can't use
+    /// [JwtAuthorize] because OWIN bearer middleware isn't wired up; instead
+    /// we validate the JWT manually via JwtHelper and check the role claim.
     /// </summary>
     [RoutePrefix("api/auth")]
     public class AuthBootstrapController : ApiController

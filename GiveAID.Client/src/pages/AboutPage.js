@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import './AboutPage.css';
@@ -157,21 +157,34 @@ const LEADERS = [
 ];
 
 function AboutPage() {
-  const [page, setPage] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [cmsPages, setCmsPages] = useState({}); // page_key -> CMS record
 
-  const fetchPage = useCallback(async () => {
+  // Sections that the admin can edit via the CMS module. When a CMS page
+  // exists and has non-empty content, the public AboutPage renders it; otherwise
+  // it falls back to the hardcoded values defined at the top of this file.
+  const fetchCms = useCallback(async () => {
+    const EDITABLE_SECTIONS = ['what_we_do', 'our_mission'];
     try {
-      const res = await api.get('/cms/pages/about_us');
-      if (res.data?.success) setPage(res.data.data);
+      // Bulk-load all editable sections in one call.
+      const keys = EDITABLE_SECTIONS.join(',');
+      const res = await api.get('/cms/pages', { params: { keys } });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        const map = {};
+        res.data.data.forEach((p) => { map[p.pageKey] = p; });
+        setCmsPages(map);
+      }
     } catch (err) {
       console.warn('About CMS fallback:', err);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchPage(); }, [fetchPage]);
+  useEffect(() => { fetchCms(); }, [fetchCms]);
+
+  const getCms = (key) => cmsPages[key];
+  const hasCmsContent = (key) => {
+    const p = getCms(key);
+    return !!(p && (p.content || p.pageTitle));
+  };
 
   return (
     <div className="ap-page">
@@ -221,39 +234,54 @@ function AboutPage() {
       </section>
 
       {/* ─── 2. MISSION / VISION / PROMISE STRIP ────────── */}
-      <section className="ap-mission" id="mission">
-        <Container>
-          <div className="ap-mission-grid">
-            <div className="ap-mission-col">
-              <div className="ap-mission-icon">{Icons.mission}</div>
-              <p className="ap-eyebrow">Our Mission</p>
-              <h3 className="ap-mission-title">A fair start for every child</h3>
-              <p className="ap-mission-desc">
-                We deliver transparent, evidence-based programmes that provide food, education,
-                healthcare and safe shelter to children who need them most.
-              </p>
+      {/* When the admin has populated the "our_mission" CMS page, render its
+          title + body instead of the hardcoded columns. Otherwise the static
+          mission/vision/promise strip below stays in place. */}
+      {hasCmsContent('our_mission') ? (
+        <section className="ap-mission ap-mission-cms" id="mission">
+          <Container>
+            <div className="ap-section-header">
+              <p className="ap-eyebrow">Mission, Vision &amp; Promise</p>
+              <h2 className="ap-section-title">{getCms('our_mission').pageTitle || 'Our Mission'}</h2>
             </div>
-            <div className="ap-mission-col">
-              <div className="ap-mission-icon ap-mission-icon-teal">{Icons.vision}</div>
-              <p className="ap-eyebrow">Our Vision</p>
-              <h3 className="ap-mission-title">A world where children thrive</h3>
-              <p className="ap-mission-desc">
-                We envision a future where no child is denied food, schooling, medical care,
-                or love — and where communities sustain that future themselves.
-              </p>
+            <div className="ap-mission-cms-body" dangerouslySetInnerHTML={{ __html: getCms('our_mission').content }} />
+          </Container>
+        </section>
+      ) : (
+        <section className="ap-mission" id="mission">
+          <Container>
+            <div className="ap-mission-grid">
+              <div className="ap-mission-col">
+                <div className="ap-mission-icon">{Icons.mission}</div>
+                <p className="ap-eyebrow">Our Mission</p>
+                <h3 className="ap-mission-title">A fair start for every child</h3>
+                <p className="ap-mission-desc">
+                  We deliver transparent, evidence-based programmes that provide food, education,
+                  healthcare and safe shelter to children who need them most.
+                </p>
+              </div>
+              <div className="ap-mission-col">
+                <div className="ap-mission-icon ap-mission-icon-teal">{Icons.vision}</div>
+                <p className="ap-eyebrow">Our Vision</p>
+                <h3 className="ap-mission-title">A world where children thrive</h3>
+                <p className="ap-mission-desc">
+                  We envision a future where no child is denied food, schooling, medical care,
+                  or love — and where communities sustain that future themselves.
+                </p>
+              </div>
+              <div className="ap-mission-col">
+                <div className="ap-mission-icon ap-mission-icon-gold">{Icons.promise}</div>
+                <p className="ap-eyebrow">Our Promise</p>
+                <h3 className="ap-mission-title">Impact you can see & verify</h3>
+                <p className="ap-mission-desc">
+                  Every donor receives detailed impact reports. Every programme is independently
+                  audited. Every story is told with dignity and consent.
+                </p>
+              </div>
             </div>
-            <div className="ap-mission-col">
-              <div className="ap-mission-icon ap-mission-icon-gold">{Icons.promise}</div>
-              <p className="ap-eyebrow">Our Promise</p>
-              <h3 className="ap-mission-title">Impact you can see & verify</h3>
-              <p className="ap-mission-desc">
-                Every donor receives detailed impact reports. Every programme is independently
-                audited. Every story is told with dignity and consent.
-              </p>
-            </div>
-          </div>
-        </Container>
-      </section>
+          </Container>
+        </section>
+      )}
 
       {/* ─── 3. OUR STORY (split image + text) ───────────── */}
       <section className="ap-story">
@@ -318,47 +346,67 @@ function AboutPage() {
         </Container>
       </section>
 
-      {/* ─── 4. PROGRAMME PILLARS ───────────────────────── */}
-      <section className="ap-pillars">
-        <Container>
-          <div className="ap-section-header">
-            <p className="ap-eyebrow">Our Work</p>
-            <h2 className="ap-section-title">Four pillars of change</h2>
-            <p className="ap-section-desc">
-              Every programme we run falls into one of four pillars — designed to give children
-              the foundations for a healthy, hopeful life.
-            </p>
-          </div>
+      {/* ─── 4. PROGRAMME PILLARS / WHAT WE DO ──────────── */}
+      {/* When the admin has populated the "what_we_do" CMS page, render its
+          content in place of the hardcoded four-pillar grid. */}
+      {hasCmsContent('what_we_do') ? (
+        <section className="ap-pillars ap-pillars-cms">
+          <Container>
+            <div className="ap-section-header">
+              <p className="ap-eyebrow">Our Work</p>
+              <h2 className="ap-section-title">{getCms('what_we_do').pageTitle || 'What We Do'}</h2>
+            </div>
+            <div className="ap-pillars-cms-body" dangerouslySetInnerHTML={{ __html: getCms('what_we_do').content }} />
+            <div className="ap-pillars-cta">
+              <Link to="/campaigns" className="c4k-btn-primary-solid">
+                <span>See all campaigns</span>
+                {Icons.arrow}
+              </Link>
+            </div>
+          </Container>
+        </section>
+      ) : (
+        <section className="ap-pillars">
+          <Container>
+            <div className="ap-section-header">
+              <p className="ap-eyebrow">Our Work</p>
+              <h2 className="ap-section-title">Four pillars of change</h2>
+              <p className="ap-section-desc">
+                Every programme we run falls into one of four pillars — designed to give children
+                the foundations for a healthy, hopeful life.
+              </p>
+            </div>
 
-          <div className="ap-pillars-grid">
-            {PROGRAMME_PILLARS.map((p, i) => (
-              <div className="ap-pillar-col" key={i}>
-                <div className="ap-pillar-card">
-                  <div className="ap-pillar-image-wrap">
-                    <img src={p.image} alt={p.title} className="ap-pillar-image" loading="lazy" />
-                    <div className="ap-pillar-icon-overlay">{p.icon}</div>
-                  </div>
-                  <div className="ap-pillar-body">
-                    <h3 className="ap-pillar-title">{p.title}</h3>
-                    <p className="ap-pillar-desc">{p.desc}</p>
-                    <div className="ap-pillar-stat">
-                      <span className="ap-pillar-stat-num">{p.stat}</span>
-                      <span className="ap-pillar-stat-lbl">{p.statLabel}</span>
+            <div className="ap-pillars-grid">
+              {PROGRAMME_PILLARS.map((p, i) => (
+                <div className="ap-pillar-col" key={i}>
+                  <div className="ap-pillar-card">
+                    <div className="ap-pillar-image-wrap">
+                      <img src={p.image} alt={p.title} className="ap-pillar-image" loading="lazy" />
+                      <div className="ap-pillar-icon-overlay">{p.icon}</div>
+                    </div>
+                    <div className="ap-pillar-body">
+                      <h3 className="ap-pillar-title">{p.title}</h3>
+                      <p className="ap-pillar-desc">{p.desc}</p>
+                      <div className="ap-pillar-stat">
+                        <span className="ap-pillar-stat-num">{p.stat}</span>
+                        <span className="ap-pillar-stat-lbl">{p.statLabel}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div className="ap-pillars-cta">
-            <Link to="/campaigns" className="c4k-btn-primary-solid">
-              <span>See all campaigns</span>
-              {Icons.arrow}
-            </Link>
-          </div>
-        </Container>
-      </section>
+            <div className="ap-pillars-cta">
+              <Link to="/campaigns" className="c4k-btn-primary-solid">
+                <span>See all campaigns</span>
+                {Icons.arrow}
+              </Link>
+            </div>
+          </Container>
+        </section>
+      )}
 
       {/* ─── 5. IMPACT DARK BAND ────────────────────────── */}
       <section className="ap-impact">

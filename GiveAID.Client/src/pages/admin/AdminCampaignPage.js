@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Row, Col, Card, Alert, Button, Modal, Form,
   Spinner, Badge, ProgressBar, Table
@@ -651,7 +651,11 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ causeName: '', causeCode: '', description: '', imageUrl: '', icon: '', targetAmount: '', displayOrder: 0, isActive: true });
+    setForm({
+      causeName: '', causeCode: '', description: '', imageUrl: '',
+      icon: '', targetAmount: '', displayOrder: 0, isActive: true,
+      parentCauseId: ''
+    });
     setShowForm(true);
   };
 
@@ -662,6 +666,7 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
       description: c.description || '', imageUrl: c.imageUrl || '',
       icon: c.icon || '', targetAmount: c.targetAmount ?? '',
       displayOrder: c.displayOrder || 0, isActive: c.isActive !== false,
+      parentCauseId: c.parentCauseId ?? ''
     });
     setShowForm(true);
   };
@@ -669,7 +674,14 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...form, targetAmount: form.targetAmount ? parseFloat(form.targetAmount) : null, displayOrder: parseInt(form.displayOrder) || 0 };
+      const payload = {
+        ...form,
+        targetAmount: form.targetAmount ? parseFloat(form.targetAmount) : null,
+        displayOrder: parseInt(form.displayOrder) || 0,
+        parentCauseId: form.parentCauseId === '' || form.parentCauseId === null
+          ? null
+          : parseInt(form.parentCauseId)
+      };
       if (editing) {
         await api.put(`/causes/${editing.causeId}`, payload);
       } else {
@@ -725,6 +737,7 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
               <tr>
                 <th>Cause</th>
                 <th>Code</th>
+                <th>Type</th>
                 <th>Goal / Raised</th>
                 <th>Progress</th>
                 <th>Status</th>
@@ -732,13 +745,34 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
               </tr>
             </thead>
             <tbody>
-              {causes.map((c) => (
+              {causes
+                .slice()
+                .sort((a, b) => {
+                  // Parents first, then sub-causes by display order.
+                  const aIsParent = !a.parentCauseId ? 0 : 1;
+                  const bIsParent = !b.parentCauseId ? 0 : 1;
+                  if (aIsParent !== bIsParent) return aIsParent - bIsParent;
+                  return (a.displayOrder || 0) - (b.displayOrder || 0);
+                })
+                .map((c) => {
+                  const parent = c.parentCauseId
+                    ? causes.find((p) => p.causeId === c.parentCauseId)
+                    : null;
+                  return (
                 <tr key={c.causeId} className={!c.isActive ? 'inactive-row' : ''}>
                   <td>
-                    <div className="fw-semibold" style={{ color: 'var(--text-light)' }}>{c.causeName}</div>
+                    <div className="fw-semibold" style={{ color: 'var(--text-light)' }}>
+                      {parent ? <span className="text-muted me-1">↳</span> : null}
+                      {c.causeName}
+                    </div>
                     {c.description && <div className="small text-muted">{c.description.slice(0, 60)}{c.description.length > 60 ? '…' : ''}</div>}
                   </td>
                   <td><code>{c.causeCode || '—'}</code></td>
+                  <td>
+                    {parent
+                      ? <Badge bg="info" style={{ fontSize: '0.7rem' }}>Sub of {parent.causeName}</Badge>
+                      : <Badge bg="primary" style={{ fontSize: '0.7rem' }}>Parent</Badge>}
+                  </td>
                   <td>
                     <div className="small fw-semibold">{fmtVnd(c.raisedAmount)}</div>
                     <div className="small text-muted">of {fmtVnd(c.targetAmount)}</div>
@@ -763,7 +797,8 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
                     )}
                   </td>
                 </tr>
-              ))}
+                  );
+                })}
             </tbody>
           </Table>
         </Card>
@@ -784,7 +819,31 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
               </div>
               <div className="col-md-6">
                 <Form.Group><Form.Label>Cause Code</Form.Label>
-                  <Form.Control value={form.causeCode || ''} onChange={(e) => setForm((f) => ({ ...f, causeCode: e.target.value }))} placeholder="EDU" />
+                  <Form.Control value={form.causeCode || ''} onChange={(e) => setForm((f) => ({ ...f, causeCode: e.target.value }))} placeholder="EDU-SUPPLIES (auto if blank)" />
+                  <Form.Text className="text-muted">
+                    Leave blank to auto-generate from the cause name. Required for top-level causes.
+                  </Form.Text>
+                </Form.Group>
+              </div>
+              <div className="col-12">
+                <Form.Group>
+                  <Form.Label>Parent Cause</Form.Label>
+                  <Form.Select
+                    value={form.parentCauseId === '' || form.parentCauseId === null ? '' : String(form.parentCauseId)}
+                    onChange={(e) => setForm((f) => ({ ...f, parentCauseId: e.target.value }))}
+                  >
+                    <option value="">— Top-level (no parent) —</option>
+                    {causes
+                      .filter((c) => !c.parentCauseId && (!editing || c.causeId !== editing.causeId))
+                      .map((p) => (
+                        <option key={p.causeId} value={String(p.causeId)}>
+                          {p.causeName}
+                        </option>
+                      ))}
+                  </Form.Select>
+                  <Form.Text className="text-muted">
+                    Pick a parent to make this a sub-cause (e.g. "Mua sách vở" under "Giáo dục cho trẻ em").
+                  </Form.Text>
                 </Form.Group>
               </div>
               <div className="col-12">

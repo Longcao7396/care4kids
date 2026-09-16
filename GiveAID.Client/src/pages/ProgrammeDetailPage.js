@@ -93,13 +93,6 @@ const ProgrammeDetailPage = () => {
     });
   };
 
-  const formatShortDate = (date) => {
-    if (!date) return '—';
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric'
-    });
-  };
-
   const getStatusBadge = (status) => {
     const map = {
       Upcoming: 'badge-teal',

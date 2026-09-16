@@ -212,7 +212,7 @@ namespace GiveAID.Web.Controllers
                     })
                     .ToList();
 
-                return Ok(new ApiResponse { Success = true, Data = items });
+                return Ok(new ApiResponse { Success = true, Data = new { items, total = items.Count } });
             }
             catch (Exception ex)
             {
@@ -354,6 +354,7 @@ namespace GiveAID.Web.Controllers
             try
             {
                 var all = _context.Conversations.AsQueryable();
+                var since = DateTime.Now.AddDays(-7); // compute outside LINQ
                 return Ok(new ApiResponse
                 {
                     Success = true,
@@ -364,7 +365,7 @@ namespace GiveAID.Web.Controllers
                         inProgress = all.Count(c => c.Status == "InProgress"),
                         closed = all.Count(c => c.Status == "Closed"),
                         highPriority = all.Count(c => c.Priority == "High" && c.Status != "Closed"),
-                        last7Days = all.Count(c => c.CreatedAt >= DateTime.Now.AddDays(-7))
+                        last7Days = all.Count(c => c.CreatedAt >= since)
                     }
                 });
             }

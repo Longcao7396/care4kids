@@ -1,0 +1,83 @@
+/* CausesPage styles — sub-cause hierarchy + responsive tweaks */
+
+.causes-page .cause-card {
+  border: 1px solid var(--border-soft, #e9ecef);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.causes-page .cause-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.causes-page .cause-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.causes-page .cause-icon-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--accent-color, #d9534f);
+}
+
+.causes-page .sub-cause-block {
+  border-top: 1px dashed var(--border-soft, #e9ecef);
+  padding-top: 0.75rem;
+}
+
+.causes-page .sub-cause-toggle {
+  font-weight: 600;
+  color: var(--accent-color, #d9534f);
+  font-size: 0.9rem;
+}
+
+.causes-page .sub-cause-toggle:hover,
+.causes-page .sub-cause-toggle:focus {
+  color: var(--accent-color, #d9534f);
+}
+
+.causes-page .sub-cause-list {
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.causes-page .sub-cause-item {
+  padding: 0.35rem 0;
+  font-size: 0.92rem;
+  border-bottom: 1px dotted #f0f0f0;
+}
+
+.causes-page .sub-cause-item:last-child {
+  border-bottom: none;
+}
+
+.causes-page .sub-cause-link {
+  color: var(--text-color, #333);
+  text-decoration: none;
+  display: block;
+  transition: color 0.15s ease;
+}
+
+.causes-page .sub-cause-link:hover {
+  color: var(--accent-color, #d9534f);
+}
+
+@media (max-width: 575.98px) {
+  .causes-page .cause-icon-overlay {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+}

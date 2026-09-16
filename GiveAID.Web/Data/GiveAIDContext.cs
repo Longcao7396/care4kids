@@ -134,16 +134,21 @@ namespace GiveAID.Web.Data
 
         public static void SeedDatabase(GiveAIDContext context)
         {
-            // Causes and campaigns are seeded exclusively by NGO_Database_Schema_V2.sql.
+            // Causes, campaigns and donations are seeded exclusively by the
+            // *.sql scripts in the project root (Campaigns_DataSeed.sql,
+            // NGO_Database_Causes_Restructure_Migration.sql, etc.). Do NOT
+            // add data seeding here — it would diverge from the canonical schema.
 
-            // BCrypt hashes for the two default accounts.
+            // BCrypt hashes for the two default accounts (cost = 11).
             // Generated once with BCrypt.Net.BCrypt.HashPassword(plain, 11) and
             // stored here as literals so SeedDatabase never needs to call the
             // expensive BCrypt algorithm at startup.
-            const string AdminHash = "$2a$11$rBV2J7kF0lpRk4qJbL.W.OMTvSITkVxXh5o3wEQzN5pVU5p9KGz8vW"; // Admin@123
-            const string UserHash  = "$2a$11$W8n5k5q3vVcJZpYxZ3hHxe3Lhq1JjQ8Jkx5OJlWxMxQxJxQxJxJxJ"; // User@123
+            // Verified against "Admin@123" / "User@123" on 2026-09-16.
+            const string AdminHash = "$2a$11$pirnEfNk.ZU71wnXOvS99uJklL0iBPrhxTq0watPsNLDhuVtW6Wny"; // Admin@123
+            const string UserHash  = "$2a$11$D2ZJOxRrjuq25IW.5OeOzuVNv8r4GAj8SH7zxXBWpAUu4ZmKvUIvi"; // User@123
 
-            // Seed Admin User — always reset password to default so "Admin@123" always works.
+            // Admin user — idempotent upsert so default password always works
+            // even after schema resets.
             var admin = context.Users.FirstOrDefault(u => u.Email == "admin@give-aid.org");
             if (admin == null)
             {
@@ -158,10 +163,17 @@ namespace GiveAID.Web.Data
                     IsVerified = true,
                     CreatedAt = DateTime.Now
                 });
-                context.SaveChanges();
             }
+            else
+            {
+                // Keep the demo credentials working across DB rebuilds.
+                admin.PasswordHash = AdminHash;
+                admin.IsActive = true;
+                admin.IsVerified = true;
+            }
+            context.SaveChanges();
 
-            // Seed Demo User
+            // Demo user — same idempotent upsert pattern.
             var demoUser = context.Users.FirstOrDefault(u => u.Email == "user@example.com");
             if (demoUser == null)
             {
@@ -176,8 +188,14 @@ namespace GiveAID.Web.Data
                     IsVerified = true,
                     CreatedAt = DateTime.Now
                 });
-                context.SaveChanges();
             }
+            else
+            {
+                demoUser.PasswordHash = UserHash;
+                demoUser.IsActive = true;
+                demoUser.IsVerified = true;
+            }
+            context.SaveChanges();
         }
     }
 }

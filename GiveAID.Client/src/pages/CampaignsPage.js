@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Container, Row, Col, Card, ProgressBar, Badge, Form, Button, InputGroup } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Form, Button, InputGroup } from 'react-bootstrap';
 import api from '../services/api';
 import { SAMPLE_CAMPAIGNS, SAMPLE_CAUSES } from '../data/sampleCampaigns';
 import './CampaignsPage.css';
@@ -81,12 +81,6 @@ function CampaignsPage() {
     setSearchTerm(searchInput);
   };
 
-  const handleReset = () => {
-    setSelectedCause('');
-    setSelectedStatus('All');
-    setSearchTerm('');
-    setSearchInput('');
-  };
 
   const resetFilters = () => {
     setSelectedCause('');

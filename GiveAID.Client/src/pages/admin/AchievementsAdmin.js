@@ -14,8 +14,12 @@ export default function AchievementsAdmin() {
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/achievements', { params: { activeOnly: false } });
-      if (response.data.success) setItems(response.data.data || []);
+      const response = await api.get('/achievements', { params: { activeOnly: false, pageSize: 100 } });
+      if (response.data.success) {
+        const data = response.data.data;
+        const list = Array.isArray(data) ? data : (data?.items || []);
+        setItems(list);
+      }
     } catch (err) {
       setError('Failed to load achievements.');
     } finally {

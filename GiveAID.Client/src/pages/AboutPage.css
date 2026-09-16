@@ -288,6 +288,48 @@
 }
 
 /* ─── 3. OUR STORY (split layout) ─────────────────────── */
+
+.ap-mission-cms,
+.ap-pillars-cms {
+  background: var(--c4k-gray-50, #f8f9fa);
+}
+
+.ap-mission-cms-body,
+.ap-pillars-cms-body {
+  max-width: 880px;
+  margin: 0 auto;
+  background: var(--c4k-white, #ffffff);
+  border-radius: 12px;
+  padding: 32px 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--c4k-gray-700);
+}
+
+.ap-mission-cms-body h1,
+.ap-mission-cms-body h2,
+.ap-mission-cms-body h3,
+.ap-pillars-cms-body h1,
+.ap-pillars-cms-body h2,
+.ap-pillars-cms-body h3 {
+  margin-top: 1.2em;
+  color: var(--c4k-gray-900, #1a1a1a);
+}
+
+.ap-mission-cms-body p,
+.ap-pillars-cms-body p {
+  margin-bottom: 1em;
+}
+
+.ap-mission-cms-body ul,
+.ap-mission-cms-body ol,
+.ap-pillars-cms-body ul,
+.ap-pillars-cms-body ol {
+  padding-left: 1.4em;
+  margin-bottom: 1em;
+}
+
 .ap-story {
   padding: 96px 0;
   background: var(--c4k-white);

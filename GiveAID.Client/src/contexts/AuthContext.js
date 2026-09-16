@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -53,6 +53,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   }, []);
 
+  // Refresh the cached user object from localStorage (used after profile
+  // updates so the navbar/sidebar reflect the new name).
+  const refreshUser = useCallback(() => {
+    const storedUser = authService.getStoredUser();
+    if (storedUser) setUser(storedUser);
+    return Promise.resolve(storedUser);
+  }, []);
+
   const isAdmin = useCallback(() => {
     return user && (user.role === 'Admin' || user.role === 'SuperAdmin');
   }, [user]);
@@ -61,16 +69,17 @@ export const AuthProvider = ({ children }) => {
     return user && user.role === 'SuperAdmin';
   }, [user]);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     login,
     register,
     logout,
+    refreshUser,
     isAuthenticated: !!user,
     isAdmin,
     isSuperAdmin,
-  };
+  }), [user, loading, login, register, logout, refreshUser, isAdmin, isSuperAdmin]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

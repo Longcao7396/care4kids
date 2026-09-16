@@ -10,7 +10,9 @@ const DonatePage = () => {
   const navigate = useNavigate();
 
   const [causes, setCauses] = useState([]);
+  const [causeTree, setCauseTree] = useState([]); // [{parent, subCauses[]}]
   const [campaigns, setCampaigns] = useState([]);
+  const [subCauses, setSubCauses] = useState([]);
   const [formData, setFormData] = useState({
     causeId: location.state?.causeId || '',
     campaignId: location.state?.campaignId || '',
@@ -24,15 +26,60 @@ const DonatePage = () => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    loadCauses();
+    const abortController = new AbortController();
+    const loadTree = async () => {
+      try {
+        const treeResp = await api.get('/causes/tree', {
+          params: { activeOnly: true },
+          signal: abortController.signal
+        });
+        if (treeResp.data?.success) {
+          const treeData = treeResp.data.data || [];
+          setCauseTree(treeData);
+          const flat = [];
+          treeData.forEach((node) => {
+            flat.push(node.parent);
+            (node.subCauses || []).forEach((s) => flat.push(s));
+          });
+          setCauses(flat);
+        } else {
+          // Backwards compatibility: backend without /tree endpoint
+          const response = await causesService.getAll(true, { signal: abortController.signal });
+          if (response.success) setCauses(response.data);
+        }
+      } catch (error) {
+        if (error.name !== 'CanceledError') console.error('Error loading causes:', error);
+      }
+    };
+    const loadCampaigns = async () => {
+      try {
+        const response = await api.get('/campaigns', {
+          params: { status: 'Active' },
+          signal: abortController.signal
+        });
+        if (response.data.success) setCampaigns(response.data.data);
+      } catch (error) {
+        if (error.name !== 'CanceledError') console.error('Error loading campaigns:', error);
+      }
+    };
+    loadTree();
     loadCampaigns();
+    return () => abortController.abort();
   }, []);
 
   useEffect(() => {
     if (formData.causeId) {
       loadCampaignsByCause(formData.causeId);
+      // Find the cause's sub-items via the tree (so the user can pick
+      // a specific Care4Kids sub-cause rather than just the parent).
+      const selected = causes.find((c) => String(c.causeId) === String(formData.causeId));
+      const parentId = selected?.parentCauseId || selected?.causeId;
+      const subs = causeTree.find((node) => node.parent.causeId === parentId)?.subCauses || [];
+      setSubCauses(subs);
+    } else {
+      setSubCauses([]);
     }
-  }, [formData.causeId]);
+  }, [formData.causeId, causeTree, causes]);
 
   const loadCampaignsByCause = async (causeId) => {
     try {
@@ -156,27 +203,68 @@ const DonatePage = () => {
 
                 <Form onSubmit={handleSubmit}>
 
-                  {/* Step 1 — Choose cause */}
+                  {/* Step 1 — Choose cause (top-level category) */}
                   <div className="dp-step">
                     <p className="dp-step-num">Step 1</p>
                     <h3 className="dp-step-title">Choose a Cause</h3>
-                    <p className="dp-step-desc">Select the area you'd like your donation to support.</p>
+                    <p className="dp-step-desc">
+                      Select the area you'd like your donation to support.
+                    </p>
 
                     <Form.Select
-                      name="causeId"
-                      value={formData.causeId}
-                      onChange={handleChange}
+                      name="parentCauseId"
+                      value={
+                        // resolve current parent selection (top-level cause chosen)
+                        causeTree.find((node) =>
+                          (node.parent.causeId === formData.causeId) ||
+                          (node.subCauses || []).some((s) => s.causeId === formData.causeId)
+                        )?.parent.causeId || ''
+                      }
+                      onChange={(e) => {
+                        const parentId = e.target.value;
+                        const parent = causeTree.find((n) => n.parent.causeId === Number(parentId))?.parent;
+                        setFormData((prev) => ({
+                          ...prev,
+                          causeId: parent?.causeId || '',
+                          campaignId: ''
+                        }));
+                      }}
                       required
                       className="dp-select"
                     >
                       <option value="">Choose a cause...</option>
-                      {causes.map((cause) => (
-                        <option key={cause.causeId} value={cause.causeId}>
-                          {cause.causeName}
+                      {causeTree.map((node) => (
+                        <option key={node.parent.causeId} value={node.parent.causeId}>
+                          {node.parent.causeName}
                         </option>
                       ))}
                     </Form.Select>
                   </div>
+
+                  {/* Step 1b — Optional sub-cause (specific item) */}
+                  {subCauses.length > 0 && (
+                    <div className="dp-step dp-step-sub">
+                      <p className="dp-step-num">Step 1b · Optional</p>
+                      <h3 className="dp-step-title">Specific Need</h3>
+                      <p className="dp-step-desc">
+                        Pick a specific area to direct your donation, or leave blank to support the whole cause.
+                      </p>
+
+                      <Form.Select
+                        name="causeId"
+                        value={formData.causeId}
+                        onChange={handleChange}
+                        className="dp-select"
+                      >
+                        <option value="">Support the whole cause</option>
+                        {subCauses.map((sub) => (
+                          <option key={sub.causeId} value={sub.causeId}>
+                            {sub.causeName}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
+                  )}
 
                   {/* Step 2 — Optional Campaign */}
                   {campaigns.length > 0 && formData.causeId && (
