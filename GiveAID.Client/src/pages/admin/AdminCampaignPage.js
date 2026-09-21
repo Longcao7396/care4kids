@@ -214,7 +214,8 @@ export default function AdminCampaignPage() {
       setLoading(true);
       setError(null);
       const res = await api.get('/campaigns', { params: { pageSize: 100, page: 1 } });
-      if (res.data.success) setCampaigns(res.data.data || []);
+      // interceptor unwraps envelope → res is the array directly
+      if (Array.isArray(res)) setCampaigns(res);
     } catch {
       setError('Failed to load campaigns.');
     } finally {
@@ -225,7 +226,8 @@ export default function AdminCampaignPage() {
   const fetchCauses = useCallback(async () => {
     try {
       const res = await api.get('/causes', { params: { activeOnly: false } });
-      if (res.data.success) setCauses(res.data.data || []);
+      // interceptor unwraps envelope → res is the array directly
+      if (Array.isArray(res)) setCauses(res);
     } catch { /* non-fatal */ }
   }, []);
 
@@ -238,8 +240,9 @@ export default function AdminCampaignPage() {
   const openDetail = async (item) => {
     setDetailItem(null);
     try {
+      // interceptor unwraps envelope → res is the object directly
       const res = await api.get(`/campaigns/${item.campaignId}`);
-      if (res.data.success) setDetailItem(res.data.data);
+      if (res && typeof res === 'object') setDetailItem(res);
     } catch { setDetailItem(item); }
   };
 
@@ -639,7 +642,8 @@ function CausesAdminTab({ causes: externalCauses, setCauses: setExternalCauses }
     try {
       setLoading(true);
       const res = await api.get('/causes', { params: { activeOnly: false } });
-      if (res.data.success) setCauses(res.data.data || []);
+      // interceptor unwraps envelope → res is the array directly
+      if (Array.isArray(res)) setCauses(res);
     } catch {
       setError('Failed to load causes.');
     } finally {

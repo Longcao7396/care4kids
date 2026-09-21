@@ -22,9 +22,10 @@ const ContactPage = () => {
     let cancelled = false;
     (async () => {
       try {
-        const response = await api.get('/cms/pages/contact_info');
-        if (!cancelled && response.data.success) {
-          setCmsPage(response.data.data);
+        const cms = await api.get('/cms/pages/contact_info');
+        // interceptor unwraps → cms is the object directly
+        if (!cancelled && cms && typeof cms === 'object') {
+          setCmsPage(cms);
         }
       } catch {
         // Non-fatal

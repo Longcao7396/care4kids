@@ -1,7 +1,7 @@
 {
   "name": "giveaid-client",
-  "version": "1.0.0",
-  "description": "Give-AID NGO Website - React Frontend",
+  "version": "2.0.0",
+  "description": "Give-AID NGO Website - React Frontend (v2 Clean Architecture)",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
@@ -19,12 +19,16 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm:start:backend\" \"npm:start:frontend\"",
-    "start:frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-frontend.ps1",
+    "_comment": "─── Quick start: just run `npm start` (auto-runs prestart) ───",
+    "prestart": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pre-start.ps1",
+    "start": "concurrently -n BACKEND,ADMIN,FRONTEND -c blue,magenta,green \"npm:start:backend\" \"npm:start:admin\" \"npm:start:frontend\"",
     "start:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1",
+    "start:admin": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-admin.ps1",
+    "start:frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-frontend.ps1",
+    "stop": "concurrently -n BACKEND,ADMIN,FRONTEND -c blue,magenta,green \"npm:stop:backend\" \"npm:stop:admin\" \"npm:stop:frontend\"",
     "stop:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-backend.ps1",
+    "stop:admin": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-admin.ps1",
     "stop:frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-frontend.ps1",
-    "stop": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm:stop:backend\" \"npm:stop:frontend\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -47,8 +51,9 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:44300",
+  "proxy": "http://localhost:5000",
   "devDependencies": {
+    "axios-mock-adapter": "^2.1.0",
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
     "wait-on": "^9.1.0"

@@ -44,7 +44,10 @@ function AdminDonationsPage() {
   /* Fetch campaign list once for the dropdown */
   useEffect(() => {
     api.get('/campaigns', { params: { pageSize: 200 } })
-      .then((r) => r.data.success && setCampaigns(r.data.data || []))
+      .then((r) => {
+        // interceptor unwraps envelope → r is the raw data directly
+        if (Array.isArray(r)) setCampaigns(r);
+      })
       .catch(() => {});
   }, []);
 
@@ -59,8 +62,9 @@ function AdminDonationsPage() {
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
       const res = await api.get('/admin/donations', { params });
-      if (res.data.success) {
-        const d = res.data.data;
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object' && res.items) {
+        const d = res;
         setItems(d.items || []);
         setSummary(d.summary || { totalAmount: 0, averageAmount: 0 });
         setPagination({

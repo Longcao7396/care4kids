@@ -25,22 +25,21 @@ namespace GiveAID.Web.Data
         public DbSet<CampaignReport> CampaignReports { get; set; }
         public DbSet<Donation> Donations { get; set; }
         public DbSet<CampaignRegistration> CampaignRegistrations { get; set; }
-        // Legacy entities — kept for backward compatibility (Gallery FK references
-        // Programmes.programme_id; data is read-only through ProgrammesController).
-        public DbSet<Programme> Programmes { get; set; }
-        public DbSet<ProgrammePhoto> ProgrammePhotos { get; set; }
-        public DbSet<ProgrammeRegistration> ProgrammeRegistrations { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<ConversationMessage> ConversationMessages { get; set; }
         public DbSet<CmsPage> CmsPages { get; set; }
         public DbSet<Career> Careers { get; set; }
         public DbSet<CareerApplication> CareerApplications { get; set; }
+        // Legacy entity — Gallery.programme_id column is kept for historical accuracy;
+        // no new ProgrammePhoto records are written via EF.
         public DbSet<Gallery> Gallery { get; set; }
         public DbSet<ContactMessage> ContactMessages { get; set; }
         public DbSet<TeamMember> TeamMembers { get; set; }
         public DbSet<Achievement> Achievements { get; set; }
         public DbSet<Faq> Faqs { get; set; }
         public DbSet<Invitation> Invitations { get; set; }
+        public DbSet<WebhookLog> WebhookLogs { get; set; }
+        public DbSet<EmailLog> EmailLogs { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -72,16 +71,7 @@ namespace GiveAID.Web.Data
                 .HasIndex(d => new { d.UserId, d.IdempotencyKey })
                 .IsUnique();
 
-            // Programme registration: prevent double-booking at the DB level.
-            // (ProgrammeId, UserId) composite unique index lets two concurrent
-            // Register requests race and one fails cleanly with DbUpdateException,
-            // which the controller converts to a 400 instead of an unsafe
-            // Serializable transaction.
-            modelBuilder.Entity<ProgrammeRegistration>()
-                .HasIndex(r => new { r.ProgrammeId, r.UserId })
-                .IsUnique();
-
-            // Same for CampaignRegistrations: (CampaignId, UserId) unique.
+            // CampaignRegistrations: (CampaignId, UserId) unique prevents double-booking.
             modelBuilder.Entity<CampaignRegistration>()
                 .HasIndex(r => new { r.CampaignId, r.UserId })
                 .IsUnique();
@@ -125,15 +115,6 @@ namespace GiveAID.Web.Data
 
             modelBuilder.Entity<CampaignReport>()
                 .Property(r => r.TotalSpent)
-                .HasPrecision(18, 2);
-
-            // Programme configurations
-            modelBuilder.Entity<Programme>()
-                .Property(p => p.ExpectedBudget)
-                .HasPrecision(18, 2);
-
-            modelBuilder.Entity<Programme>()
-                .Property(p => p.ActualBudget)
                 .HasPrecision(18, 2);
 
             // Achievement configurations

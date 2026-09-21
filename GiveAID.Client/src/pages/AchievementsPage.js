@@ -55,11 +55,9 @@ function AchievementsPage() {
       const params = { activeOnly: true, pageSize: 100 };
       if (category) params.category = category;
       const response = await api.get('/achievements', { params });
-      if (response.data.success) {
-        const data = response.data.data;
-        const list = Array.isArray(data) ? data : (data?.items || []);
-        setItems(list);
-      }
+      // interceptor unwraps → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setItems(data);
     } catch (err) {
       setError('Failed to load achievements.');
     } finally {
@@ -69,10 +67,9 @@ function AchievementsPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await api.get('/achievements/stats');
-      if (response.data.success) {
-        setStats(response.data.data);
-      }
+      const stats = await api.get('/achievements/stats');
+      // interceptor unwraps → stats is the object directly
+      if (stats && typeof stats === 'object') setStats(stats);
     } catch (err) {
       // Non-fatal
     }

@@ -1,30 +1,79 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row, Col, ProgressBar } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { campaignReportsService, statisticsService } from '../services';
 import './HomePage.css';
+
+// ── Client-side cache to avoid hammering the API ────────────────────────────────
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let _statsCache = { data: null, timestamp: 0 };
 
 const HomePage = () => {
   const [featuredCampaigns, setFeaturedCampaigns] = useState([]);
+  const [recentReports, setRecentReports] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  let cancelled = false;
-  const loadData = async () => {
-    try {
-      const campaignsRes = await api.get('/campaigns/featured', { params: { count: 3 } });
-      if (!cancelled && campaignsRes.data.success) {
-        setFeaturedCampaigns(campaignsRes.data.data || []);
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchStats = async () => {
+      // Return cached data if still fresh
+      if (_statsCache.data && (Date.now() - _statsCache.timestamp) < CACHE_DURATION) {
+        if (!cancelled) { setStats(_statsCache.data); setStatsLoading(false); }
+        return;
       }
-    } catch (error) {
-      if (!cancelled) console.error('Error loading data:', error);
-    } finally {
-      if (!cancelled) setLoading(false);
-    }
-  };
-  loadData();
-  return () => { cancelled = true; };
-}, []);
+      try {
+        const data = await statisticsService.getDashboardStatistics();
+        if (!cancelled) {
+          setStats(data);
+          setStatsError(null);
+          // Update cache
+          _statsCache = { data, timestamp: Date.now() };
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Failed to fetch statistics:', err);
+          setStatsError(err.message || 'Failed to load statistics');
+        }
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    };
+
+    const loadData = async () => {
+      try {
+        const [campaignsRes, reportsRes] = await Promise.all([
+          api.get('/campaigns/featured', { params: { count: 3 } }),
+          campaignReportsService.getAll({ pageSize: 3, page: 1 }).catch(() => ({ success: false })),
+        ]);
+        // api.js interceptor unwraps { success, message, data } → returns body.data directly.
+        // So campaignsRes is the array (or the interceptor throws on non-2xx).
+        const campaigns = Array.isArray(campaignsRes) ? campaignsRes : [];
+        if (!cancelled) {
+          setFeaturedCampaigns(campaigns.slice(0, 3));
+        }
+        if (!cancelled) {
+          const reports = reportsRes && typeof reportsRes === 'object' && 'items' in reportsRes
+            ? reportsRes.items
+            : Array.isArray(reportsRes) ? reportsRes : [];
+          setRecentReports(reports.slice(0, 3));
+        }
+      } catch (error) {
+        if (!cancelled) console.error('Error loading data:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    // Fetch stats in parallel with other data
+    fetchStats();
+    loadData();
+    return () => { cancelled = true; };
+  }, []);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -187,24 +236,65 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="c4k-mission-stats-row">
-            <div className="c4k-stat-item">
-              <div className="stat-number">2,500+</div>
-              <div className="stat-label">Children Supported</div>
+          {statsError ? (
+            /* Error: fallback to hard-coded values */
+            <div className="c4k-mission-stats-row">
+              <div className="c4k-stat-item">
+                <div className="stat-number">2,500+</div>
+                <div className="stat-label">Children Supported</div>
+              </div>
+              <div className="c4k-stat-item">
+                <div className="stat-number">50,000+</div>
+                <div className="stat-label">Meals Provided</div>
+              </div>
+              <div className="c4k-stat-item">
+                <div className="stat-number">1,200+</div>
+                <div className="stat-label">Education Packages</div>
+              </div>
+              <div className="c4k-stat-item">
+                <div className="stat-number">3,000+</div>
+                <div className="stat-label">Donors Trust Us</div>
+              </div>
             </div>
-            <div className="c4k-stat-item">
-              <div className="stat-number">50,000+</div>
-              <div className="stat-label">Meals Provided</div>
+          ) : statsLoading ? (
+            /* Loading skeleton */
+            <div className="c4k-mission-stats-row">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="c4k-stat-item">
+                  <div className="stat-skeleton stat-number-skeleton"></div>
+                  <div className="stat-skeleton stat-label-skeleton"></div>
+                </div>
+              ))}
             </div>
-            <div className="c4k-stat-item">
-              <div className="stat-number">1,200+</div>
-              <div className="stat-label">Education Packages</div>
+          ) : stats ? (
+            /* Real data from database */
+            <div className="c4k-mission-stats-row">
+              <div className="c4k-stat-item">
+                <div className="stat-number">
+                  {formatCurrency(stats.totalRaised || 0)}
+                </div>
+                <div className="stat-label">Total Raised</div>
+              </div>
+              <div className="c4k-stat-item">
+                <div className="stat-number">
+                  {(stats.totalDonors || 0).toLocaleString('vi-VN')}+
+                </div>
+                <div className="stat-label">Donors</div>
+              </div>
+              <div className="c4k-stat-item">
+                <div className="stat-number">
+                  {stats.activeCampaigns || 0}
+                </div>
+                <div className="stat-label">Active Campaigns</div>
+              </div>
+              <div className="c4k-stat-item">
+                <div className="stat-number">
+                  {stats.totalCauses || 0}
+                </div>
+                <div className="stat-label">Causes Supported</div>
+              </div>
             </div>
-            <div className="c4k-stat-item">
-              <div className="stat-number">3,000+</div>
-              <div className="stat-label">Donors Trust Us</div>
-            </div>
-          </div>
+          ) : null}
         </Container>
       </section>
 
@@ -487,7 +577,89 @@ useEffect(() => {
       </section>
 
       {/* ============================================================
-          7. FINAL CTA — Coral accent section
+          7. IMPACT REPORTS — Featured published reports
+      ============================================================ */}
+      {recentReports.length > 0 && (
+        <section className="c4k-impact-reports">
+          <Container>
+            <div className="c4k-section-header">
+              <p className="eyebrow">Transparency &amp; Impact</p>
+              <h2 className="c4k-section-title">Where Your Donations Go</h2>
+              <p className="c4k-section-desc">
+                We publish regular impact reports showing exactly how donated funds were spent and the children we reached together.
+              </p>
+            </div>
+
+            <div className="c4k-impact-grid">
+              {recentReports.slice(0, 3).map((report) => {
+                const spendPct = report.totalReceived > 0
+                  ? Math.min((report.totalSpent / report.totalReceived) * 100, 100)
+                  : 0;
+                return (
+                  <div key={report.reportId} className="c4k-impact-card">
+                    <div className="c4k-impact-card-header">
+                      <div className="c4k-impact-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 11l3 3L22 4"/>
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        </svg>
+                      </div>
+                      <h3 className="c4k-impact-card-title">{report.reportTitle}</h3>
+                    </div>
+
+                    <div className="c4k-impact-stats">
+                      <div className="c4k-impact-stat">
+                        <div className="c4k-impact-stat-num text-success">
+                          {formatCurrency(report.totalReceived)}
+                        </div>
+                        <div className="c4k-impact-stat-lbl">Received</div>
+                      </div>
+                      <div className="c4k-impact-stat">
+                        <div className="c4k-impact-stat-num text-primary">
+                          {formatCurrency(report.totalSpent)}
+                        </div>
+                        <div className="c4k-impact-stat-lbl">Spent</div>
+                      </div>
+                      <div className="c4k-impact-stat">
+                        <div className="c4k-impact-stat-num text-info">
+                          {(report.beneficiariesReached ?? 0).toLocaleString('vi-VN')}
+                        </div>
+                        <div className="c4k-impact-stat-lbl">Beneficiaries</div>
+                      </div>
+                    </div>
+
+                    <div className="c4k-impact-progress-wrap">
+                      <div className="c4k-impact-progress-label">
+                        <span>Fund Utilisation</span>
+                        <span><strong>{spendPct.toFixed(0)}%</strong></span>
+                      </div>
+                      <ProgressBar
+                        now={spendPct}
+                        variant={spendPct >= 90 ? 'success' : spendPct >= 50 ? 'info' : 'warning'}
+                        className="c4k-impact-progress"
+                      />
+                    </div>
+
+                    <div className="c4k-impact-card-footer">
+                      <Link
+                        to={`/campaigns/${report.campaignId}`}
+                        className="btn-outline-teal btn-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <i className="bi bi-arrow-right me-1"></i>
+                        View Campaign
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Container>
+        </section>
+      )}
+
+      {/* ============================================================
+          8. FINAL CTA — Coral accent section
       ============================================================ */}
       <section className="c4k-cta">
         <Container className="text-center">

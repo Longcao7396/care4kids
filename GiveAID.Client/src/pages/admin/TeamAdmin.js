@@ -15,11 +15,9 @@ export default function TeamAdmin() {
     try {
       setLoading(true);
       const response = await api.get('/team', { params: { activeOnly: false, pageSize: 100 } });
-      if (response.data.success) {
-        const data = response.data.data;
-        const list = Array.isArray(data) ? data : (data?.items || []);
-        setItems(list);
-      }
+      // interceptor unwraps envelope → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setItems(data);
     } catch (err) {
       setError('Failed to load team.');
     } finally {
@@ -66,12 +64,11 @@ export default function TeamAdmin() {
       const response = editing
         ? await api.put(`/team/${editing.teamMemberId}`, payload)
         : await api.post('/team', payload);
-      if (response.data.success) {
+      // interceptor unwraps envelope → response is truthy on success
+      if (response) {
         setSuccess(editing ? 'Team member updated.' : 'Team member added.');
         setShowModal(false);
         load();
-      } else {
-        setError(response.data.message || 'Save failed.');
       }
     } catch (err) {
       setError('Save failed.');

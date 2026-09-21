@@ -8,29 +8,29 @@
 }
 
 .about-subpage .page-header {
-  background: var(--hero-gradient);
-  color: var(--text-light);
+  background: transparent;
+  color: var(--c4k-gray-800);
   padding: 4rem 0 3rem;
   margin-bottom: 3rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--c4k-gray-200);
   text-align: center;
 }
 
 .about-subpage .page-header h1 {
-  color: var(--text-light);
+  color: var(--c4k-gray-900);
   margin-bottom: 0.75rem;
   font-size: 2.5rem;
 }
 
 .about-subpage .page-header .lead {
-  color: var(--text-gray);
+  color: var(--c4k-gray-600);
   font-size: 1.1rem;
   max-width: 760px;
   margin: 0 auto;
 }
 
 .about-subpage .page-header .text-accent {
-  color: var(--accent-sky);
+  color: var(--c4k-teal);
 }
 
 /* Generic card override for the dark theme */
@@ -669,4 +669,63 @@
   .achievement-stat-value {
     font-size: 1.5rem;
   }
+}
+
+/* =====================================================
+   LIGHT THEME OVERRIDES — Help Centre, Team, Career, etc.
+   ===================================================== */
+body:not(.dark-mode) .about-subpage,
+body:not(.dark-mode) .about-subpage .faq-item,
+body:not(.dark-mode) .about-subpage .team-card,
+body:not(.dark-mode) .about-subpage .career-card,
+body:not(.dark-mode) .about-subpage .achievement-card,
+body:not(.dark-mode) .about-subpage .supporter-card,
+body:not(.dark-mode) .about-subpage .partner-card,
+body:not(.dark-mode) .about-subpage .card {
+  background-color: #ffffff;
+  color: #0F172A;
+}
+
+body:not(.dark-mode) .about-subpage h1,
+body:not(.dark-mode) .about-subpage h2,
+body:not(.dark-mode) .about-subpage h3,
+body:not(.dark-mode) .about-subpage h4,
+body:not(.dark-mode) .about-subpage h5,
+body:not(.dark-mode) .about-subpage h6,
+body:not(.dark-mode) .about-subpage .card-title,
+body:not(.dark-mode) .about-subpage .team-name,
+body:not(.dark-mode) .about-subpage .team-role,
+body:not(.dark-mode) .about-subpage .faq-question,
+body:not(.dark-mode) .about-subpage .career-title,
+body:not(.dark-mode) .about-subpage .achievement-title,
+body:not(.dark-mode) .about-subpage .supporter-name,
+body:not(.dark-mode) .about-subpage .partner-name {
+  color: #0F172A;
+}
+
+body:not(.dark-mode) .about-subpage .faq-question.open {
+  color: #0284C7;
+}
+
+body:not(.dark-mode) .about-subpage .faq-answer,
+body:not(.dark-mode) .about-subpage .team-bio,
+body:not(.dark-mode) .about-subpage .career-meta,
+body:not(.dark-mode) .about-subpage .achievement-desc,
+body:not(.dark-mode) .about-subpage .supporter-meta,
+body:not(.dark-mode) .about-subpage .text-muted {
+  color: #475569 !important;
+}
+
+body:not(.dark-mode) .about-subpage .faq-item,
+body:not(.dark-mode) .about-subpage .team-card,
+body:not(.dark-mode) .about-subpage .career-card,
+body:not(.dark-mode) .about-subpage .achievement-card,
+body:not(.dark-mode) .about-subpage .supporter-card,
+body:not(.dark-mode) .about-subpage .partner-card,
+body:not(.dark-mode) .about-subpage .card {
+  border-color: #E2E8F0;
+}
+
+body:not(.dark-mode) .about-subpage .team-photo-wrapper {
+  background-color: #F1F5F9;
 }

@@ -34,17 +34,17 @@ const ProfilePage = () => {
     const load = async () => {
       try {
         const res = await api.get('/users/me');
-        if (res.data.success) {
-          const u = res.data.data;
-          setProfile({
-            fullName: u.fullName || '',
-            phone: u.phone || '',
-            address: u.address || '',
-            profession: u.profession || '',
-            gender: u.gender || '',
-            dateOfBirth: u.dateOfBirth ? u.dateOfBirth.slice(0, 10) : '',
-          });
-        }
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object' && res.userId) {
+        setProfile({
+          fullName: res.fullName || '',
+          phone: res.phone || '',
+          address: res.address || '',
+          profession: res.profession || '',
+          gender: res.gender || '',
+          dateOfBirth: res.dateOfBirth ? res.dateOfBirth.slice(0, 10) : '',
+        });
+      }
       } catch (err) {
         setError('Failed to load profile.');
       } finally {
@@ -92,15 +92,14 @@ const ProfilePage = () => {
         newPassword: changingPw ? pwNew : null,
       };
       const res = await api.put('/users/me', payload);
-      if (res.data.success) {
+      // interceptor unwraps envelope → res is truthy on success
+      if (res) {
         setSuccess('Profile updated successfully.');
         setPwCurrent('');
         setPwNew('');
         setPwConfirm('');
         // Refresh local user context if name changed
         if (refreshUser) await refreshUser();
-      } else {
-        setError(res.data.message || 'Update failed.');
       }
     } catch (err) {
       setError(err.response?.data?.Message || err.response?.data?.message || err.message || 'Update failed.');

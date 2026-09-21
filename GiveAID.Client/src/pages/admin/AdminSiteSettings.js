@@ -21,7 +21,9 @@ export default function AdminSiteSettings() {
       const response = await api.get('/cms/pages', {
         params: { keys: 'privacy_policy,terms_of_service,help_centre,about_us,contact_info', includeInactive: true },
       });
-      if (response.data.success) setPages(response.data.data || []);
+      // interceptor unwraps envelope → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setPages(data);
     } catch (err) {
       setError('Failed to load site pages.');
     } finally {
@@ -45,7 +47,8 @@ export default function AdminSiteSettings() {
       const response = await api.put(`/cms/pages/${editing.pageId}`, {
         pageTitle, content, metaDescription,
       });
-      if (response.data.success) {
+      // interceptor unwraps envelope → response is the raw data directly
+      if (response && typeof response === 'object') {
         setSuccess('Page saved successfully.');
         setEditing(null);
         load();

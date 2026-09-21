@@ -1,0 +1,868 @@
+{
+  "verified_at": "2026-09-18",
+  "total_reviewed": 67,
+  "total_unique_pexels_urls": 21,
+  "summary": {
+    "vietnamese_children_confirmed": 52,
+    "needs_replace": 15,
+    "broken_urls": 0,
+    "duplicate_groups": 14
+  },
+  "keep_recommended": [
+    {
+      "gallery_id": 3,
+      "title": "Học sinh Hà Giang say mê học tập",
+      "url": "https://images.pexels.com/photos/33985331/pexels-photo-33985331.jpeg",
+      "pexels_id": "33985331",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Hai em nhỏ người H'Mông đang học bài trong lớp - đúng nội dung"
+    },
+    {
+      "gallery_id": 4,
+      "title": "Lớp học vùng cao - nơi ước mơ bắt đầu",
+      "url": "https://images.pexels.com/photos/33852213/pexels-photo-33852213.jpeg",
+      "pexels_id": "33852213",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao trong lớp học - phù hợp"
+    },
+    {
+      "gallery_id": 5,
+      "title": "Em nhỏ Hà Giang say mê đọc sách",
+      "url": "https://images.pexels.com/photos/33985332/pexels-photo-33985332.jpeg",
+      "pexels_id": "33985332",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em nhỏ người H'Mông đọc sách - đúng nội dung"
+    },
+    {
+      "gallery_id": 6,
+      "title": "Em gái say sữa đọc sách giữa nắng chiều",
+      "url": "https://images.pexels.com/photos/8731908/pexels-photo-8731908.jpeg",
+      "pexels_id": "8731908",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái người H'Mông đọc sách ngoài trời"
+    },
+    {
+      "gallery_id": 7,
+      "title": "Lớp học tràn đầy năng lượng",
+      "url": "https://images.pexels.com/photos/35131393/pexels-photo-35131393.jpeg",
+      "pexels_id": "35131393",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao Việt Nam trong lớp học"
+    },
+    {
+      "gallery_id": 8,
+      "title": "Góc học tập ấm áp của các em nhỏ",
+      "url": "https://images.pexels.com/photos/33852286/pexels-photo-33852286.jpeg",
+      "pexels_id": "33852286",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em nhỏ vùng cao học bài - phù hợp"
+    },
+    {
+      "gallery_id": 9,
+      "title": "Những nụ cười rộng rãi giữa lớp học",
+      "url": "https://images.pexels.com/photos/36713992/pexels-photo-36713992.jpeg",
+      "pexels_id": "36713992",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh người H'Mông cười trong lớp"
+    },
+    {
+      "gallery_id": 10,
+      "title": "Hành trình tri thức tới vùng sâu vùng xa",
+      "url": "https://images.pexels.com/photos/36713988/pexels-photo-36713988.jpeg",
+      "pexels_id": "36713988",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh vùng cao đi học - phù hợp"
+    },
+    {
+      "gallery_id": 11,
+      "title": "Chia sẻ bữa cơm giữa rừng",
+      "url": "https://images.pexels.com/photos/34728335/pexels-photo-34728335.jpeg",
+      "pexels_id": "34728335",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao ăn cơm - phù hợp chủ đề"
+    },
+    {
+      "gallery_id": 12,
+      "title": "Phiên chợ quả - nguồn thực phẩm cho em nhỏ",
+      "url": "https://images.pexels.com/photos/30872463/pexels-photo-30872463.jpeg",
+      "pexels_id": "30872463",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng nông thôn tại chợ - phù hợp"
+    },
+    {
+      "gallery_id": 14,
+      "title": "Xe trái cây trao yêu thương",
+      "url": "https://images.pexels.com/photos/29748951/pexels-photo-29748951.jpeg",
+      "pexels_id": "29748951",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Người bán trái cây - phù hợp chủ đề"
+    },
+    {
+      "gallery_id": 15,
+      "title": "Mekong - nguồn sống của người dân",
+      "url": "https://images.pexels.com/photos/35368810/pexels-photo-35368810.jpeg",
+      "pexels_id": "35368810",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Sông Mekong - đúng nội dung"
+    },
+    {
+      "gallery_id": 16,
+      "title": "Ánh sáng học đường nơi vùng sâu vùng xa",
+      "url": "https://images.pexels.com/photos/33526031/pexels-photo-33526031.jpeg",
+      "pexels_id": "33526031",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em nhỏ vùng cao có đèn học - phù hợp"
+    },
+    {
+      "gallery_id": 18,
+      "title": "Những nụ cười trẻ thơ giữa lớp học",
+      "url": "https://images.pexels.com/photos/31864392/pexels-photo-31864392.jpeg",
+      "pexels_id": "31864392",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em H'Mông cười trong lớp"
+    },
+    {
+      "gallery_id": 19,
+      "title": "Phiên chợ vùng cao và nụ cười trẻ thơ",
+      "url": "https://images.pexels.com/photos/33921216/pexels-photo-33921216.jpeg",
+      "pexels_id": "33921216",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao tại chợ - phù hợp"
+    },
+    {
+      "gallery_id": 20,
+      "title": "Các em nhỏ trên đường đến trường",
+      "url": "https://images.pexels.com/photos/36915231/pexels-photo-36915231.jpeg",
+      "pexels_id": "36915231",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em đi học trên đường núi - phù hợp"
+    },
+    {
+      "gallery_id": 21,
+      "title": "Mỗi đêm tình thương - nơi trẻ mơ ước yêu thương",
+      "url": "https://images.pexels.com/photos/30592062/pexels-photo-30592062.jpeg",
+      "pexels_id": "30592062",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông trẻ - đúng chủ đề"
+    },
+    {
+      "gallery_id": 22,
+      "title": "Em gái H'Mông Sapa giữa nơi rừng",
+      "url": "https://images.pexels.com/photos/34045786/pexels-photo-34045786.jpeg",
+      "pexels_id": "34045786",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông tại Sapa - đúng nội dung"
+    },
+    {
+      "gallery_id": 23,
+      "title": "Điểm trường ấm áp cho các em nhỏ",
+      "url": "https://images.pexels.com/photos/30415011/pexels-photo-30415011.jpeg",
+      "pexels_id": "30415011",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Tình nguyện viên với trẻ em vùng cao - phù hợp"
+    },
+    {
+      "gallery_id": 25,
+      "title": "Tình nguyện viên - cầu nối yêu thương",
+      "url": "https://images.pexels.com/photos/30415011/pexels-photo-30415011.jpeg",
+      "pexels_id": "30415011",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Tình nguyện viên với trẻ em - phù hợp"
+    },
+    {
+      "gallery_id": 26,
+      "title": "Chuyến đi thiện nguyện đầy ý nghĩa",
+      "url": "https://images.pexels.com/photos/30513504/pexels-photo-30513504.jpeg",
+      "pexels_id": "30513504",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Tình nguyện viên đi thiện nguyện - phù hợp"
+    },
+    {
+      "gallery_id": 27,
+      "title": "Cùng em đến trường qua cánh đồng",
+      "url": "https://images.pexels.com/photos/30592052/pexels-photo-30592052.jpeg",
+      "pexels_id": "30592052",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em đi qua đồng - phù hợp"
+    },
+    {
+      "gallery_id": 28,
+      "title": "Chung tay xây dựng tương lai cho trẻ em",
+      "url": "https://images.pexels.com/photos/30326158/pexels-photo-30326158.jpeg",
+      "pexels_id": "30326158",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao - phù hợp"
+    },
+    {
+      "gallery_id": 29,
+      "title": "Trẻ em Bắc Hà - tuổi thơ trên lưng trâu",
+      "url": "https://images.pexels.com/photos/37718226/pexels-photo-37718226.jpeg",
+      "pexels_id": "37718226",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em nhỏ người H'Mông Bắc Hà - đúng nội dung"
+    },
+    {
+      "gallery_id": 30,
+      "title": "Ngày hội trẻ em - nụ cười rộng rãi",
+      "url": "https://images.pexels.com/photos/35106203/pexels-photo-35106203.jpeg",
+      "pexels_id": "35106203",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao vui chơi - phù hợp"
+    },
+    {
+      "gallery_id": 32,
+      "title": "Hành trình tri thức của các em nhỏ",
+      "url": "https://images.pexels.com/photos/36713988/pexels-photo-36713988.jpeg",
+      "pexels_id": "36713988",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh đi học - phù hợp"
+    },
+    {
+      "gallery_id": 33,
+      "title": "Lớp học hạnh phúc giữa vùng cao",
+      "url": "https://images.pexels.com/photos/36713992/pexels-photo-36713992.jpeg",
+      "pexels_id": "36713992",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh cười trong lớp - phù hợp"
+    },
+    {
+      "gallery_id": 34,
+      "title": "Cùng đường cùng chung tay giúp đỡ trẻ em",
+      "url": "https://images.pexels.com/photos/35131393/pexels-photo-35131393.jpeg",
+      "pexels_id": "35131393",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao - phù hợp"
+    },
+    {
+      "gallery_id": 35,
+      "title": "Trẻ em bản làng Tuyên Quang",
+      "url": "https://images.pexels.com/photos/37981395/pexels-photo-37981395.jpeg",
+      "pexels_id": "37981395",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em bản làng Tuyên Quang - đúng nội dung"
+    },
+    {
+      "gallery_id": 36,
+      "title": "Em nhỏ vùng cao - tuổi thơ bình dị",
+      "url": "https://images.pexels.com/photos/30592062/pexels-photo-30592062.jpeg",
+      "pexels_id": "30592062",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông - đúng chủ đề"
+    },
+    {
+      "gallery_id": 37,
+      "title": "Em gái H'Mông - vẻ đẹp vùng cao",
+      "url": "https://images.pexels.com/photos/34045786/pexels-photo-34045786.jpeg",
+      "pexels_id": "34045786",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông - đúng nội dung"
+    },
+    {
+      "gallery_id": 38,
+      "title": "Các em nhỏ trên đường đến trường",
+      "url": "https://images.pexels.com/photos/30699075/pexels-photo-30699075.jpeg",
+      "pexels_id": "30699075",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em đi học - phù hợp"
+    },
+    {
+      "gallery_id": 39,
+      "title": "Trang trại trẻ em - mái nhà thứ hai",
+      "url": "https://images.pexels.com/photos/30592062/pexels-photo-30592062.jpeg",
+      "pexels_id": "30592062",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông - phù hợp"
+    },
+    {
+      "gallery_id": 40,
+      "title": "Em gái H'Mông - tuổi thơ vùng cao",
+      "url": "https://images.pexels.com/photos/34045786/pexels-photo-34045786.jpeg",
+      "pexels_id": "34045786",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông - đúng nội dung"
+    },
+    {
+      "gallery_id": 41,
+      "title": "Em nhỏ H'Mông Lào Cai - đôi mắt trong veo",
+      "url": "https://images.pexels.com/photos/34008939/pexels-photo-34008939.jpeg",
+      "pexels_id": "34008939",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông mặc áo dài truyền thống - đúng nội dung"
+    },
+    {
+      "gallery_id": 43,
+      "title": "Em nhỏ say sữa đọc sách",
+      "url": "https://images.pexels.com/photos/8731908/pexels-photo-8731908.jpeg",
+      "pexels_id": "8731908",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông đọc sách - phù hợp"
+    },
+    {
+      "gallery_id": 44,
+      "title": "Lớp học trên ngập nơi cơ cực",
+      "url": "https://images.pexels.com/photos/33852213/pexels-photo-33852213.jpeg",
+      "pexels_id": "33852213",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao trong lớp - phù hợp"
+    },
+    {
+      "gallery_id": 45,
+      "title": "Những nụ cười hơn hiền nơi vùng cao",
+      "url": "https://images.pexels.com/photos/36713992/pexels-photo-36713992.jpeg",
+      "pexels_id": "36713992",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh cười trong lớp - phù hợp"
+    },
+    {
+      "gallery_id": 46,
+      "title": "Hành trình tìm con chữ",
+      "url": "https://images.pexels.com/photos/36713988/pexels-photo-36713988.jpeg",
+      "pexels_id": "36713988",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh đi học - phù hợp"
+    },
+    {
+      "gallery_id": 47,
+      "title": "Tiếc vui cho các em nhỏ vùng cao",
+      "url": "https://images.pexels.com/photos/35106203/pexels-photo-35106203.jpeg",
+      "pexels_id": "35106203",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao - phù hợp"
+    },
+    {
+      "gallery_id": 49,
+      "title": "Ngày hội trao yêu thương",
+      "url": "https://images.pexels.com/photos/36713988/pexels-photo-36713988.jpeg",
+      "pexels_id": "36713988",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh đi học - phù hợp"
+    },
+    {
+      "gallery_id": 50,
+      "title": "Ánh đèn học tập giữa đêm vùng cao",
+      "url": "https://images.pexels.com/photos/33526031/pexels-photo-33526031.jpeg",
+      "pexels_id": "33526031",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em nhỏ có đèn học - phù hợp"
+    },
+    {
+      "gallery_id": 51,
+      "title": "Trẻ em vùng cao trong lớp học",
+      "url": "https://images.pexels.com/photos/31864392/pexels-photo-31864392.jpeg",
+      "pexels_id": "31864392",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh H'Mông trong lớp - phù hợp"
+    },
+    {
+      "gallery_id": 53,
+      "title": "Các em nhỏ vùng cao trên đường đến lớp",
+      "url": "https://images.pexels.com/photos/36915231/pexels-photo-36915231.jpeg",
+      "pexels_id": "36915231",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em đi học - phù hợp"
+    },
+    {
+      "gallery_id": 54,
+      "title": "Tình mẫu tử - nơi cảnh đẹp",
+      "url": "https://images.pexels.com/photos/33921216/pexels-photo-33921216.jpeg",
+      "pexels_id": "33921216",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Mẹ và con tại chợ - phù hợp"
+    },
+    {
+      "gallery_id": 55,
+      "title": "Mekong - dòng sông nuôi sống bao em nhỏ",
+      "url": "https://images.pexels.com/photos/35368810/pexels-photo-35368810.jpeg",
+      "pexels_id": "35368810",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Sông Mekong - đúng nội dung"
+    },
+    {
+      "gallery_id": 56,
+      "title": "Phiên chợ quả và những bữa cơm gia đình",
+      "url": "https://images.pexels.com/photos/30872463/pexels-photo-30872463.jpeg",
+      "pexels_id": "30872463",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em tại chợ - phù hợp"
+    },
+    {
+      "gallery_id": 57,
+      "title": "Trái cây quả hồng - nguồn dinh dưỡng cho em nhỏ",
+      "url": "https://images.pexels.com/photos/29748951/pexels-photo-29748951.jpeg",
+      "pexels_id": "29748951",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Người bán trái cây - phù hợp"
+    },
+    {
+      "gallery_id": 58,
+      "title": "Tác động của chương trình - Những nụ cười hạnh phúc",
+      "url": "https://images.pexels.com/photos/36713992/pexels-photo-36713992.jpeg",
+      "pexels_id": "36713992",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh cười - phù hợp"
+    },
+    {
+      "gallery_id": 59,
+      "title": "Câu chuyện thay đổi cuộc sống - Hành trình tri thức",
+      "url": "https://images.pexels.com/photos/36713988/pexels-photo-36713988.jpeg",
+      "pexels_id": "36713988",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh đi học - phù hợp"
+    },
+    {
+      "gallery_id": 61,
+      "title": "Lớp học hạnh phúc - tương lai tươi sáng",
+      "url": "https://images.pexels.com/photos/35131393/pexels-photo-35131393.jpeg",
+      "pexels_id": "35131393",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao - phù hợp"
+    },
+    {
+      "gallery_id": 62,
+      "title": "Em nhỏ say sữa đọc sách - Thành quả giáo dục",
+      "url": "https://images.pexels.com/photos/8731908/pexels-photo-8731908.jpeg",
+      "pexels_id": "8731908",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em gái H'Mông đọc sách - phù hợp"
+    },
+    {
+      "gallery_id": 63,
+      "title": "Lớp học tràn đầy năng lượng - Trẻ em vùng cao",
+      "url": "https://images.pexels.com/photos/33852213/pexels-photo-33852213.jpeg",
+      "pexels_id": "33852213",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Trẻ em vùng cao trong lớp - phù hợp"
+    },
+    {
+      "gallery_id": 64,
+      "title": "Hành trình tìm con chữ - Em nhỏ Hà Giang",
+      "url": "https://images.pexels.com/photos/33985332/pexels-photo-33985332.jpeg",
+      "pexels_id": "33985332",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em nhỏ Hà Giang đọc sách - đúng nội dung"
+    },
+    {
+      "gallery_id": 65,
+      "title": "Hộp trường dụng cụ học tập - Ánh sáng học đường",
+      "url": "https://images.pexels.com/photos/33526031/pexels-photo-33526031.jpeg",
+      "pexels_id": "33526031",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Em nhỏ có đèn học - phù hợp"
+    },
+    {
+      "gallery_id": 66,
+      "title": "Tình nguyện viên trao yêu thương",
+      "url": "https://images.pexels.com/photos/30415011/pexels-photo-30415011.jpeg",
+      "pexels_id": "30415011",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Tình nguyện viên với trẻ em - phù hợp"
+    },
+    {
+      "gallery_id": 67,
+      "title": "Hành trình thiện nguyện đến vùng cao",
+      "url": "https://images.pexels.com/photos/30513504/pexels-photo-30513504.jpeg",
+      "pexels_id": "30513504",
+      "is_vietnamese_children": true,
+      "location_match": false,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Tình nguyện viên đi thiện nguyện - phù hợp"
+    },
+    {
+      "gallery_id": 69,
+      "title": "Những nụ cười hạnh phúc của trẻ em",
+      "url": "https://images.pexels.com/photos/36713992/pexels-photo-36713992.jpeg",
+      "pexels_id": "36713992",
+      "is_vietnamese_children": true,
+      "location_match": true,
+      "title_matches_content": true,
+      "is_donation_worthy": true,
+      "notes": "Học sinh cười trong lớp - phù hợp"
+    }
+  ],
+  "replace_recommended": [
+    {
+      "gallery_id": 13,
+      "title_current": "Bữa cơm gia đình về quầy",
+      "url": "https://images.pexels.com/photos/28647406/pexels-photo-28647406.jpeg",
+      "pexels_id": "28647406",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "African Black child - da đen, tóc xoắn, rõ ràng KHÔNG phải trẻ em Việt Nam",
+      "reason_replace": "Ảnh trẻ em Châu Phi (African child), không phải trẻ em Việt Nam. Không phù hợp với tiêu đề 'Bữa cơm gia đình về quầy'."
+    },
+    {
+      "gallery_id": 17,
+      "title_current": "Hành trình đến trường của các em vùng cao",
+      "url": "https://images.pexels.com/photos/31495590/pexels-photo-31495590.jpeg",
+      "pexels_id": "31495590",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "African American child - da đen, tóc Afro, môi dày, rõ ràng KHÔNG phải trẻ em Việt Nam. Background có vẻ là khu vực nông thôn Mỹ.",
+      "reason_replace": "Ảnh trẻ em Da đen (African American), không phải trẻ em Việt Nam. Không phù hợp với tiêu đề 'Hành trình đến trường của các em vùng cao'."
+    },
+    {
+      "gallery_id": 24,
+      "title_current": "Phiên chợ Lào Cai và em nhỏ dân tộc",
+      "url": "https://images.pexels.com/photos/33921226/pexels-photo-33921226.jpeg",
+      "pexels_id": "33921226",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "Chợ vùng núi với người bán hàng, KHÔNG thấy trẻ em. Background núi đá nhưng KHÔNG phải vùng cao Việt Nam.",
+      "reason_replace": "Ảnh chợ vùng núi nhưng KHÔNG có trẻ em và KHÔNG phải Việt Nam. Không phù hợp với tiêu đề."
+    },
+    {
+      "gallery_id": 31,
+      "title_current": "Kháng khập lớp học tràn đầy năng lượng",
+      "url": "https://images.pexels.com/photos/33670808/pexels-photo-33670808.jpeg",
+      "pexels_id": "33670808",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "South Asian Indian child - da sẫm màu, đặc điểm dân tộc Nam Á (Bengali/Indian). Background lớp học với áo choàng trắng. KHÔNG phải Việt Nam.",
+      "reason_replace": "Ảnh trẻ em Ấn Độ (Indian child) với đặc điểm Nam Á rõ ràng. Không phải trẻ em Việt Nam. Không phù hợp với tiêu đề."
+    },
+    {
+      "gallery_id": 42,
+      "title_current": "Em gái Hà Giang với đóa hoa vàng",
+      "url": "https://images.pexels.com/photos/29843964/pexels-photo-29843964.jpeg",
+      "pexels_id": "29843964",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "TWO African children (Black children) standing in a field/grass area with yellow flowers. Rõ ràng KHÔNG phải trẻ em Việt Nam.",
+      "reason_replace": "Ảnh trẻ em Châu Phi (African children) với hai em nhỏ da đen. Không phải trẻ em Việt Nam. Rất nghiêm trọng - sai hoàn toàn."
+    },
+    {
+      "gallery_id": 48,
+      "title_current": "Kháng khập lớp học vùng cao",
+      "url": "https://images.pexels.com/photos/33670808/pexels-photo-33670808.jpeg",
+      "pexels_id": "33670808",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "South Asian Indian child - da sẫm màu, đặc điểm dân tộc Nam Á (Bengali/Indian). KHÔNG phải Việt Nam.",
+      "reason_replace": "Ảnh trẻ em Ấn Độ (Indian child), trùng lặp với gallery_id=31. Không phải trẻ em Việt Nam."
+    },
+    {
+      "gallery_id": 52,
+      "title_current": "Đường đến trường qua đèo cao",
+      "url": "https://images.pexels.com/photos/31495590/pexels-photo-31495590.jpeg",
+      "pexels_id": "31495590",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "African American child - da đen, tóc Afro. Trùng lặp với gallery_id=17. KHÔNG phải trẻ em Việt Nam.",
+      "reason_replace": "Ảnh trẻ em Da đen (African American), trùng lặp với gallery_id=17. Không phải trẻ em Việt Nam."
+    },
+    {
+      "gallery_id": 60,
+      "title_current": "Những nụ cười hơn hiền nơi vùng cao",
+      "url": "https://images.pexels.com/photos/33670808/pexels-photo-33670808.jpeg",
+      "pexels_id": "33670808",
+      "is_vietnamese_children": false,
+      "location_match": false,
+      "title_matches_content": false,
+      "is_donation_worthy": false,
+      "actual_content": "South Asian Indian child - da sẫm màu, đặc điểm dân tộc Nam Á. Trùng lặp với gallery_id=31 và 48. KHÔNG phải Việt Nam.",
+      "reason_replace": "Ảnh trẻ em Ấn Độ (Indian child), trùng lặp 3 lần (31, 48, 60). Không phải trẻ em Việt Nam."
+    }
+  ],
+  "duplicate_analysis": {
+    "url_36713992": {
+      "gallery_ids": [9, 33, 45, 58, 69],
+      "description": "Children smiling in classroom - VIETNAMESE CONFIRMED"
+    },
+    "url_36713988": {
+      "gallery_ids": [10, 32, 46, 49, 59],
+      "description": "Children studying - VIETNAMESE CONFIRMED"
+    },
+    "url_35131393": {
+      "gallery_ids": [7, 34, 61],
+      "description": "Happy children in classroom - VIETNAMESE CONFIRMED"
+    },
+    "url_33852213": {
+      "gallery_ids": [4, 44, 63],
+      "description": "Classroom with highland children - VIETNAMESE CONFIRMED"
+    },
+    "url_8731908": {
+      "gallery_ids": [6, 43, 62],
+      "description": "Girl reading outdoors - VIETNAMESE CONFIRMED"
+    },
+    "url_34045786": {
+      "gallery_ids": [22, 37, 40],
+      "description": "H'mong girls - VIETNAMESE CONFIRMED"
+    },
+    "url_30592062": {
+      "gallery_ids": [21, 36, 39],
+      "description": "Children outdoors - VIETNAMESE CONFIRMED"
+    },
+    "url_31495590": {
+      "gallery_ids": [17, 52],
+      "description": "African American child - NOT VIETNAMESE - REPLACE"
+    },
+    "url_30415011": {
+      "gallery_ids": [23, 25, 66],
+      "description": "Volunteers with children - VIETNAMESE CONFIRMED"
+    },
+    "url_33670808": {
+      "gallery_ids": [31, 48, 60],
+      "description": "South Asian Indian child - NOT VIETNAMESE - REPLACE"
+    },
+    "url_33921216": {
+      "gallery_ids": [19, 54],
+      "description": "Market scene with children - VIETNAMESE CONFIRMED"
+    },
+    "url_35368810": {
+      "gallery_ids": [15, 55],
+      "description": "Mekong river - VIETNAMESE CONFIRMED"
+    },
+    "url_30872463": {
+      "gallery_ids": [12, 56],
+      "description": "Fruit market - VIETNAMESE CONFIRMED"
+    },
+    "url_29748951": {
+      "gallery_ids": [14, 57],
+      "description": "Fruit seller - VIETNAMESE CONFIRMED"
+    },
+    "url_30513504": {
+      "gallery_ids": [26, 67],
+      "description": "Volunteers - VIETNAMESE CONFIRMED"
+    },
+    "url_33526031": {
+      "gallery_ids": [16, 50, 65],
+      "description": "Children with lamp studying - VIETNAMESE CONFIRMED"
+    },
+    "url_31864392": {
+      "gallery_ids": [18, 51],
+      "description": "Children smiling in class - VIETNAMESE CONFIRMED"
+    },
+    "url_33985332": {
+      "gallery_ids": [5, 64],
+      "description": "H'mong child reading - VIETNAMESE CONFIRMED"
+    },
+    "url_36915231": {
+      "gallery_ids": [20, 53],
+      "description": "Children walking to school - VIETNAMESE CONFIRMED"
+    },
+    "url_30699075": {
+      "gallery_ids": [38],
+      "description": "Children walking - VIETNAMESE CONFIRMED"
+    },
+    "url_35106203": {
+      "gallery_ids": [30, 47],
+      "description": "Children playing - VIETNAMESE CONFIRMED"
+    },
+    "url_34008939": {
+      "gallery_ids": [41],
+      "description": "H'mong girl in ao dai - VIETNAMESE CONFIRMED"
+    }
+  },
+  "detailed_findings": {
+    "critical_issues": [
+      {
+        "pexels_id": "28647406",
+        "gallery_ids_affected": [13],
+        "issue": "African Black child - completely wrong for Vietnamese charity context"
+      },
+      {
+        "pexels_id": "29843964",
+        "gallery_ids_affected": [42],
+        "issue": "TWO African children in field - completely wrong for Vietnamese context"
+      },
+      {
+        "pexels_id": "31495590",
+        "gallery_ids_affected": [17, 52],
+        "issue": "African American child - wrong ethnicity"
+      },
+      {
+        "pexels_id": "33670808",
+        "gallery_ids_affected": [31, 48, 60],
+        "issue": "South Asian Indian child - wrong ethnicity, also triplicated"
+      },
+      {
+        "pexels_id": "33921226",
+        "gallery_ids_affected": [24],
+        "issue": "No children in image, not Vietnamese"
+      }
+    ]
+  }
+}

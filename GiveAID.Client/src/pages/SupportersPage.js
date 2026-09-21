@@ -98,9 +98,9 @@ function SupportersPage() {
       const params = { activeOnly: true };
       if (type) params.type = type;
       const response = await api.get('/supporters', { params });
-      if (response.data.success) {
-        setItems(response.data.data || []);
-      }
+      // interceptor unwraps envelope → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setItems(data);
     } catch (err) {
       setError('Failed to load supporters.');
     } finally {
@@ -111,9 +111,8 @@ function SupportersPage() {
   const fetchStats = useCallback(async () => {
     try {
       const response = await api.get('/supporters/stats');
-      if (response.data.success) {
-        setStats(response.data.data);
-      }
+      // interceptor unwraps envelope → response is the raw data directly
+      if (response && typeof response === 'object') setStats(response);
     } catch (err) {
       // Non-fatal
     }

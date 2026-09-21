@@ -1,12 +1,14 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web.Http;
 using System.Data.Entity;
 using GiveAID.Web.Data;
 using GiveAID.Web.Models;
 using GiveAID.Web.Helpers;
 using GiveAID.Web.Controllers;
+using GiveAID.Web.Services.Payments;
 
 namespace GiveAID.Web.Controllers
 {
@@ -32,6 +34,7 @@ namespace GiveAID.Web.Controllers
 
                 var query = _context.Donations
                     .Include(d => d.Cause)
+                    .Include(d => d.Campaign)
                     .Where(d => d.UserId == userId)
                     .OrderByDescending(d => d.DonationDate);
 
@@ -51,11 +54,12 @@ namespace GiveAID.Web.Controllers
                             donationId = d.DonationId,
                             causeId = d.CauseId,
                             causeName = d.Cause.CauseName,
+                            campaignId = d.CampaignId,
+                            campaignName = d.Campaign != null ? d.Campaign.CampaignName : (string)null,
                             amount = d.Amount,
                             paymentMethod = d.PaymentMethod,
                             paymentStatus = d.PaymentStatus,
                             transactionId = d.TransactionId,
-                            campaignId = d.CampaignId,
                             message = d.Message,
                             isAnonymous = d.IsAnonymous,
                             donationDate = d.DonationDate
@@ -124,6 +128,8 @@ namespace GiveAID.Web.Controllers
                         userId = donation.UserId,
                         causeId = donation.CauseId,
                         causeName = donation.Cause.CauseName,
+                        campaignId = donation.CampaignId,
+                        campaignName = donation.Campaign != null ? donation.Campaign.CampaignName : null,
                         amount = donation.Amount,
                         paymentMethod = donation.PaymentMethod,
                         paymentStatus = donation.PaymentStatus,
@@ -145,7 +151,7 @@ namespace GiveAID.Web.Controllers
         // POST: api/donations
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create(DonationRequest request)
+        public async Task<IHttpActionResult> Create(DonationRequest request)
         {
             try
             {
@@ -171,6 +177,7 @@ namespace GiveAID.Web.Controllers
                 {
                     existingDonation = _context.Donations
                         .Include(d => d.Cause)
+                        .Include(d => d.Campaign)
                         .FirstOrDefault(d =>
                             d.UserId == userId &&
                             d.IdempotencyKey == request.IdempotencyKey);
@@ -183,11 +190,17 @@ namespace GiveAID.Web.Controllers
                             Data = new
                             {
                                 donationId = existingDonation.DonationId,
-                                transactionId = existingDonation.TransactionId,
-                                amount = existingDonation.Amount,
+                                causeId = existingDonation.CauseId,
                                 causeName = existingDonation.Cause?.CauseName,
-                                donationDate = existingDonation.DonationDate,
+                                campaignId = existingDonation.CampaignId,
+                                campaignName = existingDonation.Campaign != null ? existingDonation.Campaign.CampaignName : null,
+                                amount = existingDonation.Amount,
+                                paymentMethod = existingDonation.PaymentMethod,
                                 paymentStatus = existingDonation.PaymentStatus,
+                                transactionId = existingDonation.TransactionId,
+                                message = existingDonation.Message,
+                                isAnonymous = existingDonation.IsAnonymous,
+                                donationDate = existingDonation.DonationDate,
                                 isIdempotent = true
                             }
                         });
@@ -221,11 +234,40 @@ namespace GiveAID.Web.Controllers
                     }
                 }
 
-                // Create donation in PENDING state. The old behaviour of marking
-                // "Completed" immediately was a financial-reporting bug: no payment
-                // gateway was actually called. Now the gateway webhook (or admin
-                // manual confirmation) is responsible for flipping status to
-                // "Completed". This prevents inflated donation totals.
+                // Determine the payment gateway to use.
+                // Default to "mock" if not specified. Real deployments set
+                // PaymentGateway__Default in Web.config to "stripe" (or "vnpay"/"momo").
+                var gatewayName = string.IsNullOrWhiteSpace(request.PaymentGateway)
+                    ? PaymentGatewayFactory.CurrentGatewayName
+                    : request.PaymentGateway.Trim().ToLowerInvariant();
+
+                // ── Call the payment gateway to create a PaymentIntent ─────────────
+                var gateway = PaymentGatewayFactory.Current;
+                var metadata = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    ["donation_user_id"]  = userId.ToString(),
+                    ["donation_cause_id"] = request.CauseId.ToString(),
+                    ["donation_campaign_id"] = request.CampaignId?.ToString() ?? "",
+                    ["donation_gateway"] = gatewayName
+                };
+
+                var intentResult = await gateway.CreatePaymentIntent(
+                    amount:      request.Amount,
+                    currency:    "vnd",
+                    description: $"GiveAID donation to {cause.CauseName}" +
+                                 (campaign != null ? $" (Campaign: {campaign.CampaignName})" : ""),
+                    metadata:    metadata);
+
+                if (!intentResult.Success)
+                {
+                    return Content(System.Net.HttpStatusCode.BadGateway, new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Payment gateway error: " + (intentResult.ErrorMessage ?? intentResult.ErrorCode ?? "Unknown error")
+                    });
+                }
+
+                // ── Create donation record in PENDING state ────────────────────────
                 var donation = new Donation
                 {
                     UserId = userId,
@@ -237,6 +279,9 @@ namespace GiveAID.Web.Controllers
                     CardLastFour = request.CardLast4,
                     CardType = request.PaymentGateway ?? request.PaymentMethod,
                     TransactionId = GenerateTransactionId(),
+                    GatewayTransactionId = intentResult.GatewayTransactionId,
+                    ClientSecret = intentResult.ClientSecret,
+                    PaymentGateway = gatewayName,
                     Message = request.Message?.Trim(),
                     IsAnonymous = request.IsAnonymous,
                     ReceiptSent = false,
@@ -286,10 +331,14 @@ namespace GiveAID.Web.Controllers
                 // the dashboard KPIs accurate to actual money received, not
                 // pending intentions.
 
+                // Return donation details plus the clientSecret so the frontend
+                // can complete the payment via Stripe.js (or equivalent SDK).
+                var stripePublishableKey = PaymentGatewayFactory.StripePublishableKey;
+
                 return Ok(new ApiResponse
                 {
                     Success = true,
-                    Message = "Donation recorded. It will be marked Completed once payment is confirmed by the gateway.",
+                    Message = "Donation intent created. Complete payment using the clientSecret.",
                     Data = new
                     {
                         donationId = donation.DonationId,
@@ -299,7 +348,13 @@ namespace GiveAID.Web.Controllers
                         campaignName = campaign?.CampaignName,
                         donationDate = donation.DonationDate,
                         paymentStatus = donation.PaymentStatus,
-                        isIdempotent = false
+                        isIdempotent = false,
+                        // Gateway-specific fields
+                        clientSecret = donation.ClientSecret,
+                        gatewayTransactionId = donation.GatewayTransactionId,
+                        paymentGateway = gatewayName,
+                        // Frontend needs the publishable key to initialise Stripe.js
+                        stripePublishableKey = stripePublishableKey ?? (object)null
                     }
                 });
             }
@@ -410,6 +465,9 @@ namespace GiveAID.Web.Controllers
 
                 _context.SaveChanges();
 
+                // Invalidate statistics cache after donation confirmation
+                CacheHelper.InvalidateStatistics();
+
                 return Ok(new ApiResponse
                 {
                     Success = true,
@@ -430,75 +488,174 @@ namespace GiveAID.Web.Controllers
         }
 
         // POST: api/donations/webhook
-        // Public endpoint intended for payment-gateway webhooks (Stripe, VNPay, MoMo).
-        // No JWT required — the gateway authenticates via its own signature header
-        // (X-Gateway-Signature). For now this endpoint accepts any POST with a
-        // matching transactionId; real-world deployments must verify the signature
-        // against the gateway's shared secret before trusting the payload.
-        //
-        // In production this endpoint should:
-        //   1. Verify the gateway signature
-        //   2. Look up the donation by gateway_transaction_id (or our internal id)
-        //   3. Flip status to Completed (or Failed for disputes/chargebacks)
-        //   4. Return 200 quickly so the gateway doesn't retry
+        // Public endpoint for payment-gateway webhooks (Stripe, VNPay, MoMo, Mock).
+        // No JWT required — the gateway authenticates via its own signature header.
+        // IMPORTANT: Return 200 quickly (< 2 seconds) so the gateway doesn't retry.
+        // All signature verification and business logic happens before the response.
         [HttpPost]
         [Route("webhook")]
         [AllowAnonymous]
-        public IHttpActionResult PaymentWebhook([FromBody] GatewayWebhookPayload payload)
+        public async Task<IHttpActionResult> PaymentWebhook()
         {
+            // Read raw body — required for signature verification (Stripe HMAC-SHA256)
+            string rawBody;
             try
             {
-                if (payload == null || string.IsNullOrWhiteSpace(payload.TransactionId))
-                    return BadRequest("transactionId is required.");
-
-                // TODO: verify X-Gateway-Signature header against the gateway's shared secret.
-
-                var donation = _context.Donations
-                    .FirstOrDefault(d =>
-                        d.TransactionId == payload.TransactionId ||
-                        d.GatewayTransactionId == payload.TransactionId);
-                if (donation == null) return NotFound();
-
-                switch ((payload.Status ?? "").ToLowerInvariant())
-                {
-                    case "succeeded":
-                    case "completed":
-                    case "paid":
-                        if (donation.PaymentStatus != "Completed")
-                        {
-                            donation.PaymentStatus = "Completed";
-                            donation.PaymentConfirmedAt = DateTime.UtcNow;
-                            donation.GatewayTransactionId = payload.TransactionId;
-
-                            _context.Database.ExecuteSqlCommand(
-                                "UPDATE Causes SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE cause_id = @p2",
-                                donation.Amount, DateTime.Now, donation.CauseId);
-                            if (donation.CampaignId.HasValue)
-                            {
-                                _context.Database.ExecuteSqlCommand(
-                                    "UPDATE Campaigns SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE campaign_id = @p2",
-                                    donation.Amount, DateTime.Now, donation.CampaignId.Value);
-                            }
-                        }
-                        break;
-                    case "failed":
-                    case "declined":
-                        donation.PaymentStatus = "Failed";
-                        break;
-                    case "refunded":
-                        donation.PaymentStatus = "Refunded";
-                        break;
-                    default:
-                        return BadRequest("Unknown status: " + payload.Status);
-                }
-
-                _context.SaveChanges();
-                return Ok(new { success = true });
+                rawBody = await Request.Content.ReadAsStringAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                return InternalServerError(ex);
+                rawBody = string.Empty;
             }
+            if (string.IsNullOrWhiteSpace(rawBody))
+                return BadRequest("Empty webhook body.");
+
+            // Collect headers for signature verification
+            var headers = Request.Headers
+                .ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
+
+            // ── 1. Verify the webhook using the active gateway ───────────────────
+            var gateway = PaymentGatewayFactory.Current;
+            var verification = await gateway.VerifyWebhook(rawBody, headers);
+
+            // ── 2. Log every webhook event before processing ──────────────────────
+            var sigHeader = headers
+                .FirstOrDefault(h => h.Key.Equals("Stripe-Signature", StringComparison.OrdinalIgnoreCase))
+                .Value ?? "";
+
+            var logEntry = new WebhookLog
+            {
+                Gateway = gateway.Name,
+                EventType = verification.EventType,
+                EventId = verification.EventId,
+                RawPayload = verification.RawPayload?.Length > 4000
+                    ? verification.RawPayload.Substring(0, 4000)
+                    : (verification.RawPayload ?? ""),
+                Signature = sigHeader,
+                SignatureValid = verification.SignatureValid,
+                ProcessingStatus = "Processed",
+                ReceivedAt = DateTime.UtcNow
+            };
+
+            // Idempotency: if this EventId was already logged, return 200 immediately.
+            if (!string.IsNullOrWhiteSpace(verification.EventId))
+            {
+                var duplicate = _context.WebhookLogs
+                    .FirstOrDefault(w => w.EventId == verification.EventId && w.Gateway == gateway.Name);
+                if (duplicate != null)
+                {
+                    logEntry.ProcessingStatus = "Duplicate";
+                    _context.WebhookLogs.Add(logEntry);
+                    _context.SaveChanges();
+                    return Ok(new { success = true, duplicate = true });
+                }
+            }
+
+            // ── 3. Look up the donation ───────────────────────────────────────────
+            Donation donation = null;
+            if (!string.IsNullOrWhiteSpace(verification.TransactionId))
+            {
+                donation = _context.Donations
+                    .FirstOrDefault(d =>
+                        d.GatewayTransactionId == verification.TransactionId ||
+                        d.TransactionId == verification.TransactionId);
+            }
+
+            if (donation != null)
+            {
+                logEntry.DonationId = donation.DonationId;
+                logEntry.DonationTransactionId = donation.TransactionId;
+            }
+
+            // ── 4. Apply status change ───────────────────────────────────────────
+            if (donation != null)
+            {
+                try
+                {
+                    await ApplyWebhookStatusChange(donation, verification);
+                    logEntry.ProcessingStatus = "Processed";
+                }
+                catch (Exception ex)
+                {
+                    logEntry.ProcessingStatus = "Failed";
+                    logEntry.ErrorMessage = ex.Message;
+                    System.Diagnostics.Debug.WriteLine($"[Webhook] Error processing event {verification.EventId}: {ex}");
+                }
+            }
+            else
+            {
+                logEntry.ProcessingStatus = "Ignored";
+                logEntry.ErrorMessage = "No matching donation found for transaction: " + verification.TransactionId;
+            }
+
+            logEntry.ProcessedAt = DateTime.UtcNow;
+            _context.WebhookLogs.Add(logEntry);
+            _context.SaveChanges();
+
+            // Always return 200 to acknowledge receipt (prevents gateway retries)
+            return Ok(new { success = true });
+        }
+
+        private Task ApplyWebhookStatusChange(Donation donation, PaymentVerificationResult result)
+        {
+            if (donation == null || result == null) return Task.CompletedTask;
+
+            var now = DateTime.UtcNow;
+
+            switch ((result.Status ?? "").ToLowerInvariant())
+            {
+                case "succeeded":
+                case "completed":
+                case "paid":
+                    if (donation.PaymentStatus != "Completed")
+                    {
+                        donation.PaymentStatus = "Completed";
+                        donation.PaymentConfirmedAt = now;
+                        donation.GatewayTransactionId = result.TransactionId ?? donation.GatewayTransactionId;
+
+                        var updatedAt = DateTime.Now;
+                        _context.Database.ExecuteSqlCommand(
+                            "UPDATE Causes SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE cause_id = @p2",
+                            donation.Amount, updatedAt, donation.CauseId);
+                        if (donation.CampaignId.HasValue)
+                        {
+                            _context.Database.ExecuteSqlCommand(
+                                "UPDATE Campaigns SET raised_amount = COALESCE(raised_amount, 0) + @p0, updated_at = @p1 WHERE campaign_id = @p2",
+                                donation.Amount, updatedAt, donation.CampaignId.Value);
+                        }
+
+                        // Invalidate statistics cache after successful payment
+                        CacheHelper.InvalidateStatistics();
+                    }
+                    break;
+
+                case "failed":
+                case "declined":
+                    donation.PaymentStatus = "Failed";
+                    break;
+
+                case "refunded":
+                    donation.PaymentStatus = "Refunded";
+                    _context.Database.ExecuteSqlCommand(
+                        "UPDATE Causes SET raised_amount = COALESCE(raised_amount, 0) - @p0, updated_at = GETDATE() WHERE cause_id = @p1",
+                        donation.Amount, donation.CauseId);
+                    if (donation.CampaignId.HasValue)
+                    {
+                        _context.Database.ExecuteSqlCommand(
+                            "UPDATE Campaigns SET raised_amount = COALESCE(raised_amount, 0) - @p0, updated_at = GETDATE() WHERE campaign_id = @p1",
+                            donation.Amount, donation.CampaignId.Value);
+                    }
+                    break;
+
+                default:
+                    // Unknown status — log it but don't crash
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[Webhook] Unknown status '{result.Status}' for donation {donation.DonationId} " +
+                        $"(event: {result.EventType}, txn: {result.TransactionId})");
+                    break;
+            }
+
+            return Task.CompletedTask;
         }
 
         private string GenerateTransactionId()

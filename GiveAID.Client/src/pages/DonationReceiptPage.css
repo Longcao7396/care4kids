@@ -1,0 +1,688 @@
+/* =====================================================
+   CARE4KIDS — DONATION RECEIPT PAGE
+   ===================================================== */
+
+.drp-page {
+  background: var(--c4k-off-white);
+  min-height: 100vh;
+}
+
+/* ─── LOADING ─── */
+
+.drp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+}
+
+.drp-loading p {
+  color: var(--c4k-gray-500);
+  font-size: var(--fs-body);
+  margin: 0;
+}
+
+/* ─── HERO ─── */
+
+.drp-hero {
+  position: relative;
+  padding: var(--space-9) 0;
+  text-align: center;
+  overflow: hidden;
+}
+
+.drp-hero-sm {
+  padding: var(--space-7) 0;
+}
+
+.drp-hero-success {
+  background: linear-gradient(135deg, var(--c4k-teal-dark) 0%, var(--c4k-teal) 60%, #2a9d8f 100%);
+}
+
+.drp-hero-pending {
+  background: linear-gradient(135deg, #b45309 0%, #d97706 60%, #f59e0b 100%);
+}
+
+.drp-hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.drp-hero-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%);
+}
+
+.drp-hero-content {
+  position: relative;
+  z-index: 2;
+  color: var(--c4k-white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.drp-check-icon {
+  width: 72px;
+  height: 72px;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c4k-white);
+  margin-bottom: var(--space-5);
+  animation: drp-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.drp-check-icon-pending {
+  background: rgba(255,255,255,0.12);
+}
+
+@keyframes drp-pop-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.drp-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--c4k-white);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 var(--space-4);
+}
+
+.drp-hero-sub {
+  font-size: var(--fs-body-l);
+  color: rgba(255,255,255,0.85);
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ─── CONTENT ─── */
+
+.drp-content {
+  padding: var(--space-8) 0;
+}
+
+.drp-alert {
+  margin-bottom: var(--space-5);
+}
+
+/* ─── RECEIPT CARD ─── */
+
+.drp-receipt-section {
+  padding: var(--space-8) 0 var(--space-9);
+}
+
+.drp-receipt-card {
+  background: var(--c4k-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--c4k-gray-200);
+  margin-bottom: var(--space-6);
+}
+
+/* Receipt Header */
+
+.drp-receipt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-6) var(--space-7);
+  border-bottom: 2px dashed var(--c4k-gray-200);
+  background: var(--c4k-off-white);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.drp-receipt-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drp-logo-img {
+  height: 36px;
+  width: auto;
+}
+
+.drp-logo-text {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  letter-spacing: -0.02em;
+}
+
+.drp-receipt-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.drp-receipt-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.drp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.drp-badge-success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.drp-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.drp-badge-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.drp-badge-neutral {
+  background: var(--c4k-gray-100);
+  color: var(--c4k-gray-700);
+  border: 1px solid var(--c4k-gray-300);
+}
+
+/* Receipt Body */
+
+.drp-receipt-body {
+  padding: var(--space-7);
+}
+
+.drp-receipt-id-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.drp-receipt-id,
+.drp-receipt-date {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drp-receipt-id-label {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c4k-gray-500);
+}
+
+.drp-receipt-id-value {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  letter-spacing: -0.01em;
+}
+
+.drp-divider {
+  border: none;
+  border-top: 1px solid var(--c4k-gray-100);
+  margin: var(--space-5) 0;
+}
+
+/* Amount Section */
+
+.drp-amount-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+}
+
+.drp-amount-label {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--c4k-gray-700);
+}
+
+.drp-amount-value {
+  font-family: var(--font-serif);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--c4k-coral);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* Info Grid */
+
+.drp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-5);
+}
+
+.drp-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drp-info-label {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c4k-gray-500);
+}
+
+.drp-info-value {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--c4k-charcoal);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.drp-card-last4 {
+  font-weight: 400;
+  color: var(--c4k-gray-600);
+}
+
+.drp-txn-id {
+  font-family: 'Courier New', monospace;
+  font-size: var(--fs-body-s);
+  color: var(--c4k-teal-dark);
+  word-break: break-all;
+}
+
+/* Message Section */
+
+.drp-message-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.drp-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: var(--c4k-coral-softest);
+  border: 1px solid var(--c4k-coral-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-body);
+  color: var(--c4k-coral-darker);
+  margin: 0;
+  line-height: 1.65;
+}
+
+.drp-message svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--c4k-coral);
+}
+
+/* Anonymous Notice */
+
+.drp-anon-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-600);
+  font-style: italic;
+  padding: var(--space-3) var(--space-4);
+  background: var(--c4k-gray-50);
+  border-radius: var(--radius-md);
+}
+
+.drp-anon-notice svg {
+  flex-shrink: 0;
+  color: var(--c4k-gray-500);
+}
+
+/* Receipt Footer */
+
+.drp-receipt-footer {
+  padding: var(--space-5) var(--space-7);
+  background: var(--c4k-off-white);
+  border-top: 1px solid var(--c4k-gray-100);
+}
+
+.drp-footer-note p {
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-500);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.drp-footer-note a {
+  color: var(--c4k-teal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.drp-footer-note a:hover {
+  text-decoration: underline;
+}
+
+/* ─── ACTIONS ─── */
+
+.drp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.drp-btn-lg {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 1.5rem !important;
+  font-size: var(--fs-body) !important;
+}
+
+/* ─── SHARE ─── */
+
+.drp-share-section {
+  text-align: center;
+  padding: 0 0 var(--space-8);
+}
+
+.drp-share-label {
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  color: var(--c4k-gray-600);
+  margin: 0 0 var(--space-4);
+}
+
+.drp-share-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.drp-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all var(--t-fast);
+  background: none;
+}
+
+.drp-share-fb {
+  background: #1877f2;
+  color: white;
+  border-color: #1877f2;
+}
+
+.drp-share-fb:hover {
+  background: #1557b0;
+  color: white;
+  text-decoration: none;
+}
+
+.drp-share-tw {
+  background: #000;
+  color: white;
+  border-color: #000;
+}
+
+.drp-share-tw:hover {
+  background: #1a1a1a;
+  color: white;
+  text-decoration: none;
+}
+
+.drp-share-copy {
+  background: var(--c4k-white);
+  color: var(--c4k-charcoal);
+  border-color: var(--c4k-gray-300);
+}
+
+.drp-share-copy:hover {
+  border-color: var(--c4k-teal);
+  color: var(--c4k-teal-dark);
+}
+
+/* ─── IMPACT SECTION ─── */
+
+.drp-impact-section {
+  padding: 0 0 var(--space-10);
+}
+
+.drp-impact-card {
+  background: var(--c4k-white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-7);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--c4k-gray-200);
+  text-align: center;
+}
+
+.drp-impact-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-3);
+}
+
+.drp-impact-desc {
+  font-size: var(--fs-body);
+  color: var(--c4k-gray-600);
+  line-height: 1.65;
+  margin: 0 0 var(--space-6);
+}
+
+.drp-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.drp-impact-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.drp-impact-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--c4k-teal-light);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c4k-teal-dark);
+  margin-bottom: 4px;
+}
+
+.drp-impact-num {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--c4k-teal-dark);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.drp-impact-lbl {
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  color: var(--c4k-gray-700);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.drp-impact-note {
+  font-size: var(--fs-body-s);
+  color: var(--c4k-gray-500);
+  font-style: italic;
+  margin: 0 0 var(--space-4);
+}
+
+.drp-explore-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c4k-teal);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+
+.drp-explore-link:hover {
+  color: var(--c4k-teal-dark);
+  text-decoration: underline;
+}
+
+/* ─── PRINT ─── */
+
+@media print {
+  .drp-actions,
+  .drp-share-section,
+  .drp-impact-section,
+  .drp-hero-pattern {
+    display: none !important;
+  }
+
+  .drp-receipt-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .drp-hero {
+    background: var(--c4k-teal) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .drp-amount-value,
+  .drp-status-badge {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* ─── RESPONSIVE ─── */
+
+@media (max-width: 767px) {
+  .drp-hero {
+    padding: var(--space-7) 0;
+  }
+
+  .drp-hero-title {
+    font-size: 2rem;
+  }
+
+  .drp-receipt-header {
+    padding: var(--space-5) var(--space-5);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .drp-receipt-body {
+    padding: var(--space-5);
+  }
+
+  .drp-amount-value {
+    font-size: 1.75rem;
+  }
+
+  .drp-info-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .drp-receipt-footer {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .drp-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .drp-btn-lg {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .drp-impact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .drp-impact-num {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .drp-receipt-title {
+    font-size: var(--fs-h4);
+  }
+
+  .drp-share-btns {
+    flex-direction: column;
+  }
+
+  .drp-share-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

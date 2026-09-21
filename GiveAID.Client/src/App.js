@@ -13,12 +13,14 @@ import AuthBootstrap from './components/AuthBootstrap';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import CausesPage from './pages/CausesPage';
 import CampaignsPage from './pages/CampaignsPage';
 import CampaignDetailPage from './pages/CampaignDetailPage';
 import DonatePage from './pages/DonatePage';
-import ProgrammesPage from './pages/ProgrammesPage';
-import ProgrammeDetailPage from './pages/ProgrammeDetailPage';
+import DonationReceiptPage from './pages/DonationReceiptPage';
+import DonationHistoryDetailPage from './pages/DonationHistoryDetailPage';
 import DashboardPage from './pages/DashboardPage';
 import MyDonationsPage from './pages/MyDonationsPage';
 import MyRegistrationsPage from './pages/MyRegistrationsPage';
@@ -33,6 +35,8 @@ import ContactPage from './pages/ContactPage';
 import HelpCentrePage from './pages/HelpCentrePage';
 import GalleryPage from './pages/GalleryPage';
 import RaiseQueryPage from './pages/RaiseQueryPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -49,6 +53,7 @@ import AdminDonationsPage from './pages/admin/AdminDonationsPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminAchievementsPage from './pages/admin/AdminAchievementsPage';
 import AdminInvitationsPage from './pages/admin/AdminInvitationsPage';
+import AdminEmailLogsPage from './pages/admin/AdminEmailLogsPage';
 
 // Styles
 import './styles/App.css';
@@ -88,6 +93,7 @@ function App() {
               <Route path="queries" element={<AdminQueriesPage />} />
               <Route path="contacts" element={<AdminContactPage />} />
               <Route path="invitations" element={<AdminInvitationsPage />} />
+              <Route path="emails" element={<AdminEmailLogsPage />} />
               {/* Admin fallback */}
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
@@ -106,11 +112,11 @@ function App() {
                       <Route path="/" element={<HomePage />} />
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/register" element={<RegisterPage />} />
+                      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                      <Route path="/reset-password" element={<ResetPasswordPage />} />
                       <Route path="/causes" element={<CausesPage />} />
                       <Route path="/campaigns" element={<CampaignsPage />} />
                       <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
-                      <Route path="/programmes" element={<ProgrammesPage />} />
-                      <Route path="/programmes/:id" element={<ProgrammeDetailPage />} />
                       <Route path="/about" element={<AboutPage />} />
                       <Route path="/about/team" element={<OurTeamPage />} />
                       <Route path="/about/careers" element={<CareerPage />} />
@@ -120,6 +126,8 @@ function App() {
                       <Route path="/contact" element={<ContactPage />} />
                       <Route path="/help-centre" element={<HelpCentrePage />} />
                       <Route path="/gallery" element={<GalleryPage />} />
+                      <Route path="/privacy" element={<PrivacyPage />} />
+                      <Route path="/terms" element={<TermsPage />} />
 
                       {/* Protected (authenticated) routes */}
                       <Route
@@ -135,6 +143,22 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <DonatePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/donation-receipt/:id"
+                        element={
+                          <ProtectedRoute>
+                            <DonationReceiptPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/my-donations/:id"
+                        element={
+                          <ProtectedRoute>
+                            <DonationHistoryDetailPage />
                           </ProtectedRoute>
                         }
                       />

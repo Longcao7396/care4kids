@@ -270,6 +270,15 @@
   text-decoration: underline;
 }
 
+.mdp-item-view-details {
+  color: var(--c4k-coral);
+  font-weight: 700;
+}
+
+.mdp-item-view-details:hover {
+  color: var(--c4k-coral-darker);
+}
+
 .mdp-item-msg {
   font-family: var(--font-serif);
   font-style: italic;

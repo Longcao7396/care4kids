@@ -413,10 +413,10 @@ function AdminContactPage() {
       if (isReadFilter !== '') params.isRead = isReadFilter === 'read';
       if (search.trim()) params.search = search.trim();
       const response = await contactService.getAll(params);
-      if (response.data?.success) {
-        setContacts(response.data.data || []);
-        setTotal(response.data.pagination?.total || 0);
-      }
+      // contactService calls through api.js interceptor → response is raw data directly
+      const d = response && typeof response === 'object' ? response : {};
+      setContacts(Array.isArray(d) ? d : (d.items || []));
+      setTotal(d.pagination?.total || 0);
     } catch (err) {
       setError('Failed to load contact submissions.');
     } finally {
@@ -427,7 +427,8 @@ function AdminContactPage() {
   const fetchStats = useCallback(async () => {
     try {
       const response = await contactService.getStats();
-      if (response.data?.success) setStats(response.data.data);
+      // contactService calls through api.js interceptor → response is raw data directly
+      if (response && typeof response === 'object') setStats(response);
     } catch (err) { /* non-fatal */ }
   }, []);
 
@@ -441,7 +442,8 @@ function AdminContactPage() {
   const handleSelect = async (c) => {
     try {
       const response = await contactService.getById(c.contactId);
-      if (response.data?.success) setSelectedContact(response.data.data);
+      // contactService calls through api.js interceptor → response is raw data directly
+      if (response && typeof response === 'object') setSelectedContact(response);
     } catch (err) {
       setError('Failed to load contact details.');
     }

@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GiveAID.Web", "GiveAID.Web\GiveAID.Web.csproj", "{A1D6801E-54B8-472B-8E5D-170236D77A38}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GiveAID.Tests", "GiveAID.Tests\GiveAID.Tests.csproj", "{B9C4E2F1-8A3D-4C5E-9F2B-7A6D8E1C0F4E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AnyCPU = Debug|AnyCPU
+		Release|AnyCPU = Release|AnyCPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1D6801E-54B8-472B-8E5D-170236D77A38}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{A1D6801E-54B8-472B-8E5D-170236D77A38}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{A1D6801E-54B8-472B-8E5D-170236D77A38}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{A1D6801E-54B8-472B-8E5D-170236D77A38}.Release|AnyCPU.Build.0 = Release|AnyCPU
+		{B9C4E2F1-8A3D-4C5E-9F2B-7A6D8E1C0F4E}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{B9C4E2F1-8A3D-4C5E-9F2B-7A6D8E1C0F4E}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{B9C4E2F1-8A3D-4C5E-9F2B-7A6D8E1C0F4E}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{B9C4E2F1-8A3D-4C5E-9F2B-7A6D8E1C0F4E}.Release|AnyCPU.Build.0 = Release|AnyCPU
+	EndGlobalSection
+EndGlobal

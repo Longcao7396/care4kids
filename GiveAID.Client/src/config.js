@@ -1,18 +1,17 @@
-// API Base URL Configuration
-// Candidate backend URLs to try, in order of preference.
-// Backend IIS Express may listen on 44300 (configured) or 61508 (VS default).
-const BACKEND_CANDIDATES = [
-  'http://localhost:44300/api',
-  'http://localhost:61508/api',
-];
+// API Base URL Configuration — v2.0
+// Backend runs on port 5000 (Kestrel default in .NET 10)
 
-// Synchronous initial value (best guess) — actual fallback happens in api.js
+const BACKEND_PRIMARY = 'http://localhost:5000/api/v1';
+const BACKEND_FALLBACK = 'http://localhost:5231/api/v1';
+
 export const API_BASE_URL =
-  process.env.REACT_APP_API_URL || BACKEND_CANDIDATES[0];
+  process.env.REACT_APP_API_URL || BACKEND_PRIMARY;
 
-export { BACKEND_CANDIDATES };
+export const BACKEND_CANDIDATES = [BACKEND_PRIMARY, BACKEND_FALLBACK];
 
-// API Endpoints
+export { BACKEND_PRIMARY, BACKEND_FALLBACK };
+
+// API Endpoints — v2.0 (all reference API_BASE_URL for flexibility)
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
@@ -21,7 +20,7 @@ export const API_ENDPOINTS = {
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     ME: `${API_BASE_URL}/auth/me`,
   },
-  
+
   // Causes
   CAUSES: {
     LIST: `${API_BASE_URL}/causes`,
@@ -32,7 +31,7 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `${API_BASE_URL}/causes/${id}`,
     STATS: `${API_BASE_URL}/causes/stats`,
   },
-  
+
   // Donations
   DONATIONS: {
     LIST: `${API_BASE_URL}/donations`,
@@ -40,10 +39,8 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/donations`,
     STATS: `${API_BASE_URL}/donations/stats`,
   },
-  
-  // Programmes / Campaigns — unified.
-  // The backend merged Programme concept into Campaign; registration-style
-  // events are surfaced via RegistrationRequired = true.
+
+  // Campaigns
   CAMPAIGNS: {
     LIST: `${API_BASE_URL}/campaigns`,
     DETAIL: (id) => `${API_BASE_URL}/campaigns/${id}`,
@@ -56,15 +53,7 @@ export const API_ENDPOINTS = {
     MY_REGISTRATIONS: `${API_BASE_URL}/campaigns/my-registrations`,
   },
 
-  // Legacy alias kept so older imports don't break.
-  PROGRAMMES: {
-    LIST: `${API_BASE_URL}/campaigns?eventsOnly=true`,
-    DETAIL: (id) => `${API_BASE_URL}/campaigns/${id}`,
-    REGISTER: (id) => `${API_BASE_URL}/campaigns/${id}/register`,
-    MY_REGISTRATIONS: `${API_BASE_URL}/campaigns/my-registrations`,
-  },
-
-  // About Us - Team
+  // Team
   TEAM: {
     LIST: `${API_BASE_URL}/team`,
     DETAIL: (id) => `${API_BASE_URL}/team/${id}`,
@@ -73,7 +62,7 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `${API_BASE_URL}/team/${id}`,
   },
 
-  // About Us - Achievements
+  // Achievements
   ACHIEVEMENTS: {
     LIST: `${API_BASE_URL}/achievements`,
     STATS: `${API_BASE_URL}/achievements/stats`,
@@ -83,7 +72,7 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `${API_BASE_URL}/achievements/${id}`,
   },
 
-  // About Us - Careers
+  // Careers
   CAREERS: {
     LIST: `${API_BASE_URL}/careers`,
     DETAIL: (id) => `${API_BASE_URL}/careers/${id}`,
@@ -94,7 +83,7 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `${API_BASE_URL}/careers/${id}`,
   },
 
-  // About Us - Supporters (uses Organizations table)
+  // Supporters
   SUPPORTERS: {
     LIST: `${API_BASE_URL}/supporters`,
     STATS: `${API_BASE_URL}/supporters/stats`,
@@ -104,14 +93,14 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `${API_BASE_URL}/supporters/${id}`,
   },
 
-  // About Us - editable page text (CMS)
+  // CMS
   CMS: {
     PAGES: `${API_BASE_URL}/cms/pages`,
     PAGE_BY_KEY: (key) => `${API_BASE_URL}/cms/pages/${key}`,
     UPDATE_PAGE: (id) => `${API_BASE_URL}/cms/pages/${id}`,
   },
 
-  // Help Centre — FAQs
+  // FAQs
   FAQS: {
     LIST: `${API_BASE_URL}/faqs`,
     CATEGORIES: `${API_BASE_URL}/faqs/categories`,
@@ -121,7 +110,7 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `${API_BASE_URL}/faqs/${id}`,
   },
 
-  // Contact form submissions
+  // Contacts
   CONTACTS: {
     SUBMIT: `${API_BASE_URL}/contacts`,
     LIST: `${API_BASE_URL}/contacts`,
@@ -132,7 +121,7 @@ export const API_ENDPOINTS = {
     STATS: `${API_BASE_URL}/contacts/stats`,
   },
 
-  // Invite Friends (referrals)
+  // Invitations
   INVITATIONS: {
     SEND: `${API_BASE_URL}/invitations`,
     MINE: `${API_BASE_URL}/invitations/mine`,
@@ -142,7 +131,7 @@ export const API_ENDPOINTS = {
     ACCEPT: (token) => `${API_BASE_URL}/invitations/accept/${token}`,
   },
 
-  // User-to-admin conversations (Raise Query)
+  // Conversations
   CONVERSATIONS: {
     CREATE: `${API_BASE_URL}/conversations`,
     MINE: `${API_BASE_URL}/conversations/mine`,
@@ -164,11 +153,38 @@ export const API_ENDPOINTS = {
     UPDATE: (id) => `${API_BASE_URL}/gallery/${id}`,
     DELETE: (id) => `${API_BASE_URL}/gallery/${id}`,
   },
+
+  // Campaign Reports
+  CAMPAIGN_REPORTS: {
+    LIST: `${API_BASE_URL}/campaign-reports`,
+    BY_CAMPAIGN: (id) => `${API_BASE_URL}/campaign-reports/campaign/${id}`,
+    DETAIL: (id) => `${API_BASE_URL}/campaign-reports/${id}`,
+    STATS: `${API_BASE_URL}/campaign-reports/stats`,
+    CREATE: `${API_BASE_URL}/campaign-reports`,
+    UPDATE: (id) => `${API_BASE_URL}/campaign-reports/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/campaign-reports/${id}`,
+  },
+
+  // Email Logs (admin)
+  EMAILS: {
+    LIST: `${API_BASE_URL}/admin/emails`,
+    STATS: `${API_BASE_URL}/admin/emails/stats`,
+    RETRY_ALL: `${API_BASE_URL}/admin/emails/retry-all`,
+    RESEND: (id) => `${API_BASE_URL}/admin/emails/${id}/resend`,
+  },
+
+  // Statistics
+  STATISTICS: {
+    DASHBOARD: `${API_BASE_URL}/statistics/dashboard`,
+    CAMPAIGNS_PERFORMANCE: `${API_BASE_URL}/statistics/campaigns/performance`,
+    MONTHLY_DONATIONS: `${API_BASE_URL}/statistics/donations/monthly`,
+    TOP_DONORS: `${API_BASE_URL}/statistics/top-donors`,
+  },
 };
 
 // App Settings
 export const APP_NAME = 'Care4Kids';
-export const APP_DESCRIPTION = 'Children\'s Welfare & Donation Management System';
+export const APP_DESCRIPTION = "Children's Welfare & Donation Management System";
 
 // Pagination
 export const DEFAULT_PAGE_SIZE = 10;
@@ -192,22 +208,6 @@ export const PAYMENT_METHODS = {
   CREDIT_CARD: 'CreditCard',
   DEBIT_CARD: 'DebitCard',
   NET_BANKING: 'NetBanking',
-};
-
-// Programme Types
-export const PROGRAMME_TYPES = {
-  EDUCATION: 'Education',
-  HEALTH_CARE: 'HealthCare',
-  CHILD_WELFARE: 'ChildWelfare',
-  WOMEN_EMPOWERMENT: 'WomenEmpowerment',
-};
-
-// Programme Status
-export const PROGRAMME_STATUS = {
-  UPCOMING: 'Upcoming',
-  ONGOING: 'Ongoing',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
 };
 
 // Cause Codes

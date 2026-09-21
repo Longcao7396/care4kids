@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Container, Row, Col, Form, Alert } from 'react-bootstrap';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { causesService, donationsService } from '../services';
+import { createCardElement, confirmCardPayment, destroyCardElement } from '../services/stripeService';
 import api from '../services/api';
 import './DonatePage.css';
 
@@ -69,11 +70,17 @@ function validateCvv(cvv, isAmex) {
 const DonatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [causes, setCauses] = useState([]);
   const [causeTree, setCauseTree] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [subCauses, setSubCauses] = useState([]);
+  
+  // URL params campaign state
+  const [urlCampaign, setUrlCampaign] = useState(null);
+  const [isFromCampaignLink, setIsFromCampaignLink] = useState(false);
+  
   const [formData, setFormData] = useState({
     causeId: location.state?.causeId || '',
     campaignId: location.state?.campaignId || '',
@@ -92,6 +99,21 @@ const DonatePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // ── Stripe state ─────────────────────────────────────────────────────────────
+  // Set when the backend returns a clientSecret (Stripe gateway is active).
+  const [stripeState, setStripeState] = useState({
+    clientSecret: null,           // pi_xxx_secret_xxx from backend
+    stripePublishableKey: null,   // pk_test_... from backend
+    stripe: null,                 // Stripe instance
+    cardElement: null,            // Stripe card Element
+    paymentProcessing: false,     // true while Stripe.confirmCardPayment runs
+    paymentError: null,           // error message from Stripe
+  });
+  const [isMockGateway, setIsMockGateway] = useState(false); // true when using mock
+
+  // Refs for Stripe card element mount point
+  const stripeCardMountRef = useRef(null);
 
   // Card brand auto-detection
   const cardBrand = useMemo(() => getCardBrand(formData.cardNumber), [formData.cardNumber]);
@@ -151,11 +173,11 @@ const DonatePage = () => {
     const ac = new AbortController();
     const loadTree = async () => {
       try {
-        const treeResp = await api.get('/causes/tree', {
+        const treeData = await api.get('/causes/tree', {
           params: { activeOnly: true }, signal: ac.signal
         });
-        if (treeResp.data?.success) {
-          const treeData = treeResp.data.data || [];
+        // interceptor unwraps envelope → treeData is the array directly
+        if (Array.isArray(treeData) && treeData.length > 0) {
           setCauseTree(treeData);
           const flat = [];
           treeData.forEach((node) => {
@@ -165,7 +187,7 @@ const DonatePage = () => {
           setCauses(flat);
         } else {
           const r = await causesService.getAll(true, { signal: ac.signal });
-          if (r.success) setCauses(r.data);
+          if (Array.isArray(r) && r.length > 0) setCauses(r);
         }
       } catch (e) {
         if (e.name !== 'CanceledError') console.error(e);
@@ -176,7 +198,8 @@ const DonatePage = () => {
         const r = await api.get('/campaigns', {
           params: { status: 'Active' }, signal: ac.signal
         });
-        if (r.data.success) setCampaigns(r.data.data);
+        // interceptor unwraps → r is array directly
+        if (Array.isArray(r) && r.length > 0) setCampaigns(r);
       } catch (e) {
         if (e.name !== 'CanceledError') console.error(e);
       }
@@ -185,6 +208,34 @@ const DonatePage = () => {
     loadCampaigns();
     return () => ac.abort();
   }, []);
+
+  // Handle URL params for campaignId
+  useEffect(() => {
+    const campaignIdParam = searchParams.get('campaignId') || searchParams.get('campaign');
+    
+    if (campaignIdParam) {
+      const loadCampaignFromUrl = async () => {
+        try {
+          const campaign = await api.get(`/campaigns/${campaignIdParam}`);
+          // interceptor unwraps → campaign is the object directly
+          if (campaign && typeof campaign === 'object' && campaign.campaignId) {
+            setUrlCampaign(campaign);
+            setIsFromCampaignLink(true);
+            
+            // Auto-select cause and campaign
+            setFormData((prev) => ({
+              ...prev,
+              causeId: campaign.cause?.causeId || prev.causeId,
+              campaignId: campaign.campaignId
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to load campaign from URL:', err);
+        }
+      };
+      loadCampaignFromUrl();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (formData.causeId) {
@@ -198,13 +249,27 @@ const DonatePage = () => {
     }
   }, [formData.causeId, causeTree, causes]);
 
+  // ── Destroy Stripe card element when payment method changes ─────────────────
+  // This prevents stale iframes and race conditions when switching between
+  // BankTransfer → CreditCard/DebitCard after a prior submission.
+  useEffect(() => {
+    if (stripeState.cardElement) {
+      destroyCardElement(stripeState.cardElement);
+      setStripeState((prev) => ({
+        ...prev,
+        stripe: null,
+        cardElement: null,
+        clientSecret: null,
+        stripePublishableKey: null,
+        paymentError: null,
+      }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.paymentMethod]);
+
   // SECURITY/PCI-DSS: zero out sensitive form state (card number, CVV, expiry,
-  // amount) when the component unmounts. The state lives in React memory; if
-  // the user navigates away mid-form, those values would otherwise stay in JS
-  // heap until garbage collection. Wiping them now shrinks the window where a
-  // browser extension or XSS payload could read them.
-  //
-  // Only clears when the user is NOT staying on the form (i.e. on unmount).
+  // amount) when the component unmounts. Also destroy any Stripe card Element
+  // to ensure the iframe is removed from the DOM.
   useEffect(() => {
     return () => {
       setFormData((prev) => ({
@@ -216,13 +281,16 @@ const DonatePage = () => {
         amount: '',
       }));
       setCardErrors({});
+      if (stripeState.cardElement) destroyCardElement(stripeState.cardElement);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCampaignsByCause = async (causeId) => {
     try {
       const r = await api.get('/campaigns', { params: { status: 'Active', causeId } });
-      if (r.data.success) setCampaigns(r.data.data);
+      // interceptor unwraps envelope → r is the array directly
+      if (Array.isArray(r) && r.length > 0) setCampaigns(r);
     } catch (e) { console.error(e); }
   };
 
@@ -250,6 +318,8 @@ const DonatePage = () => {
     setLoading(true);
     try {
       const idempotencyKey = `don-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      // ── Step 1: Create donation intent on backend ────────────────────────────
       const donationData = {
         causeId: parseInt(formData.causeId),
         campaignId: formData.campaignId ? parseInt(formData.campaignId) : null,
@@ -257,17 +327,114 @@ const DonatePage = () => {
         paymentMethod: formData.paymentMethod,
         message: formData.message || null,
         isAnonymous: formData.isAnonymous,
-        idempotencyKey
+        idempotencyKey,
+        // Optional: hint the gateway. Backend falls back to PaymentGateway__Default.
+        paymentGateway: 'stripe',
       };
+
       const response = await donationsService.create(donationData);
-      if (response.success) {
-        setSuccess('Thank you for your generous donation. You will receive a receipt via email.');
-        setTimeout(() => navigate('/my-donations'), 2000);
+      if (!response.success) {
+        setError(response.message || 'Failed to create donation.');
+        setLoading(false);
+        return;
       }
+
+      const { clientSecret, stripePublishableKey, paymentGateway } = response.data || {};
+
+      // ── Step 2a: Mock gateway — skip Stripe.js ───────────────────────────────
+      if (!clientSecret || paymentGateway === 'mock') {
+        setIsMockGateway(true);
+        const mockDonationId = response.data?.donationId || response.data?.donationId;
+        setSuccess('Thank you for your generous donation (Demo Mode). You will receive a receipt via email.');
+        setTimeout(() => navigate(`/donation-receipt/${mockDonationId}`, {
+          state: { donationData: response.data }
+        }), 2500);
+        setLoading(false);
+        return;
+      }
+
+      // ── Step 2b: Stripe gateway — use Stripe.js to confirm ──────────────────
+      if (!stripePublishableKey) {
+        setError('Stripe publishable key is missing. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
+      // Mount Stripe card element dynamically
+      const { stripe, cardElement } = await createCardElement(
+        stripePublishableKey,
+        stripeCardMountRef.current
+      );
+
+      setStripeState((prev) => ({
+        ...prev,
+        stripe,
+        cardElement,
+        clientSecret,
+        stripePublishableKey,
+        paymentProcessing: true,
+      }));
+
+      // Confirm the payment with Stripe
+      const { error: stripeError, paymentIntent } = await confirmCardPayment(
+        stripe,
+        clientSecret,
+        cardElement,
+        {
+          payment_method_data: {
+            billing_details: {
+              name: formData.cardHolderName || 'Anonymous Donor',
+            },
+          },
+        }
+      );
+
+      setStripeState((prev) => ({ ...prev, paymentProcessing: false }));
+
+      if (stripeError) {
+        // Card was declined or user cancelled — show the error inline
+        const friendly =
+          stripeError.type === 'card_error'
+            ? stripeError.message
+            : 'Payment failed. Please check your card details and try again.';
+        setCardErrors({ cvv: friendly }); // reuse existing error display
+        setError(friendly);
+        destroyCardElement(cardElement);
+        setLoading(false);
+        return;
+      }
+
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Payment confirmed by Stripe — webhook will update the donation to Completed.
+        // Show success immediately so the user doesn't have to wait for the webhook.
+        setSuccess(
+          `Payment confirmed! Transaction ID: ${paymentIntent.id}. ` +
+          'Thank you for your generous donation. You will receive a receipt via email.'
+        );
+        const donationId = response.data?.donationId;
+        setTimeout(() => navigate(donationId ? `/donation-receipt/${donationId}` : '/my-donations', {
+          state: { donationData: response.data }
+        }), 3500);
+      } else {
+        // Payment is in a processing state (e.g. 3D Secure required)
+        setSuccess(
+          `Payment is being processed (${paymentIntent?.status}). ` +
+          'You will receive a confirmation email once complete.'
+        );
+        const donationId = response.data?.donationId;
+        setTimeout(() => navigate(donationId ? `/donation-receipt/${donationId}` : '/my-donations', {
+          state: { donationData: response.data }
+        }), 4000);
+      }
+
+      destroyCardElement(cardElement);
     } catch (err) {
+      // Clean up Stripe element on any unexpected error
+      if (stripeState.cardElement) destroyCardElement(stripeState.cardElement);
       setError(err.response?.data?.message || err.message || 'Donation failed. Please try again.');
     } finally {
       setLoading(false);
+      setStripeState((prev) => ({ ...prev, paymentProcessing: false }));
     }
   };
 
@@ -306,6 +473,33 @@ const DonatePage = () => {
       {/* ─── FORM ─── */}
       <section className="dp-form-section">
         <Container>
+          {/* Campaign indicator when coming from campaign link */}
+          {isFromCampaignLink && urlCampaign && (
+            <div className="dp-campaign-indicator mb-4">
+              <div className="dp-campaign-indicator-inner">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <span>Donating to: <strong>{urlCampaign.campaignName}</strong></span>
+                <button 
+                  type="button" 
+                  className="dp-campaign-indicator-close"
+                  onClick={() => {
+                    setIsFromCampaignLink(false);
+                    setUrlCampaign(null);
+                    setFormData((prev) => ({ ...prev, campaignId: '' }));
+                  }}
+                  title="Choose a different campaign"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
           <Row className="dp-form-row">
 
             {/* Left — Form */}
@@ -334,6 +528,7 @@ const DonatePage = () => {
                         setFormData((p) => ({ ...p, causeId: parent?.causeId || '', campaignId: '' }));
                       }}
                       required
+                      disabled={isFromCampaignLink}
                       className="dp-select"
                     >
                       <option value="">Choose a cause...</option>
@@ -366,7 +561,7 @@ const DonatePage = () => {
                       <p className="dp-step-num">Step 2 · Optional</p>
                       <h3 className="dp-step-title">Select a Campaign</h3>
                       <p className="dp-step-desc">Choose a specific campaign, or leave blank for a general donation.</p>
-                      <Form.Select name="campaignId" value={formData.campaignId} onChange={handleChange} className="dp-select">
+                      <Form.Select name="campaignId" value={formData.campaignId} onChange={handleChange} disabled={isFromCampaignLink} className="dp-select">
                         <option value="">General donation to this cause</option>
                         {campaigns.map((c) => (
                           <option key={c.campaignId} value={c.campaignId}>
@@ -425,89 +620,156 @@ const DonatePage = () => {
                       <div className="dp-card-form">
                         <div className="dp-card-form-header">
                           <span className="dp-card-form-title">Card Details</span>
-                          <div className="dp-card-logos">
-                            <span className="dp-card-logo">Visa</span>
-                            <span className="dp-card-logo">MC</span>
-                            <span className="dp-card-logo">Amex</span>
-                            <span className="dp-card-logo">Disc</span>
-                          </div>
+                          {stripeState.stripe ? (
+                            // ── Stripe Elements mode ──────────────────────────────────
+                            <div className="dp-secured-stripe">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                              </svg>
+                              <span>Secured by</span>
+                              <strong>Stripe</strong>
+                            </div>
+                          ) : (
+                            <div className="dp-card-logos">
+                              <span className="dp-card-logo">Visa</span>
+                              <span className="dp-card-logo">MC</span>
+                              <span className="dp-card-logo">Amex</span>
+                              <span className="dp-card-logo">Disc</span>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Card number */}
-                        <Form.Group className="mb-3">
-                          <Form.Label className="dp-label">Card Number</Form.Label>
-                          <div className="dp-card-input-wrap">
-                            <Form.Control
-                              type="text" inputMode="numeric"
-                              placeholder="1234 5678 9012 3456"
-                              value={formData.cardNumber}
-                              onChange={handleCardNumberChange}
-                              className={`dp-input ${cardErrors.cardNumber ? 'is-invalid' : ''}`}
-                              maxLength={19} autoComplete="cc-number"
-                            />
-                            {cardBrand && <span className="dp-card-brand-tag">{cardBrand}</span>}
+                        {/* ── Mock gateway banner ── */}
+                        {isMockGateway && (
+                          <div className="dp-demo-banner">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10"/>
+                              <line x1="12" y1="8" x2="12" y2="12"/>
+                              <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                            <span>Demo Mode — no real payment is processed. Set <code>PaymentGateway__Default=stripe</code> in Web.config for live payments.</span>
                           </div>
-                          {cardErrors.cardNumber && <div className="dp-field-error">{cardErrors.cardNumber}</div>}
-                          {formData.cardNumber && !cardErrors.cardNumber && (
-                            <div className="dp-field-ok">Valid format</div>
-                          )}
-                        </Form.Group>
+                        )}
 
-                        {/* Cardholder name */}
-                        <Form.Group className="mb-3">
-                          <Form.Label className="dp-label">Cardholder Name</Form.Label>
-                          <Form.Control
-                            type="text" placeholder="NGUYEN VAN A"
-                            value={formData.cardHolderName}
-                            onChange={handleChange}
-                            name="cardHolderName"
-                            className={`dp-input ${cardErrors.cardHolderName ? 'is-invalid' : ''}`}
-                            autoComplete="cc-name"
-                          />
-                          {cardErrors.cardHolderName && <div className="dp-field-error">{cardErrors.cardHolderName}</div>}
-                        </Form.Group>
-
-                        <Row>
-                          {/* Expiry */}
-                          <Col md={6}>
-                            <Form.Group className="mb-3">
-                              <Form.Label className="dp-label">Expiry Date (MM/YY)</Form.Label>
-                              <Form.Control
-                                type="text" inputMode="numeric" placeholder="MM/YY"
-                                value={formData.expiryDate}
-                                onChange={handleExpiryChange}
-                                className={`dp-input ${cardErrors.expiryDate ? 'is-invalid' : ''}`}
-                                maxLength={5} autoComplete="cc-exp"
+                        {/* ── Stripe Elements card input (replaces raw card fields) ── */}
+                        {stripeState.stripe ? (
+                          <>
+                            <div className="dp-stripe-card-wrap">
+                              {/* Stripe mounts the card iframe here */}
+                              <div
+                                id="stripe-card-element"
+                                ref={stripeCardMountRef}
+                                className="dp-stripe-card-element"
                               />
-                              {cardErrors.expiryDate && <div className="dp-field-error">{cardErrors.expiryDate}</div>}
-                            </Form.Group>
-                          </Col>
-                          {/* CVV */}
-                          <Col md={6}>
-                            <Form.Group className="mb-3">
-                              <Form.Label className="dp-label">
-                                CVV {cardBrand === 'Amex' ? '(4 digits)' : '(3 digits)'}
-                              </Form.Label>
+                            </div>
+                            {/* Cardholder name (still needed for billing_details) */}
+                            <Form.Group className="mb-3 mt-3">
+                              <Form.Label className="dp-label">Cardholder Name</Form.Label>
                               <Form.Control
-                                type="password" inputMode="numeric"
-                                placeholder={cardBrand === 'Amex' ? '1234' : '123'}
-                                value={formData.cvv}
+                                type="text"
+                                placeholder="NGUYEN VAN A"
+                                value={formData.cardHolderName}
                                 onChange={handleChange}
-                                name="cvv"
-                                className={`dp-input ${cardErrors.cvv ? 'is-invalid' : ''}`}
-                                maxLength={4} autoComplete="cc-csc"
+                                name="cardHolderName"
+                                className="dp-input"
+                                autoComplete="cc-name"
                               />
-                              {cardErrors.cvv && <div className="dp-field-error">{cardErrors.cvv}</div>}
                             </Form.Group>
-                          </Col>
-                        </Row>
+                            {/* Stripe inline error */}
+                            {stripeState.paymentError && (
+                              <div className="dp-field-error">{stripeState.paymentError}</div>
+                            )}
+                            {stripeState.paymentProcessing && (
+                              <div className="dp-stripe-processing">
+                                <span className="spinner-border spinner-border-sm me-2"></span>
+                                Confirming payment with Stripe...
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {/* ── Raw card fields (non-Stripe gateways / fallback) ── */}
+
+                            {/* Card number */}
+                            <Form.Group className="mb-3">
+                              <Form.Label className="dp-label">Card Number</Form.Label>
+                              <div className="dp-card-input-wrap">
+                                <Form.Control
+                                  type="text" inputMode="numeric"
+                                  placeholder="1234 5678 9012 3456"
+                                  value={formData.cardNumber}
+                                  onChange={handleCardNumberChange}
+                                  className={`dp-input ${cardErrors.cardNumber ? 'is-invalid' : ''}`}
+                                  maxLength={19} autoComplete="cc-number"
+                                />
+                                {cardBrand && <span className="dp-card-brand-tag">{cardBrand}</span>}
+                              </div>
+                              {cardErrors.cardNumber && <div className="dp-field-error">{cardErrors.cardNumber}</div>}
+                              {formData.cardNumber && !cardErrors.cardNumber && (
+                                <div className="dp-field-ok">Valid format</div>
+                              )}
+                            </Form.Group>
+
+                            {/* Cardholder name */}
+                            <Form.Group className="mb-3">
+                              <Form.Label className="dp-label">Cardholder Name</Form.Label>
+                              <Form.Control
+                                type="text" placeholder="NGUYEN VAN A"
+                                value={formData.cardHolderName}
+                                onChange={handleChange}
+                                name="cardHolderName"
+                                className={`dp-input ${cardErrors.cardHolderName ? 'is-invalid' : ''}`}
+                                autoComplete="cc-name"
+                              />
+                              {cardErrors.cardHolderName && <div className="dp-field-error">{cardErrors.cardHolderName}</div>}
+                            </Form.Group>
+
+                            <Row>
+                              {/* Expiry */}
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label className="dp-label">Expiry Date (MM/YY)</Form.Label>
+                                  <Form.Control
+                                    type="text" inputMode="numeric" placeholder="MM/YY"
+                                    value={formData.expiryDate}
+                                    onChange={handleExpiryChange}
+                                    className={`dp-input ${cardErrors.expiryDate ? 'is-invalid' : ''}`}
+                                    maxLength={5} autoComplete="cc-exp"
+                                  />
+                                  {cardErrors.expiryDate && <div className="dp-field-error">{cardErrors.expiryDate}</div>}
+                                </Form.Group>
+                              </Col>
+                              {/* CVV */}
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label className="dp-label">
+                                    CVV {cardBrand === 'Amex' ? '(4 digits)' : '(3 digits)'}
+                                  </Form.Label>
+                                  <Form.Control
+                                    type="password" inputMode="numeric"
+                                    placeholder={cardBrand === 'Amex' ? '1234' : '123'}
+                                    value={formData.cvv}
+                                    onChange={handleChange}
+                                    name="cvv"
+                                    className={`dp-input ${cardErrors.cvv ? 'is-invalid' : ''}`}
+                                    maxLength={4} autoComplete="cc-csc"
+                                  />
+                                  {cardErrors.cvv && <div className="dp-field-error">{cardErrors.cvv}</div>}
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                          </>
+                        )}
 
                         <div className="dp-card-security-note">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                           </svg>
-                          Your card details are encrypted and never stored on our servers.
+                          {stripeState.stripe
+                            ? 'Your card details are handled securely by Stripe and never touch our servers.'
+                            : 'Your card details are encrypted and never stored on our servers.'}
                         </div>
                       </div>
                     )}
@@ -532,9 +794,15 @@ const DonatePage = () => {
                     </label>
                   </div>
 
-                  <button type="submit" className="btn-coral btn-lg dp-submit" disabled={loading}>
-                    {loading ? (
-                      <><span className="spinner-border spinner-border-sm me-2"></span>Processing...</>
+                  <button
+                    type="submit"
+                    className="btn-coral btn-lg dp-submit"
+                    disabled={loading || stripeState.paymentProcessing}
+                  >
+                    {loading || stripeState.paymentProcessing ? (
+                      <><span className="spinner-border spinner-border-sm me-2"></span>
+                        {stripeState.paymentProcessing ? 'Confirming with Stripe...' : 'Processing...'}
+                      </>
                     ) : (
                       <>Complete Donation — {formatCurrency(parseFloat(formData.amount) || 0)}</>
                     )}

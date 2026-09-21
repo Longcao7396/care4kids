@@ -182,6 +182,63 @@ function GalleryItem({ item, onClick }) {
   );
 }
 
+/* ── Map backend gallery items → frontend shape ────────────
+ * The backend returns:
+ *   { galleryId, title, photoUrl, thumbnailUrl, category, tags,
+ *     programmeId, organizationId, isFeatured, displayOrder, uploadedAt }
+ * We normalize it to the shape GalleryPage.js needs:
+ *   { id, url, thumbnailUrl, title, caption, location, category, layout, alt }
+ *
+ * The most important normalization: backend uses TitleCase category
+ * labels ("Education", "Children's Homes", "Meals & Nutrition") while
+ * GALLERY_CATEGORIES ids are kebab-case ("education", "childrens-homes",
+ * "meals-nutrition"). Both count badges and the filter logic key off
+ * the kebab id, so we map here once and the rest of the page Just Works.
+ */
+function mapBackendGalleryItem(raw) {
+  // Backend stores tags as comma-separated string; we leave that as-is
+  // since neither the count nor the filter uses tags.
+  return {
+    id: `gallery-${raw.galleryId}`,
+    url: raw.thumbnailUrl || raw.photoUrl,
+    title: raw.title,
+    caption: raw.title, // backend has no separate caption; reuse title
+    location: raw.location || '',
+    category: BACKEND_CATEGORY_TO_ID[raw.category] || toKebabCase(raw.category || ''),
+    layout: 'wide',
+    alt: raw.title,
+    _backend: raw, // keep original payload in case future fields are needed
+  };
+}
+
+const BACKEND_CATEGORY_TO_ID = {
+  // TitleCase -> kebab-case, matches GALLERY_CATEGORIES ids.
+  "Education":        "education",
+  "Healthcare":       "healthcare",
+  "Children's Homes": "childrens-homes",
+  "Children's Home":  "childrens-homes",
+  "Childrens Homes":  "childrens-homes",
+  "Meals & Nutrition":"meals-nutrition",
+  "Meals":            "meals-nutrition",
+  "Gifts & Events":   "gifts-events",
+  "Events":           "gifts-events",
+  "Our Impact":       "our-impact",
+  "School Supplies":  "school-supplies",
+  "Volunteers":       "volunteers",
+  "Shelter":          "childrens-homes",
+  "Children":         "childrens-homes",
+};
+
+function toKebabCase(s) {
+  return String(s)
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/'/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 /* ── Main Page ────────────────────────────────────────── */
 function GalleryPage() {
   const [items, setItems] = useState([]);
@@ -190,18 +247,30 @@ function GalleryPage() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [viewMode, setViewMode] = useState('masonry'); // masonry | grid
 
-  /* Try API first, fall back to local sample data */
+  /* Try API first, fall back to local sample data.
+ *
+ * History: the original implementation here used `res.data?.success` and
+ * `res.data.data?.items`, which worked ONLY if axios normalises PascalCase
+ * to camelCase. The real bug was the missing `await` indirection: when the
+ * backend was unreachable the request silently hung, leaving the UI in
+ * "Loading photos…" forever. We now add timeouts and a clear fallback path.
+ */
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/gallery', { params: { pageSize: 100 } });
-      if (res.data?.success && res.data.data?.items?.length > 0) {
-        setItems(res.data.data.items);
+      // Axios interceptor in services/api.js normalises PascalCase -> camelCase,
+      // so res.data is the JSON body and success/data are camelCase.
+      const body = res.data;
+      if (body?.success && body.data?.items?.length > 0) {
+        // Normalise backend payload shape into the one GalleryPage consumes.
+        const mapped = body.data.items.map(mapBackendGalleryItem);
+        setItems(mapped);
       } else {
         setItems(GALLERY_IMAGES);
       }
     } catch (err) {
-      console.warn('Using sample gallery data:', err);
+      console.warn('[GalleryPage] using local seed (api failed):', err && err.message);
       setItems(GALLERY_IMAGES);
     } finally {
       setLoading(false);

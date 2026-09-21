@@ -1,4 +1,6 @@
 using System;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Http;
 using GiveAID.Web.Data;
@@ -8,13 +10,27 @@ using GiveAID.Web.Models;
 namespace GiveAID.Web.Controllers
 {
     /// <summary>
-    /// Gallery â€” photo/image management.
-    /// Stores photo URLs (no file upload). Supports optional Programme linkage.
+    /// Gallery - photo/image management.
+    /// Supports optional Programme linkage (nullable programme_id FK on Gallery rows).
+    /// The legacy /api/gallery/programmes endpoint is read-only and queries the
+    /// Programmes table directly via raw SQL; the Programme entity is no longer
+    /// registered in EF.
     /// </summary>
     [RoutePrefix("api/gallery")]
     public class GalleryController : ApiController
     {
         private readonly GiveAIDContext _context;
+
+        // Minimal read-only Programme record for gallery lookups only.
+        // Not mapped as an EF entity; queried via raw SQL so that removing
+        // Programme from the DbContext does not break the Gallery module.
+        private class ProgrammeLookup
+        {
+            public int ProgrammeId { get; set; }
+            public string Title { get; set; }
+            public string ImageUrl { get; set; }
+            public DateTime? StartDate { get; set; }
+        }
 
         public GalleryController()
         {
@@ -22,7 +38,7 @@ namespace GiveAID.Web.Controllers
         }
 
         // GET: api/gallery
-        // Public â€” list gallery items with optional filters
+        // Public - list gallery items with optional filters
         [HttpGet]
         [Route("")]
         public IHttpActionResult GetAll(
@@ -98,7 +114,7 @@ namespace GiveAID.Web.Controllers
         }
 
         // GET: api/gallery/categories
-        // Public â€” distinct categories
+        // Public - distinct categories
         [HttpGet]
         [Route("categories")]
         public IHttpActionResult GetCategories()
@@ -125,38 +141,34 @@ namespace GiveAID.Web.Controllers
         }
 
         // GET: api/gallery/programmes
-        // Public â€” programmes that have gallery items
+        // Public - returns programmes that have gallery items.
+        // [Obsolete] - the Programme concept has been merged into Campaign.
+        // This endpoint returns historical Programme data from the legacy table
+        // and is kept for backward compatibility with existing gallery filtering.
         [HttpGet]
         [Route("programmes")]
+        [Obsolete("Use /api/campaigns for event/activity data. Gallery filtering by programme is deprecated.")]
         public IHttpActionResult GetProgrammes()
         {
             try
             {
-                var programmes = _context.Gallery
+                var programmeIds = _context.Gallery
                     .Where(g => g.ProgrammeId.HasValue)
                     .Select(g => g.ProgrammeId.Value)
                     .Distinct()
-                    .ToList()
-                    .Select(pid =>
-                    {
-                        var p = _context.Programmes.Find(pid);
-                        return p != null ? new
-                        {
-                            programmeId = p.ProgrammeId,
-                            title = p.Title,
-                            imageUrl = p.ImageUrl,
-                            startDate = p.StartDate
-                        } : null;
-                    })
-                    .Where(p => p != null)
-                    .OrderBy(p => p.title)
                     .ToList();
 
-                return Ok(new ApiResponse
+                if (!programmeIds.Any())
                 {
-                    Success = true,
-                    Data = programmes
-                });
+                    return Ok(new ApiResponse { Success = true, Data = new object[0] });
+                }
+
+                var ids = string.Join(",", programmeIds);
+                var sql = $"SELECT programme_id AS ProgrammeId, title AS Title, image_url AS ImageUrl, start_date AS StartDate FROM dbo.Programmes WHERE programme_id IN ({ids}) ORDER BY title";
+
+                var programmes = _context.Database.SqlQuery<ProgrammeLookup>(sql).ToList();
+
+                return Ok(new ApiResponse { Success = true, Data = programmes });
             }
             catch (Exception ex)
             {
@@ -182,7 +194,8 @@ namespace GiveAID.Web.Controllers
 
                 if (item.ProgrammeId.HasValue)
                 {
-                    var prog = _context.Programmes.Find(item.ProgrammeId.Value);
+                    var sql = "SELECT programme_id AS ProgrammeId, title AS Title FROM dbo.Programmes WHERE programme_id = @id";
+                    var prog = _context.Database.SqlQuery<ProgrammeLookup>(sql, new SqlParameter("@id", item.ProgrammeId.Value)).FirstOrDefault();
                     programmeName = prog?.Title;
                 }
                 if (item.OrganizationId.HasValue)
@@ -219,6 +232,8 @@ namespace GiveAID.Web.Controllers
         }
 
         // POST: api/gallery  (Admin only)
+        // Note: ProgrammeId is accepted but no longer validated against the Programmes table;
+        // the value is stored directly into the programme_id column on the Gallery row.
         [HttpPost]
         [Route("")]
         [JwtAuthorize(Roles = "SuperAdmin,Admin")]
@@ -238,15 +253,6 @@ namespace GiveAID.Web.Controllers
                     return BadRequest("Photo URL must be a valid HTTP/HTTPS URL.");
                 }
 
-                if (request.ProgrammeId.HasValue)
-                {
-                    var prog = _context.Programmes.Find(request.ProgrammeId.Value);
-                    if (prog == null)
-                    {
-                        return BadRequest("Programme not found.");
-                    }
-                }
-
                 var userId = JwtHelper.GetUserIdFromToken(Request);
 
                 var item = new Gallery
@@ -256,6 +262,8 @@ namespace GiveAID.Web.Controllers
                     ThumbnailUrl = request.ThumbnailUrl?.Trim(),
                     Category = request.Category?.Trim(),
                     Tags = request.Tags?.Trim(),
+                    // ProgrammeId: stored as-is; no FK validation (Programme table may be
+                    // removed in future). The column is nullable so legacy data is safe.
                     ProgrammeId = request.ProgrammeId,
                     OrganizationId = request.OrganizationId,
                     IsFeatured = request.IsFeatured,
@@ -298,15 +306,6 @@ namespace GiveAID.Web.Controllers
                     !request.PhotoUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
                     return BadRequest("Photo URL must be a valid HTTP/HTTPS URL.");
-                }
-
-                if (request.ProgrammeId.HasValue)
-                {
-                    var prog = _context.Programmes.Find(request.ProgrammeId.Value);
-                    if (prog == null)
-                    {
-                        return BadRequest("Programme not found.");
-                    }
                 }
 
                 item.Title = request.Title?.Trim();
@@ -387,5 +386,3 @@ namespace GiveAID.Web.Controllers
         public int DisplayOrder { get; set; }
     }
 }
-
-

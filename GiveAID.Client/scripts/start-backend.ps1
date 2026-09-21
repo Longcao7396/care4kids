@@ -1,31 +1,43 @@
-﻿# Auto-starts the GiveAID backend via IIS Express.
-# Logs to scripts/backend.log and writes PID to scripts/backend.pid
+﻿# start-backend.ps1 — Build & run GiveAID v2 WebApi on port 5231.
+# Logs to scripts/backend.log, writes PID to scripts/backend.pid.
+# Auto-detects path: GiveAID.Client/.. -> project-NGO.v2/
 
 $ErrorActionPreference = 'Stop'
-$projectRoot = Join-Path $PSScriptRoot '..'
-$backendDir  = Join-Path $projectRoot '..\GiveAID.Web'
-$dllPath     = Join-Path $backendDir 'bin\GiveAID.Web.dll'
-$slnPath     = Join-Path $backendDir 'GiveAID.Web.sln'
-$msbuild     = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe'
-$logFile     = Join-Path $PSScriptRoot 'backend.log'
-$pidFile     = Join-Path $PSScriptRoot 'backend.pid'
 
-# --- Pre-flight: free up IIS Express ports if held by stale processes ---
-Write-Host "[start-backend] Checking ports 44300 / 61508 / 44301..." -ForegroundColor Cyan
-foreach ($p in @(44300, 61508, 44301)) {
-    $listeners = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue
-    foreach ($conn in $listeners) {
-        $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
-        if ($proc) {
-            $name = $proc.ProcessName
-            Write-Host "[start-backend] Port $p held by $name (PID $($proc.Id)) - killing" -ForegroundColor Yellow
-            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-        }
+# Resolve v2 project root (2 levels up from scripts/):
+# scripts/ -> GiveAID.Client/ -> project NGO/ -> Desktop/
+# Desktop/ has both "project NGO" (client) and "project NGO.v2" (solution)
+$clientRoot = Resolve-Path (Join-Path $PSScriptRoot '..')                # GiveAID.Client
+$clientParent = (Get-Item $clientRoot).Parent.FullName                   # project NGO
+$desktop      = (Get-Item $clientParent).Parent.FullName                 # Desktop
+$v2Root       = Join-Path $desktop 'project NGO.v2'
+
+if (-not (Test-Path $v2Root)) {
+    # Fallback: same as clientParent (legacy layout)
+    $v2Root = $clientParent
+}
+
+$apiProject   = Join-Path $v2Root 'src\WebApi\GiveAID.V2.WebApi.csproj'
+$apiDll       = Join-Path $v2Root 'src\WebApi\bin\Debug\net10.0\GiveAID.V2.WebApi.dll'
+$slnx         = Join-Path $v2Root 'GiveAID.V2.slnx'
+$logFile      = Join-Path $PSScriptRoot 'backend.log'
+$pidFile      = Join-Path $PSScriptRoot 'backend.pid'
+$apiPort      = 5000
+
+Write-Host "[start-backend] v2 root: $v2Root" -ForegroundColor Cyan
+
+# --- Pre-flight: free API port ---
+Write-Host "[start-backend] Checking port $apiPort..." -ForegroundColor Cyan
+Get-NetTCPConnection -LocalPort $apiPort -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
+    $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
+    if ($proc) {
+        Write-Host "[start-backend] Port $apiPort held by $($proc.ProcessName) (PID $($proc.Id)) - killing" -ForegroundColor Yellow
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
     }
 }
 Start-Sleep -Seconds 1
 
-# Kill any leftover backend from previous run
+# Kill previous backend from .pid
 if (Test-Path $pidFile) {
     $oldPid = Get-Content $pidFile -ErrorAction SilentlyContinue
     if ($oldPid) {
@@ -37,23 +49,30 @@ if (Test-Path $pidFile) {
     Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
 }
 
-# Build if DLL missing or older than any .cs file
+# --- Check dotnet ---
+$dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
+if (-not $dotnet) {
+    Write-Host "[start-backend] ERROR: dotnet CLI not found in PATH" -ForegroundColor Red
+    Write-Host "[start-backend] Install .NET 8 SDK from https://dotnet.microsoft.com/download" -ForegroundColor Yellow
+    exit 1
+}
+
+# --- Build if DLL missing or stale ---
 $needsBuild = $false
-if (-not (Test-Path $dllPath)) {
+if (-not (Test-Path $apiDll)) {
     $needsBuild = $true
 } else {
-    $csFiles = Get-ChildItem $backendDir -Recurse -Filter '*.cs' -ErrorAction SilentlyContinue
+    $csFiles = Get-ChildItem $v2Root -Recurse -Filter '*.cs' -ErrorAction SilentlyContinue |
+               Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }
+    $dllTime = (Get-Item $apiDll).LastWriteTime
     foreach ($f in $csFiles) {
-        if ($f.LastWriteTime -gt (Get-Item $dllPath).LastWriteTime) {
-            $needsBuild = $true
-            break
-        }
+        if ($f.LastWriteTime -gt $dllTime) { $needsBuild = $true; break }
     }
 }
 
 if ($needsBuild) {
-    Write-Host "[start-backend] Building GiveAID.Web..." -ForegroundColor Cyan
-    & $msbuild $slnPath /p:Configuration=Debug /v:minimal /nologo 2>&1 | Tee-Object -FilePath $logFile -Append
+    Write-Host "[start-backend] Building GiveAID.V2.WebApi..." -ForegroundColor Cyan
+    & dotnet build $apiProject -c Debug --nologo -v minimal 2>&1 | Tee-Object -FilePath $logFile -Append
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[start-backend] BUILD FAILED. Check $logFile" -ForegroundColor Red
         exit 1
@@ -62,74 +81,18 @@ if ($needsBuild) {
     Write-Host "[start-backend] DLL up-to-date, skipping build" -ForegroundColor Green
 }
 
-# Try IIS Express first
-$iisExpress = Get-ChildItem 'C:\Program Files\IIS Express\iisexpress.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+# --- Start WebApi ---
+Write-Host "[start-backend] Starting WebApi on http://localhost:$apiPort..." -ForegroundColor Cyan
+$psi = New-Object System.Diagnostics.ProcessStartInfo
+$psi.FileName               = $dotnet.Source
+# Use Arguments string (cross-compatible: works in both PS 5.1 and PS 7+)
+# Note: paths with spaces must be quoted
+$psi.Arguments              = "run --project `"$apiProject`" --no-build --urls http://localhost:$apiPort"
+$psi.UseShellExecute        = $false
+$psi.WorkingDirectory       = $v2Root
+# Start WebApi in a NEW VISIBLE WINDOW so user can see errors
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+$cmd = "cd /d `"$v2Root`" && dotnet run --project `"$apiProject`" --no-build --urls http://localhost:$apiPort"
+Start-Process cmd -ArgumentList "/c title Backend-5000 && $cmd && pause" -WorkingDirectory $v2Root -WindowStyle Normal
 
-if ($iisExpress) {
-    Write-Host "[start-backend] Starting IIS Express for site 'GiveAID.Web' on ports 44300 (http), 61508 (http), 44300 (https)" -ForegroundColor Cyan
-
-    # Launch IIS Express using the .NET Process class (bypasses PowerShell's argument parser
-    # which incorrectly splits quoted paths on spaces).  We also use the 8.3 short path
-    # for any path with spaces as an additional safeguard.
-    #
-    # Two bugs caused the original /path approach to launch "Development Web Site" instead
-    # of "GiveAID.Web":
-    #   (a) /path makes IIS Express load its default config, which only has "WebSite1";
-    #       we use /site:GiveAID.Web + /userhome pointing to the project's .vs folder.
-    #   (b) The Process-scope $env:IIS_USER_HOME from a stale prior shell session is
-    #       inherited by .NET Process children, making /config fail.  We .Remove() it.
-    #   (c) The project's .vs\GiveAID.Web\config\redirection.config had the wrong XML
-    #       section name; it must be "configurationRedirection" (root element), not
-    #       "redirectionConfiguration" inside a sectionGroup.
-
-    $projectConfigDir = "$backendDir\.vs\GiveAID.Web"
-
-    # Use 8.3 short path for the project config dir (avoids spaces in the /userhome argument)
-    $fso   = New-Object -ComObject Scripting.FileSystemObject
-    $userhome = $fso.GetFolder($projectConfigDir).ShortPath
-
-    $psi            = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName   = $iisExpress.FullName
-    $psi.Arguments  = "/site:GiveAID.Web /userhome:""$userhome"" /clr:4.0"
-    $psi.UseShellExecute = $false
-    # Remove any stale IIS_USER_HOME so /userhome is not confused with /config
-    $null = $psi.EnvironmentVariables.Remove('IIS_USER_HOME')
-
-    # SECURITY: Set the JWT secret as a process env var so it doesn't need to be
-    # committed to Web.config. JwtSettings reads GIVEAID_JWT_SECRET first.
-    # Override GIVEAID_JWT_SECRET in CI/CD to rotate the secret per environment.
-    $psi.EnvironmentVariables['GIVEAID_JWT_SECRET'] = $env:GIVEAID_JWT_SECRET
-    if ([string]::IsNullOrWhiteSpace($env:GIVEAID_JWT_SECRET)) {
-        Write-Host "[start-backend] WARNING: GIVEAID_JWT_SECRET not set; falling back to Web.config JwtSecret." -ForegroundColor Yellow
-    }
-
-    $proc = [System.Diagnostics.Process]::Start($psi)
-    Set-Content -Path $pidFile -Value $proc.Id
-    Write-Host "[start-backend] IIS Express started, PID $($proc.Id), logging to $logFile" -ForegroundColor Green
-    Write-Host "[start-backend] Backend URLs: http://localhost:44300  http://localhost:61508" -ForegroundColor Green
-
-    # Wait up to 30s for backend /health to respond
-    $ok = $false
-    for ($i = 0; $i -lt 30; $i++) {
-        Start-Sleep -Seconds 1
-        try {
-            $r = Invoke-WebRequest 'http://localhost:44300/health' -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
-            if ($r.StatusCode -eq 200) {
-                $ok = $true
-                Write-Host "[start-backend] HEALTHY after ${i}s" -ForegroundColor Green
-                break
-            }
-        } catch {}
-    }
-    if (-not $ok) {
-        Write-Host "[start-backend] WARNING: backend did not become healthy in 30s. Check $logFile" -ForegroundColor Yellow
-    }
-} else {
-    # Fallback: warn user to start backend manually
-    Write-Host "[start-backend] IIS Express NOT FOUND at C:\Program Files\IIS Express\" -ForegroundColor Red
-    Write-Host "[start-backend] Open Visual Studio -> F5 on GiveAID.Web, or install IIS Express from:" -ForegroundColor Yellow
-    Write-Host "[start-backend] https://www.iis.net/downloads/microsoft-iis-express" -ForegroundColor Yellow
-    Write-Host "[start-backend] Continuing with frontend only..." -ForegroundColor Yellow
-    # Do NOT exit 1 -- frontend can still start, user will see Network Error
-    Set-Content -Path $pidFile -Value '' -Force
-}
+Write-Host "[start-backend] WebApi started on http://localhost:$apiPort" -ForegroundColor Green

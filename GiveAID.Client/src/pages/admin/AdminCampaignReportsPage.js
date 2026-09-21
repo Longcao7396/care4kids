@@ -6,6 +6,7 @@ import {
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminPageFrame from '../../components/AdminPageFrame';
+import AdminCampaignReportsManager from './AdminCampaignReportsManager';
 import '../admin/AdminForm.css';
 
 const CAMPAIGN_STATUSES = ['Active', 'Ongoing', 'Completed', 'Cancelled', 'Upcoming'];
@@ -54,15 +55,19 @@ export default function AdminCampaignReportsPage() {
         api.get('/campaigns', { params: { pageSize: 100, page: 1 } }),
         api.get('/causes', { params: { activeOnly: false } }),
       ]);
-      if (stats.data.success) {
-        setOverview(stats.data.data?.overview || null);
-        setByMonth(stats.data.data?.donationsByMonth || []);
-        setByCampaign(stats.data.data?.donationsByCampaign || []);
-        setByCause(stats.data.data?.donationsByCause || []);
+      // interceptor unwraps envelope → stats is the raw data directly
+      if (stats && typeof stats === 'object') {
+        setOverview(stats.overview || null);
+        setByMonth(stats.donationsByMonth || []);
+        setByCampaign(stats.donationsByCampaign || []);
+        setByCause(stats.donationsByCause || []);
       }
-      if (recent.data.success) setRecent(recent.data.data || []);
-      if (camps.data.success) setCampaigns(camps.data.data || []);
-      if (caus.data.success) setCauses(caus.data.data || []);
+      // interceptor unwraps envelope → recent is the array directly
+      if (Array.isArray(recent)) setRecent(recent.slice(0, 50));
+      // interceptor unwraps envelope → camps is the array directly
+      if (Array.isArray(camps)) setCampaigns(camps);
+      // interceptor unwraps envelope → caus is the array directly
+      if (Array.isArray(caus)) setCauses(caus);
     } catch {
       setError('Failed to load reports data.');
     } finally {
@@ -597,6 +602,11 @@ export default function AdminCampaignReportsPage() {
           <i className="bi bi-database-check me-1"></i>
           Data sourced live from <code>/api/admin/stats</code>, <code>/api/admin/recent-donations</code>, <code>/api/campaigns</code>, <code>/api/causes</code>.
         </p>
+
+        {/* ── Campaign Reports Manager (CRUD) ── */}
+        <div className="mt-5">
+          <AdminCampaignReportsManager />
+        </div>
 
       <style>{`
         .kpi-card {

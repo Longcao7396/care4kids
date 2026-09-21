@@ -54,6 +54,7 @@ const NAV_GROUPS = [
       { to: '/admin/queries', label: 'User Queries', icon: 'queries' },
       { to: '/admin/contacts', label: 'Contact Messages', icon: 'contact' },
       { to: '/admin/invitations', label: 'Invitations', icon: 'invite' },
+      { to: '/admin/emails', label: 'Email Logs', icon: 'email' },
     ],
   },
 ];
@@ -161,6 +162,13 @@ const Icon = ({ name }) => {
         <svg {...common}>
           <path d="M22 2L11 13"/>
           <path d="M22 2L15 22 11 13 2 9 22 2z"/>
+        </svg>
+      );
+    case 'email':
+      return (
+        <svg {...common}>
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
         </svg>
       );
     case 'logout':

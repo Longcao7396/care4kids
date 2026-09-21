@@ -1,0 +1,55 @@
+name: .NET Tests
+
+on:
+  push:
+    branches: [ main, cursor/admin-improvements ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_FRAMEWORK_VERSION: '4.7.2'
+  SOLUTION_FILE: GiveAID.sln
+
+jobs:
+  test:
+    name: Build & Test (net472)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Restore NuGet packages
+        run: |
+          nuget restore $env:SOLUTION_FILE
+
+      - name: Build solution
+        run: |
+          msbuild $env:SOLUTION_FILE `
+            /p:Configuration=Debug `
+            /p:Platform="AnyCPU" `
+            /t:Build `
+            /v:m
+
+      - name: Create LocalDB instance
+        run: |
+          sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'GiveAIDTest') CREATE DATABASE GiveAIDTest"
+
+      - name: Run unit tests (vstest.console.exe)
+        run: |
+          $vstest = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
+          if (-not (Test-Path $vstest)) {
+            $vstest = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\Professional\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
+          }
+          if (-not (Test-Path $vstest)) {
+            $vstest = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
+          }
+          & $vstest GiveAID.Tests\bin\Debug\GiveAID.Tests.dll
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: '**/*.trx'
+          retention-days: 7

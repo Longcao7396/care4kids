@@ -49,8 +49,9 @@ function AdminUsersPage() {
       if (roleFilter) params.role = roleFilter;
       if (search.trim()) params.search = search.trim();
       const res = await api.get('/admin/users', { params });
-      if (res.data.success) {
-        const d = res.data.data;
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object' && res.items) {
+        const d = res;
         setItems(d.items || []);
         setPagination({
           page: d.page,
@@ -83,7 +84,8 @@ function AdminUsersPage() {
     if (target.role === newRole) return;
     try {
       const res = await api.put(`/admin/users/${target.userId}/role`, { role: newRole });
-      if (res.data.success) {
+      // interceptor unwraps envelope → res is truthy on success
+      if (res) {
         setItems((arr) => arr.map((u) => (u.userId === target.userId ? { ...u, role: newRole } : u)));
         flashSuccess(`Role updated to ${newRole}.`);
       }
@@ -95,7 +97,8 @@ function AdminUsersPage() {
   const handleToggleActive = async (target) => {
     try {
       const res = await api.put(`/admin/users/${target.userId}/status`, { isActive: !target.isActive });
-      if (res.data.success) {
+      // interceptor unwraps envelope → res is truthy on success
+      if (res) {
         setItems((arr) => arr.map((u) => (u.userId === target.userId ? { ...u, isActive: !target.isActive } : u)));
         flashSuccess(target.isActive ? 'User deactivated.' : 'User reactivated.');
       }
@@ -108,7 +111,8 @@ function AdminUsersPage() {
     if (!window.confirm(`Deactivate ${target.fullName}? They will no longer be able to sign in.`)) return;
     try {
       const res = await api.delete(`/admin/users/${target.userId}`);
-      if (res.data.success) {
+      // interceptor unwraps envelope → res is truthy on success (null/undefined on delete)
+      if (res !== null && res !== undefined) {
         setItems((arr) => arr.map((u) => (u.userId === target.userId ? { ...u, isActive: false } : u)));
         flashSuccess('User deactivated.');
       }

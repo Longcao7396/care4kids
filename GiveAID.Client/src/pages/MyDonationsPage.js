@@ -224,6 +224,9 @@ const MyDonationsPage = () => {
                           View campaign →
                         </Link>
                       )}
+                      <Link to={`/my-donations/${donation.donationId}`} className="mdp-item-meta-link mdp-item-view-details">
+                        View details →
+                      </Link>
                     </div>
 
                     {donation.message && (

@@ -1,0 +1,62 @@
+﻿================================================================================
+IMAGE URL VERIFICATION REPORT
+Date: 2026-09-17 20:05:31
+================================================================================
+
+OK   | #1 | https://images.pexels.com/photos/33985331/pexels-photo-33985331.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 45389 bytes
+OK   | #2 | https://images.pexels.com/photos/33852286/pexels-photo-33852286.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 68268 bytes
+OK   | #3 | https://images.pexels.com/photos/35131393/pexels-photo-35131393.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 81794 bytes
+OK   | #4 | https://images.pexels.com/photos/33670808/pexels-photo-33670808.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 48834 bytes
+OK   | #5 | https://images.pexels.com/photos/35106203/pexels-photo-35106203.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 67107 bytes
+OK   | #6 | https://images.pexels.com/photos/33768219/pexels-photo-33768219.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 68669 bytes
+OK   | #7 | https://images.pexels.com/photos/30415011/pexels-photo-30415011.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 50153 bytes
+OK   | #8 | https://images.pexels.com/photos/30513504/pexels-photo-30513504.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 93464 bytes
+OK   | #9 | https://images.pexels.com/photos/37354082/pexels-photo-37354082.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 40964 bytes
+OK   | #10 | https://images.pexels.com/photos/30811268/pexels-photo-30811268.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 82747 bytes
+OK   | #11 | https://images.pexels.com/photos/32345051/pexels-photo-32345051.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 37393 bytes
+OK   | #12 | https://images.pexels.com/photos/29801357/pexels-photo-29801357.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 29206 bytes
+OK   | #13 | https://images.pexels.com/photos/33921216/pexels-photo-33921216.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 73027 bytes
+OK   | #14 | https://images.pexels.com/photos/29623858/pexels-photo-29623858.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 60198 bytes
+OK   | #15 | https://images.pexels.com/photos/37981395/pexels-photo-37981395.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 55470 bytes
+OK   | #16 | https://images.pexels.com/photos/30592052/pexels-photo-30592052.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 62227 bytes
+OK   | #17 | https://images.pexels.com/photos/37981403/pexels-photo-37981403.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 68697 bytes
+OK   | #18 | https://images.pexels.com/photos/34045791/pexels-photo-34045791.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 75643 bytes
+OK   | #19 | https://images.pexels.com/photos/30326158/pexels-photo-30326158.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 82914 bytes
+OK   | #20 | https://images.pexels.com/photos/5692265/pexels-photo-5692265.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 53608 bytes
+OK   | #21 | https://images.pexels.com/photos/33933381/pexels-photo-33933381.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 86976 bytes
+OK   | #22 | https://images.pexels.com/photos/28503359/pexels-photo-28503359.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 31213 bytes
+OK   | #23 | https://images.pexels.com/photos/37718226/pexels-photo-37718226.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 99789 bytes
+OK   | #24 | https://images.pexels.com/photos/33908174/pexels-photo-33908174.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 77745 bytes
+OK   | #25 | https://images.pexels.com/photos/35671466/pexels-photo-35671466.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 68469 bytes
+OK   | #26 | https://images.pexels.com/photos/38107333/pexels-photo-38107333.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 96721 bytes
+OK   | #27 | https://images.pexels.com/photos/36713992/pexels-photo-36713992.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 61615 bytes
+OK   | #28 | https://images.pexels.com/photos/36713988/pexels-photo-36713988.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 75542 bytes
+OK   | #29 | https://images.pexels.com/photos/36292810/pexels-photo-36292810.jpeg?auto=compress&cs=tinysrgb&w=800&h=600 | image/jpeg | 58122 bytes
+OK   | #30 | https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91 | image/jpeg | 4248817 bytes
+OK   | #31 | https://images.unsplash.com/photo-1488521787991-ed7bbaae773c | image/jpeg | 5157137 bytes
+OK   | #32 | https://images.unsplash.com/photo-1531123897727-8f129e1688ce | image/jpeg | 2757069 bytes
+FAIL | #33 | https://images.unsplash.com/photo-1535077206424-510d6d7bf9f9 | The remote server returned an error: (404) Not Found.
+OK   | #34 | https://images.unsplash.com/photo-1527631746610-bca00a040d60 | image/jpeg | 3681051 bytes
+FAIL | #35 | https://images.unsplash.com/photo-1529453354429-c69c1c9c4c42 | The remote server returned an error: (404) Not Found.
+FAIL | #36 | https://images.unsplash.com/photo-1509060706506-1fb9c2f2c5a1 | The remote server returned an error: (404) Not Found.
+OK   | #37 | https://images.unsplash.com/photo-1743329636103-482b69d90fd6 | image/jpeg | 3224518 bytes
+FAIL | #38 | https://images.unsplash.com/photo-1535041574970-0ade3e8f3f2d | The remote server returned an error: (404) Not Found.
+OK   | #39 | https://images.unsplash.com/photo-1772178957276-b57cf3bf3c3f | image/jpeg | 7237876 bytes
+OK   | #40 | https://images.unsplash.com/photo-1489710437720-ebb67ec84dd2 | image/jpeg | 6687379 bytes
+OK   | #41 | https://images.unsplash.com/photo-1497633762265-9d179a990aa6 | image/jpeg | 1899699 bytes
+
+================================================================================
+SUMMARY
+================================================================================
+Total URLs checked: 41
+OK: 37
+FAILED: 4
+Success rate: 90.2%
+
+================================================================================
+FAILED URLS (for fallback):
+================================================================================
+  - https://images.unsplash.com/photo-1535077206424-510d6d7bf9f9
+  - https://images.unsplash.com/photo-1529453354429-c69c1c9c4c42
+  - https://images.unsplash.com/photo-1509060706506-1fb9c2f2c5a1
+  - https://images.unsplash.com/photo-1535041574970-0ade3e8f3f2d

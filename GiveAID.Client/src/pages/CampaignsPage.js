@@ -18,8 +18,9 @@ function CampaignsPage() {
   const fetchCauses = useCallback(async () => {
     try {
       const response = await api.get('/causes');
-      if (response.data.success && response.data.data && response.data.data.length > 0) {
-        setCauses(response.data.data);
+      // interceptor unwraps → response is array directly
+      if (Array.isArray(response) && response.length > 0) {
+        setCauses(response);
       } else {
         // Fallback to sample causes when API returns empty
         setCauses(SAMPLE_CAUSES);
@@ -42,17 +43,12 @@ function CampaignsPage() {
 
       const response = await api.get('/campaigns', { params });
 
-      if (response.data.success) {
-        const data = response.data.data || [];
-        // If API returns empty array, fall back to sample data
-        if (data.length === 0) {
-          setCampaigns(SAMPLE_CAMPAIGNS);
-        } else {
-          setCampaigns(data);
-        }
-      } else {
-        // Use sample campaigns silently so users always see something
+      // interceptor unwraps → response is array directly
+      const data = Array.isArray(response) ? response : [];
+      if (data.length === 0) {
         setCampaigns(SAMPLE_CAMPAIGNS);
+      } else {
+        setCampaigns(data);
       }
     } catch (err) {
       // Network / server error → still show demo data instead of empty page

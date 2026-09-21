@@ -31,23 +31,29 @@ namespace GiveAID.Web.Controllers
             try
             {
                 if (request == null ||
-                    string.IsNullOrWhiteSpace(request.Email) ||
                     string.IsNullOrWhiteSpace(request.Password))
                 {
-                    return BadRequest("Email and password are required.");
+                    return BadRequest("Password is required.");
                 }
 
-                var email = request.Email.Trim();
-                var user = _context.Users.FirstOrDefault(u => u.Email == email);
+                // Accept login by username OR email (frontend sends username field).
+                var identifier = (request.Username ?? request.Email ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(identifier))
+                {
+                    return BadRequest("Username or email is required.");
+                }
+
+                var user = _context.Users.FirstOrDefault(u =>
+                    u.Username == identifier || u.Email == identifier);
 
                 if (user == null || !user.IsActive)
                 {
-                    return BadRequest("Invalid email or password.");
+                    return BadRequest("Invalid username or password.");
                 }
 
                 if (!PasswordHasher.Verify(request.Password, user.PasswordHash))
                 {
-                    return BadRequest("Invalid email or password.");
+                    return BadRequest("Invalid username or password.");
                 }
 
                 user.LastLogin = DateTime.Now;
@@ -213,6 +219,81 @@ namespace GiveAID.Web.Controllers
             return Ok(new { success = true, message = "Logout successful" });
         }
 
+        // POST: api/auth/forgot-password
+        /// <summary>
+        /// Request password reset - sends email with reset link.
+        /// Always returns success to prevent email enumeration attacks.
+        /// </summary>
+        [HttpPost]
+        [Route("forgot-password")]
+        [AllowAnonymous]
+        public IHttpActionResult ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request?.Email))
+                return BadRequest("Email is required.");
+
+            var email = request.Email.Trim();
+            var user = _context.Users.FirstOrDefault(u => u.Email == email && u.IsActive);
+
+            if (user != null)
+            {
+                // Generate reset token (valid 1 hour)
+                var resetToken = Guid.NewGuid().ToString("N");
+                user.VerificationToken = resetToken;
+                user.TokenExpiry = DateTime.UtcNow.AddHours(1);
+                _context.SaveChanges();
+
+                // Send email with reset link
+                var resetLink = $"{EmailService.PublicSiteUrl}/reset-password?token={resetToken}";
+                EmailService.SendPasswordResetEmail(user.Email, user.FullName ?? user.Username, resetLink);
+            }
+
+            // Always return success to prevent email enumeration
+            return Ok(new
+            {
+                success = true,
+                message = "If that email exists in our system, we have sent password reset instructions."
+            });
+        }
+
+        // POST: api/auth/reset-password
+        /// <summary>
+        /// Reset password with valid token.
+        /// </summary>
+        [HttpPost]
+        [Route("reset-password")]
+        [AllowAnonymous]
+        public IHttpActionResult ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request?.Token) || string.IsNullOrWhiteSpace(request?.NewPassword))
+                return BadRequest("Token and new password are required.");
+
+            var user = _context.Users.FirstOrDefault(u =>
+                u.VerificationToken == request.Token &&
+                u.TokenExpiry > DateTime.UtcNow &&
+                u.IsActive);
+
+            if (user == null)
+                return BadRequest("Invalid or expired reset token. Please request a new password reset.");
+
+            // Validate password
+            if (request.NewPassword.Length < 8)
+                return BadRequest("Password must be at least 8 characters.");
+
+            // Update password
+            user.PasswordHash = PasswordHasher.Hash(request.NewPassword);
+            user.VerificationToken = null;
+            user.TokenExpiry = null;
+            user.PasswordChangedAt = DateTime.UtcNow;
+            _context.SaveChanges();
+
+            return Ok(new
+            {
+                success = true,
+                message = "Password reset successfully. Please login with your new password."
+            });
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing) _context.Dispose();
@@ -222,7 +303,23 @@ namespace GiveAID.Web.Controllers
 
     public class LoginRequest
     {
+        /// <summary>
+        /// Login identifier — frontend sends username, but we also accept email
+        /// for backward compatibility with any existing API consumers.
+        /// </summary>
+        public string Username { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
+    }
+
+    public class ForgotPasswordRequest
+    {
+        public string Email { get; set; }
+    }
+
+    public class ResetPasswordRequest
+    {
+        public string Token { get; set; }
+        public string NewPassword { get; set; }
     }
 }

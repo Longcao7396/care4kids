@@ -169,9 +169,11 @@ function AboutPage() {
       // Bulk-load all editable sections in one call.
       const keys = EDITABLE_SECTIONS.join(',');
       const res = await api.get('/cms/pages', { params: { keys } });
-      if (res.data?.success && Array.isArray(res.data.data)) {
+      // interceptor unwraps envelope → res is the raw data directly
+      const raw = Array.isArray(res) ? res : (res?.items || []);
+      if (raw.length > 0) {
         const map = {};
-        res.data.data.forEach((p) => { map[p.pageKey] = p; });
+        raw.forEach((p) => { map[p.pageKey] = p; });
         setCmsPages(map);
       }
     } catch (err) {

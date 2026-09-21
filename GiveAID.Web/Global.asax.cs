@@ -104,32 +104,52 @@ namespace GiveAID.Web
 
         protected void Application_BeginRequest()
         {
-            // SECURITY: Manually handle only CORS preflight (OPTIONS) requests.
-            // Previously this code echoed back ANY Origin header — a CSRF-grade
-            // vulnerability because combined with Access-Control-Allow-Credentials:true
-            // it allowed credentialed cross-origin reads from arbitrary sites.
-            // Now we validate Origin against the same allowlist WebApiConfig uses.
-            if (Request.HttpMethod != "OPTIONS") return;
-
+            // Single CORS layer. Handles both preflight (OPTIONS) and actual
+            // (GET/POST/PUT/DELETE) cross-origin requests so we don't depend
+            // on System.Web.Http.Cors's EnableCors pipeline. Using ONLY
+            // this layer prevents duplicate Access-Control-Allow-Origin
+            // headers (and the resulting browser CORS error "contains
+            // multiple values '... , ...'").
             var origin = Request.Headers["Origin"];
             if (string.IsNullOrEmpty(origin)) return;
 
             // ONLY echo back the Origin if it's in the validated allowlist.
             if (!CorsAllowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
             {
-                // Reject — do not add any CORS headers. Browser will block the request.
+                // Reject any non-allow-listed cross-origin request right away.
+                // For actual requests (non-OPTIONS) browsers ignore our status
+                // code, but at least we don't leak sensitive response data to
+                // a foreign origin because we never add the CORS headers.
                 Response.StatusCode = 403;
                 Response.End();
                 return;
             }
 
+            // Preflight: short-circuit with a 200 so the browser proceeds
+            // to the real request. We must complete here for OPTIONS, but
+            // for actual requests we keep going so MVC/Web API can serve
+            // the response (and we add the CORS headers to that response).
+            if (Request.HttpMethod == "OPTIONS")
+            {
+                Response.AddHeader("Access-Control-Allow-Origin", origin);
+                Response.AddHeader("Vary", "Origin");
+                Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+                Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Requested-With");
+                Response.AddHeader("Access-Control-Allow-Credentials", "true");
+                Response.AddHeader("Access-Control-Max-Age", "86400");
+                Response.StatusCode = 200;
+                Response.End();
+                return;
+            }
+
+            // For actual cross-origin GET/POST/etc.: tag the response with
+            // a single set of CORS headers. This runs *before* the
+            // controller pipeline, so even error pages get the headers
+            // and the browser sees them.
             Response.AddHeader("Access-Control-Allow-Origin", origin);
             Response.AddHeader("Vary", "Origin");
-            Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-            Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Requested-With");
             Response.AddHeader("Access-Control-Allow-Credentials", "true");
-            Response.AddHeader("Access-Control-Max-Age", "86400");
-            Response.StatusCode = 200;
+            Response.AddHeader("Access-Control-Expose-Headers", "Authorization");
         }
 
         protected void Application_Error()

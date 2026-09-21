@@ -104,6 +104,30 @@
   --container-max:  1280px;
   --container-wide: 1440px;
   --navbar-h:       76px;
+
+  /* ─── LEGACY VARIABLE ALIASES (for AboutPages.css compatibility) ─── */
+  /* Dark theme variables used by HelpCentre, About, Team pages */
+  --bg-primary:      #0B0E14;
+  --bg-secondary:    #111827;
+  --bg-card:         #0F172A;
+  --bg-surface:      #1E293B;
+  --text-light:       #F8FAFC;
+  --text-gray:        #94A3B8;
+  --text-muted:       #64748B;
+  --border-color:     #334155;
+  --border-slate:     #334155;
+  --primary-dark:      #0B0E14;
+  --primary-navy:      #0F172A;
+  --primary-slate:     #1E293B;
+  --accent-sky:        #38BDF8;
+  --accent-cyan:       #22D3EE;
+  --accent-orange:     #F97316;
+  --transition-base:   200ms ease;
+  --transition-fast:   150ms ease;
+  --transition-slow:   300ms ease;
+  --hero-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  --radius-lg: 8px;
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 
 /* =====================================================

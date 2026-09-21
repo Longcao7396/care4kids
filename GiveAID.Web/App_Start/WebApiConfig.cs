@@ -1,5 +1,6 @@
 using System.Web.Http;
 using System.Web.Http.Cors;
+using GiveAID.Web.Helpers;
 
 namespace GiveAID.Web
 {
@@ -7,19 +8,24 @@ namespace GiveAID.Web
     {
         public static void Register(HttpConfiguration config)
         {
+            // SECURITY: Global exception handler - returns JSON instead of HTML error pages
+            config.Filters.Add(new ApiExceptionFilterAttribute());
             // SECURITY: CORS allowlist is now resolved once in Global.asax and
             // shared with Application_BeginRequest. Previously this file had its
             // own hardcoded dev list AND a parallel echo-anywhere code path in
             // Global.asax, which together allowed credentialed cross-origin from
             // arbitrary sites (CSRF). Both layers now use the validated allowlist.
+            // SECURITY: For non-OPTIONS requests we let Web API's own CORS
+            // pipeline add a single Access-Control-Allow-Origin (from the
+            // validated allowlist) once. Application_BeginRequest in
+            // Global.asax.cs handles OPTIONS preflight separately.
+            // We deliberately do NOT call config.EnableCors(...) here to avoid
+            // emitting duplicate CORS headers when both layers respond to
+            // the same request.
             var allowedOrigins = WebApiApplication.CorsAllowedOrigins;
-            var cors = new EnableCorsAttribute(
-                origins: string.Join(",", allowedOrigins),
-                headers: "*",
-                methods: "*");
-            cors.SupportsCredentials = true;
-            cors.ExposedHeaders.Add("Authorization");
-            config.EnableCors(cors);
+            // Touch the allowlist so it is resolved at startup (matches the
+            // eager-init in Global.asax and surfaces misconfig early).
+            _ = allowedOrigins;
 
             // Web API routes
             config.MapHttpAttributeRoutes();

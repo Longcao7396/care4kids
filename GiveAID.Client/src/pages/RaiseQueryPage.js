@@ -40,7 +40,8 @@ export default function RaiseQueryPage() {
     try {
       setLoadingList(true);
       const res = await api.get('/conversations/mine', { params: statusFilter ? { status: statusFilter } : {} });
-      if (res.data.success) setMyQueries(res.data.data || []);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (Array.isArray(res)) setMyQueries(res);
     } catch { /* non-fatal */ }
     finally { setLoadingList(false); }
   }, [statusFilter]);
@@ -59,8 +60,9 @@ export default function RaiseQueryPage() {
     setSubmitSuccess(null);
     try {
       const res = await api.post('/conversations', form);
-      if (res.data.success) {
-        setSubmitSuccess(res.data);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') {
+        setSubmitSuccess(res);
         setForm(EMPTY_FORM);
         setErrors({});
         fetchMine();
@@ -78,7 +80,8 @@ export default function RaiseQueryPage() {
     setReplyText('');
     try {
       const res = await api.get(`/conversations/${id}`);
-      if (res.data.success) setDetail(res.data.data);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') setDetail(res);
     } catch (err) {
       setDetail({ error: err.response?.data?.message || 'Failed to load conversation.' });
     } finally {

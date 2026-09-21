@@ -15,11 +15,9 @@ export default function AchievementsAdmin() {
     try {
       setLoading(true);
       const response = await api.get('/achievements', { params: { activeOnly: false, pageSize: 100 } });
-      if (response.data.success) {
-        const data = response.data.data;
-        const list = Array.isArray(data) ? data : (data?.items || []);
-        setItems(list);
-      }
+      // interceptor unwraps envelope → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setItems(data);
     } catch (err) {
       setError('Failed to load achievements.');
     } finally {
@@ -75,7 +73,8 @@ export default function AchievementsAdmin() {
       const response = editing
         ? await api.put(`/achievements/${editing.achievementId}`, payload)
         : await api.post('/achievements', payload);
-      if (response.data.success) {
+      // interceptor unwraps envelope → response is truthy on success
+      if (response) {
         setSuccess(editing ? 'Achievement updated.' : 'Achievement added.');
         setShowModal(false);
         load();

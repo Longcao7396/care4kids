@@ -38,7 +38,8 @@ export default function InviteFriendsModal({ show, onHide }) {
     try {
       setLoadingList(true);
       const res = await api.get('/invitations/mine');
-      if (res.data.success) setMyInvites(res.data.data || []);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (Array.isArray(res)) setMyInvites(res);
     } catch { /* non-fatal */ }
     finally { setLoadingList(false); }
   }, []);
@@ -64,9 +65,12 @@ export default function InviteFriendsModal({ show, onHide }) {
     setSuccess(null);
     try {
       const res = await api.post('/invitations', form);
-      if (res.data.success) {
-        setSuccess(res.data);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') {
+        setSuccess(res);
         setForm(EMPTY);
+        fetchMine();
+      }
         setErrors({});
         fetchMine();
       }

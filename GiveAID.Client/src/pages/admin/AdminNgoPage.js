@@ -293,7 +293,10 @@ export default function AdminNgoPage() {
       setLoading(true);
       setError(null);
       const res = await api.get('/organizations');
-      if (res.data.success) setItems(res.data.data?.items || res.data.data || []);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') {
+        setItems(Array.isArray(res) ? res : (res.items || []));
+      }
     } catch {
       setError('Failed to load organizations.');
     } finally {
@@ -304,7 +307,8 @@ export default function AdminNgoPage() {
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.get('/organizations/stats');
-      if (res.data.success) setStats(res.data.data);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') setStats(res);
     } catch { /* non-fatal */ }
   }, []);
 
@@ -317,7 +321,8 @@ export default function AdminNgoPage() {
   const openDetail = (item) => {
     setDetailOrg(item);
     api.get(`/organizations/${item.organizationId}`).then((res) => {
-      if (res.data.success) setDetailOrg(res.data.data);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') setDetailOrg(res);
     });
   };
 

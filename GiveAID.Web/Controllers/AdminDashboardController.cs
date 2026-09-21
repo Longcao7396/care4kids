@@ -1,4 +1,6 @@
 using System;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Http;
 using System.Data.Entity;
@@ -37,8 +39,10 @@ namespace GiveAID.Web.Controllers
                 var activeCampaigns = db.Campaigns.Count(c => c.Status == "Active");
                 var completedCampaigns = db.Campaigns.Count(c => c.Status == "Completed");
 
-                // Active Programmes
-                var activeProgrammes = db.Programmes.Count(p => p.Status == "Ongoing" || p.Status == "Upcoming");
+                // Active Programmes count - removed legacy query (table deleted)
+                // ProgrammeRegistrations count - removed legacy query (table deleted)
+                // Return 0 for legacy fields as tables no longer exist
+                int activeProgrammes = 0;
 
                 // Recent Donations (Last 30 days)
                 var thirtyDaysAgo = DateTime.Now.AddDays(-30);
@@ -109,7 +113,7 @@ namespace GiveAID.Web.Controllers
                 // Donations by Cause
                 // Pre-compute donation counts in a single query to avoid N+1 subqueries
                 var donationCountsByCause = db.Donations
-                    .Where(d => d.PaymentStatus == "Completed" && d.CauseId != null)
+                    .Where(d => d.PaymentStatus == "Completed" && d.CauseId > 0)
                     .GroupBy(d => d.CauseId)
                     .Select(g => new { CauseId = g.Key, donationCount = g.Count() })
                     .ToDictionary(x => x.CauseId, x => x.donationCount);
@@ -150,8 +154,9 @@ namespace GiveAID.Web.Controllers
                     })
                     .ToList();
 
-                // Programme Registrations Count
-                var programmeRegistrations = db.ProgrammeRegistrations.Count();
+                // Programme Registrations Count - removed legacy query (table deleted)
+                // Return 0 as table no longer exists
+                int programmeRegistrations = 0;
 
                 return Ok(new
                 {

@@ -700,3 +700,162 @@
   font-size: 0.85rem;
   margin-bottom: 0.5rem;
 }
+
+/* ─── IMPACT REPORTS ─── */
+
+.cdp-reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.cdp-report-card {
+  background: var(--c4k-off-white);
+  border: 1px solid var(--c4k-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.cdp-report-card:hover {
+  border-color: var(--c4k-teal);
+  box-shadow: var(--shadow-md);
+}
+
+.cdp-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.cdp-report-title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h5);
+  font-weight: 700;
+  color: var(--c4k-charcoal);
+  margin: 0;
+  letter-spacing: -0.01em;
+  flex: 1;
+  min-width: 200px;
+}
+
+.cdp-report-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  background: var(--c4k-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c4k-gray-100);
+}
+
+.cdp-report-stat {
+  text-align: center;
+}
+
+.cdp-report-stat-num {
+  font-family: var(--font-serif);
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--space-1);
+  word-break: break-word;
+}
+
+.cdp-report-stat-lbl {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c4k-gray-500);
+}
+
+.cdp-report-progress-wrap {
+  margin-bottom: var(--space-5);
+}
+
+.cdp-report-progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-body-s);
+  font-weight: 600;
+  color: var(--c4k-gray-700);
+}
+
+.cdp-report-progress {
+  height: 8px !important;
+  border-radius: var(--radius-pill) !important;
+  background-color: var(--c4k-gray-100) !important;
+  overflow: hidden;
+}
+
+.cdp-report-content,
+.cdp-report-expenses {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c4k-gray-200);
+}
+
+.cdp-report-content-title {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-s);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c4k-gray-600);
+  margin-bottom: var(--space-3);
+}
+
+.cdp-report-para {
+  font-size: var(--fs-body);
+  line-height: 1.75;
+  color: var(--c4k-gray-700);
+  margin-bottom: var(--space-3);
+}
+
+.cdp-report-para:last-child {
+  margin-bottom: 0;
+}
+
+.cdp-expense-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cdp-expense-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: var(--c4k-white);
+  border: 1px solid var(--c4k-gray-100);
+  border-radius: var(--radius-sm);
+}
+
+.cdp-expense-cat {
+  font-weight: 600;
+  color: var(--c4k-charcoal);
+}
+
+.cdp-expense-amt {
+  font-weight: 700;
+  color: var(--c4k-teal-dark);
+}
+
+@media (max-width: 767px) {
+  .cdp-report-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cdp-report-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

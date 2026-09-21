@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Container, Row, Col, ProgressBar, Alert, Tab, Tabs } from 'react-bootstrap';
+import { Container, Row, Col, ProgressBar, Alert, Tab, Tabs, Badge } from 'react-bootstrap';
 import api from '../services/api';
+import { campaignReportsService } from '../services';
 import { useAuth } from '../contexts/AuthContext';
 import './CampaignDetailPage.css';
 
@@ -15,13 +16,16 @@ function CampaignDetailPage() {
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState('');
   const [registerError, setRegisterError] = useState('');
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
 
   const fetchCampaignDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get(`/campaigns/${id}`);
-      if (response.data.success) {
-        setCampaign(response.data.data);
+      // interceptor unwraps envelope → response is the object directly
+      if (response && typeof response === 'object' && response.campaignId) {
+        setCampaign(response);
       }
     } catch (err) {
       setError('Unable to load campaign information');
@@ -31,9 +35,23 @@ function CampaignDetailPage() {
     }
   }, [id]);
 
+  const fetchReports = useCallback(async () => {
+    if (!id) return;
+    try {
+      setReportsLoading(true);
+      const response = await campaignReportsService.getByCampaign(id, true);
+      if (response.success) setReports(response.data || []);
+    } catch (err) {
+      console.error('Failed to load campaign reports:', err);
+    } finally {
+      setReportsLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchCampaignDetail();
-  }, [fetchCampaignDetail]);
+    fetchReports();
+  }, [fetchCampaignDetail, fetchReports]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -52,13 +70,8 @@ function CampaignDetailPage() {
   };
 
   const handleDonate = () => {
-    navigate('/donate', {
-      state: {
-        campaignId: campaign.campaignId,
-        campaignName: campaign.campaignName,
-        causeId: campaign.cause?.causeId
-      }
-    });
+    // Navigate to DonatePage with campaignId as URL param
+    navigate(`/donate?campaignId=${campaign.campaignId}`);
   };
 
   const handleRegister = async () => {
@@ -73,12 +86,13 @@ function CampaignDetailPage() {
       const response = await api.post(`/campaigns/${id}/register`, {
         notes: ''
       });
-      if (response.data.success) {
+      // interceptor unwraps envelope → response is truthy on success
+      if (response) {
         setRegisterSuccess('Registration submitted! We will confirm your spot soon.');
         // Refresh campaign to update participant count
         fetchCampaignDetail();
       } else {
-        setRegisterError(response.data.message || 'Registration failed. Please try again.');
+        setRegisterError('Registration failed. Please try again.');
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.response?.data?.Message;
@@ -118,7 +132,20 @@ function CampaignDetailPage() {
 
   const percentReached = Math.min(campaign.percentageReached || 0, 100);
   const isCompleted = campaign.status === 'Completed';
+  const isEnded = campaign.status === 'Ended' || campaign.status === 'Expired' || campaign.status === 'Cancelled';
   const isActive = campaign.status === 'Active';
+  const isUpcoming = campaign.status === 'Upcoming' || campaign.startDate > new Date().toISOString();
+
+  // Determine days remaining display
+  const getDaysDisplay = () => {
+    if (isEnded) return 'Campaign Ended';
+    if (isCompleted) return 'Goal Reached!';
+    if (isUpcoming) return formatDate(campaign.startDate);
+    if (campaign.daysRemaining != null && campaign.daysRemaining >= 0) {
+      return `${campaign.daysRemaining} day${campaign.daysRemaining !== 1 ? 's' : ''} left`;
+    }
+    return '∞';
+  };
 
   return (
     <div className="cdp-page">
@@ -204,11 +231,9 @@ function CampaignDetailPage() {
                 </div>
                 <div className="cdp-stat-card">
                   <div className="cdp-stat-num">
-                    {campaign.daysRemaining != null && campaign.daysRemaining >= 0
-                      ? campaign.daysRemaining
-                      : '∞'}
+                    {getDaysDisplay()}
                   </div>
-                  <div className="cdp-stat-lbl">Days Remaining</div>
+                  <div className="cdp-stat-lbl">Status</div>
                 </div>
               </div>
 
@@ -326,6 +351,132 @@ function CampaignDetailPage() {
                       )}
                     </div>
                   </Tab>
+
+                  <Tab eventKey="reports" title={`Impact Reports (${reports.length})`}>
+                    <div className="cdp-tab-pane">
+                      <h3 className="cdp-tab-title">Impact & Transparency Reports</h3>
+                      <p className="text-muted mb-4">
+                        See how your donations were used and the impact we achieved together.
+                      </p>
+
+                      {reportsLoading ? (
+                        <div className="text-center py-4">
+                          <div className="spinner-border spinner-border-sm text-primary" />
+                          <p className="text-muted mt-2 mb-0 small">Loading reports…</p>
+                        </div>
+                      ) : reports.length === 0 ? (
+                        <Alert variant="info" className="cdp-empty-alert">
+                          <i className="bi bi-clipboard-data me-2"></i>
+                          No impact reports have been published for this campaign yet.
+                        </Alert>
+                      ) : (
+                        <div className="cdp-reports-list">
+                          {reports.map((report) => {
+                            const remaining = (report.totalReceived || 0) - (report.totalSpent || 0);
+                            const spendPct = report.totalReceived > 0
+                              ? Math.min((report.totalSpent / report.totalReceived) * 100, 100)
+                              : 0;
+                            return (
+                              <div key={report.reportId} className="cdp-report-card">
+                                <div className="cdp-report-header">
+                                  <h4 className="cdp-report-title">
+                                    <i className="bi bi-clipboard-check-fill text-success me-2"></i>
+                                    {report.reportTitle}
+                                  </h4>
+                                  {report.publishedDate && (
+                                    <Badge bg="success" pill>
+                                      <i className="bi bi-calendar-check me-1"></i>
+                                      {new Date(report.publishedDate).toLocaleDateString('en-US', {
+                                        year: 'numeric', month: 'short', day: 'numeric'
+                                      })}
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                <div className="cdp-report-stats">
+                                  <div className="cdp-report-stat">
+                                    <div className="cdp-report-stat-num text-success">
+                                      {formatCurrency(report.totalReceived)}
+                                    </div>
+                                    <div className="cdp-report-stat-lbl">Total Received</div>
+                                  </div>
+                                  <div className="cdp-report-stat">
+                                    <div className="cdp-report-stat-num text-warning">
+                                      {formatCurrency(report.totalSpent)}
+                                    </div>
+                                    <div className="cdp-report-stat-lbl">Total Spent</div>
+                                  </div>
+                                  <div className="cdp-report-stat">
+                                    <div className="cdp-report-stat-num text-info">
+                                      {formatCurrency(Math.max(remaining, 0))}
+                                    </div>
+                                    <div className="cdp-report-stat-lbl">Remaining</div>
+                                  </div>
+                                  <div className="cdp-report-stat">
+                                    <div className="cdp-report-stat-num text-primary">
+                                      {(report.beneficiariesReached ?? 0).toLocaleString('vi-VN')}
+                                    </div>
+                                    <div className="cdp-report-stat-lbl">Beneficiaries</div>
+                                  </div>
+                                </div>
+
+                                <div className="cdp-report-progress-wrap">
+                                  <div className="cdp-report-progress-label">
+                                    <span>Fund Utilization</span>
+                                    <span>{spendPct.toFixed(1)}%</span>
+                                  </div>
+                                  <ProgressBar
+                                    now={spendPct}
+                                    variant={spendPct >= 90 ? 'success' : spendPct >= 50 ? 'info' : 'warning'}
+                                    className="cdp-report-progress"
+                                  />
+                                </div>
+
+                                {report.reportContent && (
+                                  <div className="cdp-report-content">
+                                    <h6 className="cdp-report-content-title">
+                                      <i className="bi bi-file-text me-1"></i>
+                                      Report Summary
+                                    </h6>
+                                    {report.reportContent.split('\n\n').map((para, i) => (
+                                      <p key={i} className="cdp-report-para">{para}</p>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {report.expenseBreakdown && (() => {
+                                  try {
+                                    const items = JSON.parse(report.expenseBreakdown);
+                                    if (Array.isArray(items) && items.length > 0) {
+                                      return (
+                                        <div className="cdp-report-expenses">
+                                          <h6 className="cdp-report-content-title">
+                                            <i className="bi bi-pie-chart me-1"></i>
+                                            Expense Breakdown
+                                          </h6>
+                                          <div className="cdp-expense-list">
+                                            {items.map((item, i) => (
+                                              <div key={i} className="cdp-expense-row">
+                                                <span className="cdp-expense-cat">{item.category || item.name || '—'}</span>
+                                                <span className="cdp-expense-amt">
+                                                  {formatCurrency(item.amount || 0)}
+                                                </span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                  } catch (e) { /* ignore JSON parse errors */ }
+                                  return null;
+                                })()}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </Tab>
                 </Tabs>
               </div>
             </Col>
@@ -350,10 +501,14 @@ function CampaignDetailPage() {
                 />
 
                 <div className="cdp-donate-progress-meta">
-                  <span className="cdp-donate-pct">{percentReached.toFixed(1)}% funded</span>
-                  {isActive && campaign.daysRemaining != null && campaign.daysRemaining >= 0 && (
+                  <span className="cdp-donate-pct">
+                    {isCompleted ? '🎉 Goal Reached!' : `${percentReached.toFixed(1)}% funded`}
+                  </span>
+                  {isActive && campaign.daysRemaining != null && campaign.daysRemaining > 0 && (
                     <span className="cdp-donate-days">{campaign.daysRemaining} days left</span>
                   )}
+                  {isEnded && <span className="cdp-donate-days">Campaign Ended</span>}
+                  {isUpcoming && <span className="cdp-donate-days">Starting {formatDate(campaign.startDate)}</span>}
                 </div>
 
                 {isActive ? (

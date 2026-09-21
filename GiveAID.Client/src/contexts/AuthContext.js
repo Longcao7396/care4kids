@@ -29,8 +29,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (credentials) => {
     const result = await authService.login(credentials);
-    if (result.success && result.data?.user) {
-      setUser(result.data.user);
+    if (result.success) {
+      // v2 API returns { token, userId, email, username, role, expiresAt }
+      // — `user` field is not part of the response, so build it from the fields we have.
+      const data = result.data || {};
+      const userObj = {
+        userId: data.userId,
+        email: data.email,
+        username: data.username,
+        role: data.role,
+        expiresAt: data.expiresAt,
+      };
+      if (userObj.userId) {
+        setUser(userObj);
+      }
       return result;
     }
     const error = new Error(result.message || 'Login failed');

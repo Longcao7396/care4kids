@@ -17,7 +17,9 @@ export default function CareersAdmin() {
     try {
       setLoading(true);
       const response = await api.get('/careers', { params: { activeOnly: false } });
-      if (response.data.success) setItems(response.data.data || []);
+      // interceptor unwraps envelope → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setItems(data);
     } catch (err) {
       setError('Failed to load careers.');
     } finally {
@@ -70,7 +72,8 @@ export default function CareersAdmin() {
       const response = editing
         ? await api.put(`/careers/${editing.careerId}`, payload)
         : await api.post('/careers', payload);
-      if (response.data.success) {
+      // interceptor unwraps envelope → response is truthy on success
+      if (response) {
         setSuccess(editing ? 'Career updated.' : 'Career posted.');
         setShowModal(false);
         load();
@@ -95,7 +98,8 @@ export default function CareersAdmin() {
     setViewing(item);
     try {
       const response = await api.get(`/careers/${item.careerId}/applications`);
-      if (response.data.success) setApplications(response.data.data || []);
+      // interceptor unwraps envelope → response is the applications array directly
+      if (Array.isArray(response)) setApplications(response);
     } catch (err) {
       setApplications([]);
     }

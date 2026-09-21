@@ -152,8 +152,10 @@ const Navbar = () => {
                     <>
                       <Divider />
 
-                      <SectionHeader label="ADMINISTRATION" />
+                      {/* Top-level Admin Dashboard - direct access */}
                       <MenuItem to="/admin" icon="shield" label="Admin Dashboard" />
+
+                      <SectionHeader label="ADMINISTRATION" />
 
                       <SectionHeader label="CAMPAIGNS" />
                       <MenuItem to="/admin/campaigns" icon="megaphone" label="Campaign Management" />

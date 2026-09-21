@@ -15,7 +15,9 @@ export default function SupportersAdmin() {
     try {
       setLoading(true);
       const response = await api.get('/supporters', { params: { activeOnly: false } });
-      if (response.data.success) setItems(response.data.data || []);
+      // interceptor unwraps envelope → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setItems(data);
     } catch (err) {
       setError('Failed to load supporters.');
     } finally {
@@ -68,7 +70,8 @@ export default function SupportersAdmin() {
       const response = editing
         ? await api.put(`/supporters/${editing.organizationId}`, payload)
         : await api.post('/supporters', payload);
-      if (response.data.success) {
+      // interceptor unwraps envelope → response is truthy on success
+      if (response) {
         setSuccess(editing ? 'Supporter updated.' : 'Supporter added.');
         setShowModal(false);
         load();

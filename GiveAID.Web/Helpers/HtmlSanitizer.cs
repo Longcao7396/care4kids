@@ -32,7 +32,11 @@ namespace GiveAID.Web.Helpers
             "blockquote", "pre", "code",
             "a", "img",
             "table", "thead", "tbody", "tr", "th", "td",
-            "hr", "span", "div"
+            "hr", "span", "div",
+            // Common interactive / form-like elements often used inside
+            // rich-text CMS content (blog posts, FAQ answers, etc.).
+            // Inline event handlers and javascript: URIs are still blocked.
+            "button", "label", "figure", "figcaption"
         };
 
         private static readonly HashSet<string> AllowedAttributes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

@@ -36,9 +36,10 @@ namespace GiveAID.Web.Helpers
             if (!string.IsNullOrEmpty(Roles))
             {
                 var allowed = Roles.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                   .Select(r => r.Trim());
+                                   .Select(r => r.Trim())
+                                   .ToList();
                 var userRole = principal.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-                if (userRole == null || !allowed.Contains(userRole))
+                if (userRole == null || !allowed.Contains(userRole, StringComparer.OrdinalIgnoreCase))
                 {
                     return false;
                 }

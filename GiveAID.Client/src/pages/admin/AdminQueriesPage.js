@@ -43,9 +43,12 @@ export default function AdminQueriesPage() {
           pageSize: pagination.pageSize,
         },
       });
-      if (res.data.success) {
-        setItems(res.data.data?.items || []);
-        setPagination((p) => ({ ...p, ...(res.data.data?.pagination || {}) }));
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object' && res.items) {
+        setItems(res.items);
+        setPagination((p) => ({ ...p, ...(res.pagination || {}) }));
+      } else if (Array.isArray(res)) {
+        setItems(res);
       }
     } catch {
       setError('Failed to load queries.');
@@ -57,7 +60,8 @@ export default function AdminQueriesPage() {
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.get('/conversations/stats');
-      if (res.data.success) setStats(res.data.data);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') setStats(res);
     } catch { /* non-fatal */ }
   }, []);
 
@@ -65,11 +69,9 @@ export default function AdminQueriesPage() {
   const fetchAdmins = useCallback(async () => {
     try {
       const res = await api.get('/admin/users', { params: { role: 'Admin', pageSize: 100 } });
-      if (res.data.success) {
-        const data = res.data.data;
-        const list = Array.isArray(data) ? data : (data?.items || []);
-        setAdmins(list.filter((u) => u.isActive));
-      }
+      // interceptor unwraps envelope → res is the raw data directly
+      const data = Array.isArray(res) ? res : (res?.items || []);
+      if (data.length > 0) setAdmins(data.filter((u) => u.isActive));
     } catch { /* non-fatal */ }
   }, []);
 
@@ -83,7 +85,10 @@ export default function AdminQueriesPage() {
     setReplyText('');
     try {
       const res = await api.get(`/conversations/${id}`);
-      if (res.data.success) setDetail(res.data.data);
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object') {
+        setDetail(res);
+      }
     } catch (err) {
       setDetail({ error: err.response?.data?.message || 'Failed to load conversation.' });
     } finally {

@@ -22,6 +22,7 @@ namespace GiveAID.Web.Models
         public string Email { get; set; }
 
         [Required]
+        [MaxLength(255)]
         public string PasswordHash { get; set; }
 
         [Required]
@@ -54,6 +55,8 @@ namespace GiveAID.Web.Models
 
         [MaxLength(100)]
         public string VerificationToken { get; set; }
+
+        public DateTime? TokenExpiry { get; set; }
 
         public DateTime? LastLogin { get; set; }
 
@@ -212,7 +215,7 @@ namespace GiveAID.Web.Models
             get
             {
                 if (GoalAmount > 0)
-                    return (RaisedAmount / GoalAmount) * 100;
+                    return Math.Min((RaisedAmount / GoalAmount) * 100, 100);
                 return 0;
             }
         }
@@ -225,7 +228,7 @@ namespace GiveAID.Web.Models
                 if (EndDate.HasValue)
                 {
                     var days = (EndDate.Value - DateTime.Now).Days;
-                    return days >= 0 ? days : (int?)null;
+                    return days >= 0 ? days : 0;
                 }
                 return null;
             }
@@ -233,6 +236,12 @@ namespace GiveAID.Web.Models
 
         [NotMapped]
         public int DonorCount { get; set; }
+
+        // Navigation property for the Campaign → Donations one-to-many
+        // relationship. EF6 infers this from Donation.CampaignId (the FK
+        // declared on Donation) — no fluent config required. Populated
+        // eagerly via .Include(c => c.Donations) or lazily on demand.
+        public virtual ICollection<Donation> Donations { get; set; }
 
         // Indicates this campaign accepts donations (Campaign type).
         // Always true for unified Campaign model — kept as a NotMapped
@@ -401,89 +410,17 @@ namespace GiveAID.Web.Models
         // Now: POST /api/donations creates a "Pending" row, the gateway webhook
         // (or a manual admin confirm) flips it to "Completed" or "Failed".
         public DateTime? PaymentConfirmedAt { get; set; }
-    }
 
-    [Table("Programmes")]
-    public class Programme
-    {
-        [Key]
-        public int ProgrammeId { get; set; }
-
-        public int? OrganizationId { get; set; }
-
-        [ForeignKey("OrganizationId")]
-        public virtual Organization Organization { get; set; }
-
-        [Required]
-        [MaxLength(200)]
-        public string Title { get; set; }
-
-        [Required]
-        [MaxLength(50)]
-        public string ProgrammeType { get; set; }
-
-        public string Description { get; set; }
-
-        [MaxLength(255)]
-        public string ImageUrl { get; set; }
-
-        public DateTime? StartDate { get; set; }
-
-        public DateTime? EndDate { get; set; }
-
-        [MaxLength(255)]
-        public string Location { get; set; }
-
-        public int? TargetBeneficiaries { get; set; }
-
-        public decimal? ExpectedBudget { get; set; }
-
-        public decimal? ActualBudget { get; set; }
-
-        [Required]
+        // ── Payment Gateway Integration ──────────────────────────────────────────
+        // Name of the gateway used for this donation ("stripe", "vnpay", "momo", "mock").
         [MaxLength(20)]
-        public string Status { get; set; } = "Upcoming";
+        public string PaymentGateway { get; set; }
 
-        public bool IsFeatured { get; set; } = false;
-
-        public bool RegistrationRequired { get; set; } = true;
-
-        public int? MaxParticipants { get; set; }
-
-        public int? CreatedBy { get; set; }
-
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
-    }
-
-    [Table("ProgrammeRegistrations")]
-    public class ProgrammeRegistration
-    {
-        [Key]
-        public int RegistrationId { get; set; }
-
-        [Required]
-        public int ProgrammeId { get; set; }
-
-        [ForeignKey("ProgrammeId")]
-        public virtual Programme Programme { get; set; }
-
-        [Required]
-        public int UserId { get; set; }
-
-        [ForeignKey("UserId")]
-        public virtual User User { get; set; }
-
-        [MaxLength(20)]
-        public string Status { get; set; } = "Registered";
-
+        // Client secret returned by the gateway (e.g. Stripe pi_xxx_secret_xxx).
+        // Frontend uses this with Stripe.js to confirm the payment in the browser.
+        // Null for non-Stripe gateways or when gateway is disabled.
         [MaxLength(500)]
-        public string Notes { get; set; }
-
-        public bool AttendanceConfirmed { get; set; } = false;
-
-        public DateTime RegistrationDate { get; set; } = DateTime.Now;
+        public string ClientSecret { get; set; }
     }
 
     [Table("Organizations")]
@@ -540,32 +477,6 @@ namespace GiveAID.Web.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
-    }
-
-    [Table("ProgrammePhotos")]
-    public class ProgrammePhoto
-    {
-        [Key]
-        public int PhotoId { get; set; }
-
-        [Required]
-        public int ProgrammeId { get; set; }
-
-        [ForeignKey("ProgrammeId")]
-        public virtual Programme Programme { get; set; }
-
-        [Required]
-        [MaxLength(255)]
-        public string PhotoUrl { get; set; }
-
-        [MaxLength(200)]
-        public string Caption { get; set; }
-
-        public int DisplayOrder { get; set; } = 0;
-
-        public int? UploadedBy { get; set; }
-
-        public DateTime UploadedAt { get; set; } = DateTime.Now;
     }
 
     [Table("Conversations")]
@@ -626,7 +537,7 @@ namespace GiveAID.Web.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 
-    [Table("CmsPages")]
+    [Table("cms_pages")]
     public class CmsPage
     {
         [Key]
@@ -776,9 +687,9 @@ namespace GiveAID.Web.Models
         [MaxLength(255)]
         public string Tags { get; set; }
 
-        public int? ProgrammeId { get; set; }
-
         public int? OrganizationId { get; set; }
+
+        public int? ProgrammeId { get; set; }
 
         public int DisplayOrder { get; set; } = 0;
 
@@ -879,7 +790,7 @@ namespace GiveAID.Web.Models
     /// <summary>
     /// About Us module - Our Team page
     /// </summary>
-    [Table("TeamMembers")]
+    [Table("team_members")]
     public class TeamMember
     {
         [Key]
@@ -1024,5 +935,133 @@ namespace GiveAID.Web.Models
 
         [ForeignKey("CreatedBy")]
         public virtual User CreatedByUser { get; set; }
+    }
+
+    /// <summary>
+    /// Webhook event log — written by the payment gateway webhook endpoint.
+    /// Useful for debugging gateway delivery issues, auditing events, and
+    /// detecting duplicate deliveries (idempotency checks).
+    /// </summary>
+    [Table("WebhookLogs")]
+    public class WebhookLog
+    {
+        [Key]
+        public long WebhookLogId { get; set; }
+
+        /// <summary>Gateway that sent this event: "stripe", "vnpay", "momo", "mock".</summary>
+        [Required]
+        [MaxLength(20)]
+        public string Gateway { get; set; }
+
+        /// <summary>Event type from the gateway, e.g. "payment_intent.succeeded".</summary>
+        [Required]
+        [MaxLength(100)]
+        public string EventType { get; set; }
+
+        /// <summary>Unique event ID from the gateway (for idempotency / deduplication).</summary>
+        [MaxLength(100)]
+        public string EventId { get; set; }
+
+        /// <summary>
+        /// Raw webhook payload, truncated to 4000 chars.
+        /// Stored so we can replay / audit events if needed.
+        /// </summary>
+        [MaxLength(4000)]
+        public string RawPayload { get; set; }
+
+        /// <summary>Signature header value received (for debugging failures).</summary>
+        [MaxLength(500)]
+        public string Signature { get; set; }
+
+        /// <summary>
+        /// Whether signature verification passed. A false value means the event
+        /// was still processed (with a warning) but the status is untrusted.
+        /// </summary>
+        public bool SignatureValid { get; set; }
+
+        /// <summary>
+        /// Processed | Failed | Ignored | Duplicate
+        /// </summary>
+        [MaxLength(20)]
+        public string ProcessingStatus { get; set; } = "Processed";
+
+        /// <summary>
+        /// Human-readable error message when ProcessingStatus = Failed.
+        /// </summary>
+        [MaxLength(500)]
+        public string ErrorMessage { get; set; }
+
+        /// <summary>The donation's internal TransactionId if one was matched.</summary>
+        [MaxLength(100)]
+        public string DonationTransactionId { get; set; }
+
+        /// <summary>The donation's internal DonationId if one was matched.</summary>
+        public int? DonationId { get; set; }
+
+        public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? ProcessedAt { get; set; }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // EmailLog — persistent log of every outbound email attempt.
+    // Provides audibility and retry capability without a background worker.
+    // ══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Records every email dispatch attempt (success or failure) for audit,
+    /// retry, and admin visibility.
+    /// </summary>
+    [Table("EmailLogs")]
+    public class EmailLog
+    {
+        [Key]
+        public int EmailLogId { get; set; }
+
+        /// <summary>The RFC 5321 To: address.</summary>
+        [Required]
+        [MaxLength(254)]
+        public string ToEmail { get; set; }
+
+        /// <summary>Email subject line.</summary>
+        [Required]
+        [MaxLength(500)]
+        public string Subject { get; set; }
+
+        /// <summary>Full HTML body that was (or would have been) sent.</summary>
+        public string Body { get; set; }
+
+        /// <summary>
+        /// Logical category used for filtering and reporting.
+        /// Values: invitation | donation_receipt | registration_confirmation |
+        /// contact_reply | general.
+        /// </summary>
+        [MaxLength(50)]
+        public string Category { get; set; }
+
+        /// <summary>
+        /// ID of the related entity (DonationId, InvitationId, etc.), if any.
+        /// </summary>
+        public int? RelatedId { get; set; }
+
+        /// <summary>
+        /// Sent | Failed | MockSent | PendingRetry.
+        /// </summary>
+        [MaxLength(20)]
+        public string Status { get; set; } = "Pending";
+
+        /// <summary>UTC timestamp when the email was successfully dispatched.</summary>
+        public DateTime? SentAt { get; set; }
+
+        /// <summary>Error message from the SMTP transport on failure.</summary>
+        [MaxLength(2000)]
+        public string ErrorMessage { get; set; }
+
+        /// <summary>Number of times the service has attempted to resend this entry.</summary>
+        public int RetryCount { get; set; } = 0;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

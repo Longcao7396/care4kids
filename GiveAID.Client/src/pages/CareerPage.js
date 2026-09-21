@@ -53,10 +53,11 @@ function CareerApplyModal({ show, career, onHide, onSuccess }) {
       setSubmitting(true);
       setError(null);
       const response = await api.post(`/careers/${career.careerId}/apply`, form);
-      if (response.data.success) {
-        onSuccess && onSuccess(response.data);
+      // interceptor unwraps envelope → response is the raw data directly
+      if (response && typeof response === 'object' && response.careerId) {
+        onSuccess && onSuccess(response);
       } else {
-        setError(response.data.message || 'Failed to submit application.');
+        setError('Submission may have failed. Please contact us directly.');
       }
     } catch (err) {
       setError(err.response?.data?.Message || err.response?.data?.message || 'Failed to submit application.');
@@ -241,9 +242,9 @@ function CareerPage() {
     try {
       setLoading(true);
       const response = await api.get('/careers', { params: { activeOnly: true } });
-      if (response.data.success) {
-        setJobs(response.data.data || []);
-      }
+      // interceptor unwraps envelope → response is the raw data directly
+      const data = Array.isArray(response) ? response : (response?.items || []);
+      if (data.length > 0) setJobs(data);
     } catch (err) {
       setError('Failed to load open positions.');
     } finally {

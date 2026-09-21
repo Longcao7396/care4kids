@@ -26,8 +26,10 @@ function AdminDashboard() {
         api.get('/admin/stats'),
         api.get('/admin/recent-donations?count=5'),
       ]);
-      if (statsRes.data.success) setStats(statsRes.data.data);
-      if (recentRes.data.success) setRecentDonations(recentRes.data.data || []);
+      // interceptor unwraps envelope → statsRes is the raw data directly
+      if (statsRes && typeof statsRes === 'object') setStats(statsRes);
+      // interceptor unwraps envelope → recentRes is the raw data directly
+      if (Array.isArray(recentRes)) setRecentDonations(recentRes.slice(0, 5));
     } catch (err) {
       console.error(err);
       setError(

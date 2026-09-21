@@ -37,8 +37,9 @@ function AdminInvitationsPage() {
       const params = { page, pageSize: 30 };
       if (statusFilter) params.status = statusFilter;
       const res = await api.get('/invitations', { params });
-      if (res.data.success) {
-        const d = res.data.data;
+      // interceptor unwraps envelope → res is the raw data directly
+      if (res && typeof res === 'object' && res.items) {
+        const d = res;
         setItems(d.items || []);
         const p = d.pagination || {};
         setPagination({

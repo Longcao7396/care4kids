@@ -25,8 +25,10 @@ export default function AdminContactInfo({ pageKey = 'contact_info', title = 'Co
       setLoading(true);
       setError(null);
       const response = await api.get('/cms/pages', { params: { includeInactive: true } });
-      if (response.data.success) {
-        const found = response.data.data.find((p) => p.pageKey === pageKey);
+      // interceptor unwraps envelope → response is the raw data directly
+      const pages = Array.isArray(response) ? response : (response?.items || []);
+      if (pages.length > 0) {
+        const found = pages.find((p) => p.pageKey === pageKey);
         if (found) {
           setPage(found);
           setPageTitle(found.pageTitle || title);
@@ -57,7 +59,8 @@ export default function AdminContactInfo({ pageKey = 'contact_info', title = 'Co
         content,
         metaDescription,
       });
-      if (response.data.success) {
+      // interceptor unwraps envelope → response is truthy on success
+      if (response) {
         setSuccess('Contact information saved. Visit the Contact page to verify.');
       }
     } catch (err) {

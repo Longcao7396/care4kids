@@ -6,7 +6,7 @@ import { STORAGE_KEYS } from '../config';
 import './AuthPages.css';
 
 function LoginPage() {
-  const [form, setForm] = useState({ email: '', password: '', rememberMe: false });
+  const [form, setForm] = useState({ username: '', password: '', rememberMe: false });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,15 +33,16 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) {
-      setError('Please enter your email and password.');
+    if (!form.username || !form.password) {
+      setError('Please enter your username and password.');
       return;
     }
     setError('');
     setLoading(true);
 
     try {
-      const result = await login({ email: form.email, password: form.password });
+      // Login by username (email is no longer accepted as a login identifier).
+      const result = await login({ username: form.username.trim(), password: form.password });
       // Navigation happens via the effect below once user state updates.
       // The previous bug was calling navigate() before AuthContext's setUser
       // had propagated, which made ProtectedRoute bounce the user back to /login.
@@ -120,22 +121,23 @@ function LoginPage() {
                 {/* Form */}
                 <Form onSubmit={handleSubmit} noValidate>
                   <Form.Group className="auth-form-group">
-                    <Form.Label className="auth-label" htmlFor="login-email">Email Address</Form.Label>
+                    <Form.Label className="auth-label" htmlFor="login-username">Username</Form.Label>
                     <div className="auth-input-wrap">
                       <span className="auth-input-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
                         </svg>
                       </span>
                       <Form.Control
-                        id="login-email"
-                        type="email"
-                        name="email"
-                        placeholder="you@example.com"
-                        value={form.email}
+                        id="login-username"
+                        type="text"
+                        name="username"
+                        placeholder="your-username"
+                        value={form.username}
                         onChange={handleChange}
                         className="auth-input"
-                        autoComplete="email"
+                        autoComplete="username"
                         required
                       />
                     </div>
@@ -208,12 +210,7 @@ function LoginPage() {
                         <span>Signing in…</span>
                       </>
                     ) : (
-                      <>
-                        <span>Sign In</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                        </svg>
-                      </>
+                      <span>Sign In</span>
                     )}
                   </Button>
                 </Form>

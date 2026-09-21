@@ -49,7 +49,7 @@ const Footer = () => {
                 <li><Link to="/about/achievements">Achievements</Link></li>
                 <li><Link to="/about/supporters">Supporters</Link></li>
                 <li><Link to="/about/partners">Partners</Link></li>
-                <li><Link to="/careers">Careers</Link></li>
+                <li><Link to="/about/careers">Careers</Link></li>
               </ul>
             </Col>
 
@@ -71,7 +71,7 @@ const Footer = () => {
               <ul className="c4k-footer-links">
                 <li><Link to="/gallery">Gallery</Link></li>
                 <li><Link to="/help-centre">Help Centre</Link></li>
-                <li><Link to="/programmes">Programmes</Link></li>
+                <li><Link to="/campaigns">Programmes</Link></li>
               </ul>
 
               <h4 className="c4k-footer-heading c4k-footer-heading-legal">Legal</h4>

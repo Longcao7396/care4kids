@@ -1,0 +1,7 @@
+You cannot call a method on a null-valued expression.
+At C:\Users\admin\Desktop\project NGO\GiveAID.Client\scripts\start-backend.ps1:88 char:1
++ $psi.ArgumentList.Add('run')
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : InvokeMethodOnNull
+ 

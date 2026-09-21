@@ -613,3 +613,53 @@
   border-color: var(--accent-sky);
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
 }
+
+/* ─── Campaign Indicator ─────────────────────────────────── */
+
+.dp-campaign-indicator {
+  margin-top: 0;
+}
+
+.dp-campaign-indicator-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, var(--c4k-coral-softest) 0%, rgba(253, 224, 200, 0.5) 100%);
+  border: 1.5px solid var(--c4k-coral-soft);
+  border-radius: var(--radius-lg);
+  font-size: var(--fs-body-s);
+  color: var(--c4k-coral-darker);
+}
+
+.dp-campaign-indicator-inner svg {
+  color: var(--c4k-coral);
+  flex-shrink: 0;
+}
+
+.dp-campaign-indicator-inner span {
+  flex: 1;
+}
+
+.dp-campaign-indicator-inner strong {
+  color: var(--c4k-coral);
+}
+
+.dp-campaign-indicator-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  flex-shrink: 0;
+}
+
+.dp-campaign-indicator-close:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
