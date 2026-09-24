@@ -1,280 +1,297 @@
-# Runbook
+# Runbook — GiveAID v2.0
 
-> Audience: anyone running, debugging, or deploying the project locally. Follow these steps
-> in order. **Do not skip the "Verify health" step** — it catches 90% of issues.
-
----
+> Audience: anyone running, debugging, or deploying the project. Follow these steps in
+> order. **Don't skip "Verify health"** — it catches 90% of issues.
 
 ## 1. Prerequisites
 
-| Requirement | Version | How to check |
-|---|---|---|
-| Windows | 10/11 | `winver` |
-| Node.js | 18 LTS or 20 LTS | `node -v` |
-| npm | 9+ | `npm -v` |
-| .NET Framework | 4.7.2 | `reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"` |
-| SQL Server | Express 2019+ | `sqlcmd -S .\SQLEXPRESS -Q "SELECT @@VERSION"` |
-| Visual Studio (or MSBuild) | 2019/2022 | `where.exe MSBuild` |
-| IIS Express | 10+ | `where.exe iisexpress` |
+| Requirement       | Version            | How to check                              |
+|-------------------|--------------------|-------------------------------------------|
+| Windows           | 10/11              | `winver`                                  |
+| .NET SDK          | 8.0+               | `dotnet --version`                        |
+| Node.js           | 18 LTS or 20 LTS   | `node -v`                                 |
+| npm               | 9+                 | `npm -v`                                  |
+| SQL Server        | Express 2019+      | `sqlcmd -S .\SQLEXPRESS -Q "SELECT @@VERSION"` |
+| Git               | 2.40+              | `git --version`                           |
+| Visual Studio / Rider / VS Code | 2022 17.8+ / 2024.1+ | `where.exe devenv`            |
 
----
+## 2. First-time Setup
 
-## 2. First-time setup
-
-```powershell
-# Clone (or open existing folder)
-cd "C:\Users\admin\Desktop\project NGO"
-
-# Install frontend deps
-cd GiveAID.Client
-npm install
-cd ..
-
-# Build backend (validates everything compiles)
-& "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" `
-  GiveAID.Web\GiveAID.Web.csproj /p:Configuration=Debug
-```
-
-If MSBuild isn't at that path, find it:
+### 2.1. Database
 
 ```powershell
-Get-ChildItem 'C:\Program Files' -Recurse -Filter MSBuild.exe |
-  Where-Object { $_.FullName -match 'Visual Studio' } |
-  Select-Object -First 1 -ExpandProperty FullName
-```
-
----
-
-## 3. Database setup
-
-### Option A — Fresh database
-
-```powershell
+# Create database (idempotent — skip if already exists)
 sqlcmd -S .\SQLEXPRESS -Q "IF DB_ID('GiveAIDDB') IS NULL CREATE DATABASE GiveAIDDB"
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i ".\DB_Patch_Combined.sql"
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i ".\NGO_Database_Causes_Restructure_Migration.sql"
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i ".\NGO_Database_CampaignProgramme_Merge.sql"
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i ".\NGO_Database_Invitations_Migration.sql"
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i ".\Campaigns_DataSeed.sql"
+
+# Apply EF Core migrations
+# <REPO_ROOT> = the folder containing this file (the repo root)
+cd "<REPO_ROOT>"
+dotnet ef database update --project src/Infrastructure/GiveAID.V2.Infrastructure.csproj --startup-project src/WebApi/GiveAID.V2.WebApi.csproj
 ```
 
-### Option B — Reset an existing dev DB
+The migration also seeds the default `Admin` user.
 
-```sql
-USE master;
-GO
-ALTER DATABASE GiveAIDDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-GO
-DROP DATABASE GiveAIDDB;
-GO
-CREATE DATABASE GiveAIDDB;
-GO
+### 2.2. Backend
+
+```powershell
+cd "<REPO_ROOT>"
+dotnet restore GiveAID.V2.slnx
+dotnet build GiveAID.V2.slnx
+# Expected: Build succeeded. 0 Warning(s) 0 Error(s)
 ```
 
-Then re-run Option A.
+### 2.3. Frontend
 
----
+```powershell
+cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
+npm install --no-audit --no-fund
+```
 
-## 4. Running the project
+## 3. Run (Three Terminals)
 
-### Both at once (recommended)
+### Terminal 1 — WebApi
+
+```powershell
+cd "<REPO_ROOT>"
+dotnet run --project src/WebApi/GiveAID.V2.WebApi.csproj
+# Listens on http://localhost:5231
+```
+
+### Terminal 2 — Admin Console
+
+```powershell
+cd "<REPO_ROOT>"
+dotnet run --project src/Web/GiveAID.V2.Web.csproj
+# Listens on http://localhost:5069
+```
+
+### Terminal 3 — React Client
 
 ```powershell
 cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
 npm start
+# Listens on http://localhost:3000
 ```
 
-This uses `concurrently` to:
-1. Run `start-backend.ps1` (kills stale port, launches IIS Express for the .NET API)
-2. Run `start-frontend.ps1` (kills stale port, launches `react-scripts start`)
-3. Open the frontend at <http://localhost:3000>
-4. Backend API at <http://localhost:44300> (or whatever `Web.config` → `applicationhost.config` says)
-
-### Run them separately
+## 4. Verify Health
 
 ```powershell
-# Terminal 1
-cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
-npm run start:backend
+curl.exe -s http://localhost:5231/healthz
+# Expected: 200 OK (empty body)
 
-# Terminal 2
-cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
-npm run start:frontend
+curl.exe -s http://localhost:5231/api/v1/health
+# Expected: {"status":"healthy","version":"2.0",...}
+
+curl.exe -s http://localhost:5069/Admin/Auth/Login
+# Expected: 200 OK (HTML login page)
+
+curl.exe -s http://localhost:3000/api/v1/health
+# Expected: same as 5231 (proxy works)
 ```
 
-### Stop everything
+If any of these fail, jump to **Troubleshooting** below.
+
+## 5. Default Credentials
+
+| Role   | Email                  | Password    |
+|--------|------------------------|-------------|
+| Admin  | admin@give-aid.org     | Admin@123   |
+| User   | user@give-aid.org      | User@123    |
+
+> **Change these in production.** See `src/Infrastructure/Persistence/Seed/DatabaseSeeder.cs`.
+
+## 6. Useful URLs
+
+| Service                | URL                                          |
+|------------------------|----------------------------------------------|
+| WebApi root            | http://localhost:5231                        |
+| OpenAPI (Scalar UI)    | http://localhost:5231/scalar/v1              |
+| Health check           | http://localhost:5231/healthz                |
+| Admin login            | http://localhost:5069/Admin/Auth/Login       |
+| Admin dashboard        | http://localhost:5069/Admin/Dashboard        |
+| React site             | http://localhost:3000                        |
+| React login            | http://localhost:3000/login                  |
+
+## 7. Smoke Test Script
+
+After everything is up, run this in PowerShell:
 
 ```powershell
-cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
-npm run stop
+# Backend health
+$health = curl.exe -s http://localhost:5231/api/v1/health | ConvertFrom-Json
+Write-Host "Backend: $($health.status) v$($health.version)"
+
+# Admin login page renders
+$login = curl.exe -s -o $null -w "%{http_code}" http://localhost:5069/Admin/Auth/Login
+Write-Host "Admin login page: $login"
+
+# React homepage loads
+$home = curl.exe -s -o $null -w "%{http_code}" http://localhost:3000
+Write-Host "React homepage: $home"
+
+# Run all tests
+cd "C:\Users\admin\Desktop\project NGO.v2"
+dotnet test GiveAID.V2.slnx --no-build --logger "console;verbosity=quiet"
 ```
+
+Expected:
+- `Backend: healthy v2.0`
+- `Admin login page: 200`
+- `React homepage: 200`
+- `Passed!  - Failed: 0, Passed: 169, Total: 169`
+
+## 8. Troubleshooting
+
+### 8.1. WebApi fails to start with "address already in use"
+
+```powershell
+# Find and kill the process
+Get-NetTCPConnection -LocalPort 5231 | Select-Object OwningProcess
+Stop-Process -Id <pid> -Force
+```
+
+### 8.2. Database connection error
+
+1. Confirm SQL Server is running: `Get-Service MSSQLSERVER` or `Get-Service MSSQL$SQLEXPRESS`
+2. Test connection: `sqlcmd -S .\SQLEXPRESS -Q "SELECT 1"`
+3. If using localdb, switch connection string in `appsettings.json`
+
+### 8.3. EF migration fails with "pending model changes"
+
+```powershell
+dotnet ef migrations add FixPendingChanges --project src/Infrastructure/GiveAID.V2.Infrastructure.csproj --startup-project src/WebApi/GiveAID.V2.WebApi.csproj
+dotnet ef database update --project src/Infrastructure/GiveAID.V2.Infrastructure.csproj --startup-project src/WebApi/GiveAID.V2.WebApi.csproj
+```
+
+### 8.4. Admin console shows "Cannot connect to API"
+
+- Verify WebApi is running on port 5231: `curl http://localhost:5231/healthz`
+- Verify `src/Web/appsettings.json` has `"Api:BaseUrl": "http://localhost:5231"`
+- Verify CORS in WebApi allows the admin origin (if served from another host)
+
+### 8.5. React client shows blank page
+
+1. Check browser dev tools console for errors
+2. Verify React dev server compiled: terminal should show "webpack compiled successfully"
+3. Hard-reload: Ctrl+Shift+R
+4. Clear localStorage: dev tools → Application → Storage → Clear site data
+
+### 8.6. 401 Unauthorized on API calls
+
+- Token expired (default 60 min) — re-login
+- JWT secret rotated — users must re-login
+- Check `[Authorize]` attribute on the endpoint
+
+### 8.7. Tests fail with database errors
+
+The functional tests use **InMemory DB** — no SQL Server needed. If they fail:
+
+```powershell
+# Confirm tests run
+dotnet test tests/WebApi.FunctionalTests/GiveAID.V2.WebApi.FunctionalTests.csproj
+```
+
+If only specific tests fail, read the test output for the actual exception.
+
+### 8.8. SMTP "5.7.0 Authentication Required"
+
+- Gmail blocks plain auth — use an **App Password** (https://support.google.com/accounts/answer/185833)
+- Other providers may require different ports or SSL settings
+
+### 8.9. Stripe webhook signature validation fails
+
+- Local dev: use Stripe CLI to forward webhooks:
+  ```bash
+  stripe listen --forward-to http://localhost:5231/api/v1/webhooks/stripe
+  ```
+- Copy the printed `whsec_...` into `appsettings.Development.json`
+
+## 9. Reset to a Clean State
+
+```powershell
+# Drop and recreate database
+sqlcmd -S .\SQLEXPRESS -Q "DROP DATABASE IF EXISTS GiveAIDDB"
+sqlcmd -S .\SQLEXPRESS -Q "CREATE DATABASE GiveAIDDB"
+
+# Re-apply migrations (also re-seeds)
+cd "C:\Users\admin\Desktop\project NGO.v2"
+dotnet ef database update --project src/Infrastructure/GiveAID.V2.Infrastructure.csproj --startup-project src/WebApi/GiveAID.V2.WebApi.csproj
+
+# Stop everything
+Get-Process -Name "dotnet" -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process -Name "node"    -ErrorAction SilentlyContinue | Stop-Process -Force
+```
+
+## 10. Performance Profiling
+
+```powershell
+# CPU sampling
+dotnet trace collect --process-id <pid> --duration 00:00:30 --profile cpu-sampling
+
+# Live metrics
+dotnet-counters monitor --process-id <pid> --refresh-interval 1
+```
+
+EF Core SQL logging:
+
+```json
+// appsettings.Development.json
+{
+  "Logging": {
+    "LogLevel": {
+      "Microsoft.EntityFrameworkCore.Database.Command": "Information"
+    }
+  }
+}
+```
+
+## 11. Where to Look
+
+| Symptom                                  | Look at                                           |
+|------------------------------------------|---------------------------------------------------|
+| App won't start                          | `src/WebApi/Program.cs` — DI registration order   |
+| Wrong DB column type                     | `src/Infrastructure/Persistence/Configurations/`  |
+| 500 on endpoint                          | Response body — `errors` field has details        |
+| Login fails                              | `EmailLogs` table — any send failures              |
+| Stripe payments failing                  | `WebhookLogs` table — error column                |
+| Admin 401                                | Browser cookie `GiveAID.Admin` — check expiry     |
+| Tests flaky                              | Look for `Thread.Sleep` or shared static state    |
+
+## 12. Environment Configuration (CRITICAL)
+
+The application REQUIRES `ConnectionStrings:DefaultConnection` to be set for each
+environment. The default `appsettings.json` contains a placeholder — the app will
+**fail to start** if the connection string is missing.
+
+### How to configure per environment
+
+| Environment | File | How to populate |
+|-------------|------|-----------------|
+| Development | `src/WebApi/appsettings.Development.json` | Edit locally, file is gitignored |
+| Staging | `src/WebApi/appsettings.Staging.json` | Edit on server, file is gitignored |
+| Production | `src/WebApi/appsettings.Production.json` | Edit on server, file is gitignored |
+| Any (preferred) | Environment variable | `ConnectionStrings__DefaultConnection=Server=...` |
+
+### Fail-fast on missing config
+
+If `ConnectionStrings:DefaultConnection` is empty or placeholder when the app starts,
+it will throw an exception during dependency injection setup. This is INTENTIONAL —
+better to fail at startup than silently corrupt data.
+
+### DO NOT
+
+- Commit real connection strings (passwords) to git history
+- Use SQL Authentication in production without first rotating any leaked credentials
+- Copy the Development connection string to Staging/Production — they should be different servers/databases
+
+## 13. Contact
+
+- **Slack**: `#giveaid-dev` channel
+- **Email**: tech-lead@give-aid.org
+- **On-call rota**: see internal wiki
 
 ---
 
-## 5. Verify health
-
-After `npm start` is up:
-
-```powershell
-# Backend health (should return 200 with "Healthy")
-curl http://localhost:44300/api/health
-
-# Frontend (should load the home page)
-Start-Process http://localhost:3000
-```
-
-If the backend returns `Unable to connect`, check that IIS Express is bound to port 44300
-(see `GiveAID.Web/.vs/GiveAID.Web/config/applicationhost.config`). If you change the port,
-also update:
-- `GiveAID.Client/package.json` → `proxy`
-- `GiveAID.Client/.env.development.local` → `REACT_APP_API_BASE_URL`
-- `GiveAID.Web/Web.config` → any hardcoded origin
-
----
-
-## 6. Demo accounts
-
-```
-SuperAdmin →  admin@give-aid.org   /  Admin@123
-User       →  user@example.com     /  User@123
-```
-
-If `Admin@123` doesn't work (e.g., after a DB reset):
-
-```powershell
-# Login as SuperAdmin from another browser first, then:
-$token = "..."   # your JWT
-Invoke-RestMethod -Method POST `
-  -Uri "http://localhost:44300/api/auth/bootstrap" `
-  -Headers @{ Authorization = "Bearer $token" }
-```
-
-Or, simplest: drop and recreate the DB (Option B above). `Global.asax.SeedDatabase()` will
-re-create both accounts.
-
----
-
-## 7. Debugging checklist
-
-### "Network Error" in browser console
-
-1. Is the backend running? `curl http://localhost:44300/api/health`
-2. Is the proxy set correctly in `package.json`?
-3. Is CORS configured? Check `WebApiConfig.cs` origins list.
-
-### Login returns "Invalid email or password"
-
-1. Confirm the user exists in DB: `SELECT * FROM Users WHERE email = 'admin@give-aid.org'`
-2. Confirm `is_active = 1`.
-3. Reset via `/api/auth/bootstrap` (SuperAdmin JWT required).
-
-### Login returns 401 immediately
-
-JWT secret mismatch between sessions (very rare — happens if `Web.config` `JwtSecret` changes
-mid-session). Clear `localStorage.GiveAID_token` and reload.
-
-### ESLint complains
-
-```powershell
-cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
-npx eslint src/ --ext .js,.jsx --max-warnings=0
-```
-
-Current baseline: **0 errors, 0 warnings**. Any deviation indicates a regression.
-
-### Backend won't build
-
-1. Run MSBuild (path above) and look for `CSxxxx` errors.
-2. Most common cause: missing `using` directive. Add it.
-3. Less common: stale `bin/` folder. Delete `GiveAID.Web/bin/` and `obj/` and rebuild.
-
-### "Cannot find module" on backend
-
-`packages/` folder is missing. Run:
-
-```powershell
-nuget restore GiveAID.Web\GiveAID.Web.csproj
-```
-
-### Frontend won't start
-
-```powershell
-cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
-Remove-Item -Recurse -Force node_modules
-Remove-Item -Force package-lock.json
-npm install
-```
-
----
-
-## 8. Logging
-
-- Backend: `System.Diagnostics.Debug.WriteLine` (visible in VS Output window during debug;
-  also `Global.asax` uses it for `[Startup] SeedDatabase failed: ...`).
-- Frontend: `console.log` + browser DevTools.
-- IIS Express logs: `GiveAID.Web/.vs/.../logs/` (only when running under VS).
-
-For production: replace `EmailService` with real SMTP and add structured logging (Serilog,
-NLog) — not in scope for this dev project.
-
----
-
-## 9. Production deployment checklist
-
-When moving from dev to staging/prod, **review every item**:
-
-- [ ] `Web.config`: replace `JwtSecret` with a long random string (≥32 chars). Do NOT reuse
-      the dev value.
-- [ ] `Web.config`: set `<customErrors mode="On" />` and `<httpRuntime targetFramework="4.7.2" />`.
-- [ ] `Web.config`: update `Cors:AllowedOrigins` to the production frontend domain(s).
-- [ ] `Web.config`: update connection string to a production SQL Server (Integrated Security
-      → SQL auth recommended for prod).
-- [ ] `Global.asax.cs`: switch from debug-mode seed to a one-time migration job.
-- [ ] `WebApiConfig.cs`: update `EnableCorsAttribute` origins.
-- [ ] `EmailService`: replace mock SMTP with real provider (SendGrid, SES, etc.).
-- [ ] `npm run build` in `GiveAID.Client/` → deploy `build/` to a CDN or static host.
-- [ ] Update the React app's `REACT_APP_API_BASE_URL` env var to the production API URL.
-- [ ] HTTPS everywhere — IIS Express in dev uses HTTP; production must be HTTPS-only.
-- [ ] Set up DB backups + run all `*.sql` migrations on the prod DB before deploying the API.
-
----
-
-## 10. Common tasks
-
-### Add a new admin page
-
-1. Create `src/pages/admin/AdminXxxPage.js`. Wrap in `<AdminPageFrame>`.
-2. Add a route in `src/App.js` under the admin section.
-3. Done.
-
-### Add a new API endpoint
-
-1. Add action method to the relevant `Controllers/XxxController.cs`.
-2. Add the DTO in `Models/ViewModels.cs`.
-3. Add a method to the matching `services/index.js` export.
-4. Add the URL to `config.js → API_ENDPOINTS`.
-5. Restart the backend.
-
-### Add a new DB column
-
-1. Write a `*.sql` migration in the project root (idempotent!).
-2. Add the property to the matching entity in `EntityModels.cs`.
-3. Rebuild backend.
-4. Apply the SQL migration to the DB.
-
-### Reset everything
-
-```powershell
-# Stop both servers
-cd "C:\Users\admin\Desktop\project NGO\GiveAID.Client"
-npm run stop
-
-# Drop and recreate DB (see Section 3 Option B)
-
-# Rebuild backend
-& "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" `
-  GiveAID.Web\GiveAID.Web.csproj /p:Configuration=Debug
-
-# Restart
-npm start
-```
+For production deployment, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For API contracts, see [API_REFERENCE.md](API_REFERENCE.md).
+For architecture details, see [ARCHITECTURE.md](ARCHITECTURE.md).

@@ -1,223 +1,367 @@
 # Project Map — Annotated File Index
 
-> Audience: AI coding assistants. Every file an AI might want to edit is listed here with a
-> one-line description of what it does. Read this **before** searching the codebase — it's
-> faster.
+> Audience: developers and AI coding assistants. Every file worth editing is listed here
+> with a one-line description. Read this **before** searching the codebase — it's faster.
 
 ---
 
 ## Top-level
 
-| File | What it is |
-|---|---|
-| `GiveAID.Web.sln` | Visual Studio solution |
-| `package.json` | Frontend deps + scripts (`npm start` runs both via `concurrently`) |
-| `docs/` | This documentation folder |
-| `*.sql` (in root) | DB migration scripts (apply in order, see `DATABASE.md`) |
+| File / Folder         | What it is                                                        |
+|-----------------------|-------------------------------------------------------------------|
+| `GiveAID.V2.slnx`     | .NET solution (XML format). Open in Rider/VS/VS Code.             |
+| `README.md`           | Project entry point — quick start, status, links.                 |
+| `src/`                | .NET source — Domain, Application, Infrastructure, WebApi, Web.   |
+| `tests/`              | xUnit test projects (4 projects, 169 tests).                      |
+| `GiveAID.Client/`     | React 18 public site (separate repo concept, sibling directory).  |
+| `database/`           | SQL migration scripts + seeds.                                    |
+| `docs/`               | This documentation set.                                           |
+| `scripts/`            | PowerShell helpers (`pre-start.ps1`, `start-*.ps1`).              |
+| `wireframes/`         | Design reference (PNG/SVG mockups).                               |
+| `.github/`            | GitHub workflows (CI templates, future).                          |
+| `.gitignore`          | Standard .NET + Node ignores.                                     |
 
 ---
 
-## Backend — `GiveAID.Web/`
+## Backend — `src/Domain/`
 
-### Entry points
+Pure C# entities, value objects, enums. **No NuGet dependencies**, no `using System.*`
+beyond BCL.
 
-| File | Role |
-|---|---|
-| `Global.asax.cs` | App startup. Validates JWT config (fail-fast), runs `SeedDatabase()`, handles CORS preflight. **If something explodes on first request, look here first.** |
-| `Web.config` | Connection string + JWT settings + CORS origins. Edit for prod. |
-| `packages.config` | NuGet dependencies (legacy format). |
-| `GiveAID.Web.csproj` | MSBuild project file (`.NET Framework 4.7.2`, WebApplication project type). |
+### `Entities/` (24 files)
 
-### `App_Start/`
+| File                          | Purpose                                                |
+|-------------------------------|--------------------------------------------------------|
+| `BaseEntity.cs`               | Abstract base with `Id`, `CreatedAt`, `UpdatedAt`      |
+| `User.cs`                     | Identity, roles, password hash, lock state             |
+| `Cause.cs`                    | Donation cause (hierarchical)                          |
+| `Campaign.cs`                 | Time-bound campaign with progress tracking             |
+| `CampaignRegistration.cs`     | User sign-up for registration campaigns                |
+| `CampaignReport.cs`           | Post-campaign impact reports                           |
+| `Donation.cs`                 | Donation transactions                                  |
+| `Gallery.cs`                  | Photo gallery items                                    |
+| `TeamMember.cs`               | About-us team                                          |
+| `Achievement.cs`              | About-us milestones                                    |
+| `Career.cs`                   | Job postings                                           |
+| `CareerApplication.cs`        | Job applications                                       |
+| `Organization.cs`             | Partner organizations                                  |
+| `Faq.cs`                      | FAQ entries                                            |
+| `ContactMessage.cs`           | Contact form submissions                               |
+| `Conversation.cs`             | User-to-admin conversation thread                      |
+| `ConversationMessage.cs`      | Message in a conversation                              |
+| `Invitation.cs`               | Referral invitations                                   |
+| `CmsPage.cs`                  | Editable CMS page content                              |
+| `EmailLog.cs`                 | Outbound email audit                                   |
+| `WebhookLog.cs`               | Stripe webhook delivery log                            |
+| `Programme.cs`                | Legacy alias (merged into Campaign)                    |
+| `ProgrammePhoto.cs`           | Legacy alias                                           |
+| `ProgrammeRegistration.cs`    | Legacy alias                                           |
 
-| File | Role |
-|---|---|
-| `WebApiConfig.cs` | Web API routes, JSON settings, CORS attribute registration |
-| `RouteConfig.cs` | MVC routes (mostly unused — this is API-only) |
-| `FilterConfig.cs` | Global filters (error handling) |
+### `Enums/` (10 files)
 
-### `Controllers/` (the API surface)
+`CampaignStatus`, `DonationStatus`, `PaymentMethod`, `UserRole`, `GalleryCategory`,
+`CareerType`, `ContactStatus`, `ConversationStatus`, `EmailStatus`, `WebhookStatus`.
 
-| Controller | Routes | Notes |
-|---|---|---|
-| `AuthController.cs` | `POST /login`, `GET /me`, `POST /register`, `POST /logout` | No `[JwtAuthorize]` — validates JWT manually for `/me` and `/logout` |
-| `AuthBootstrapController.cs` | `POST /auth/bootstrap` (SuperAdmin only) | Resets admin + demo password hashes; idempotent |
-| `CampaignsController.cs` | CRUD on campaigns; `/featured`, `/my-registrations`, `{id}/register` | Main entity; uses `causeLookup` to avoid N+1 |
-| `CausesController.cs` | CRUD on causes; `/tree`, `/{id}/sub-causes`, `/stats` | Hierarchical taxonomy |
-| `DonationsController.cs` | CRUD on donations (user's own); `/stats` (admin) | **No card numbers** — `PaymentToken` + `CardLast4` only |
-| `InvitationsController.cs` | `/`, `/mine`, `/stats`, `/{id}/cancel`, `/accept/{token}` | Referral system |
-| `UsersController.cs` | `GET /me`, `PUT /me` | Authenticated user profile |
-| `AchievementsController.cs` | CRUD | About-page impact stats |
-| `CareersController.cs` | CRUD + `/apply` | Job board |
-| `CmsPagesController.cs` | CRUD by slug | CMS content blocks |
-| `ContactsController.cs` | CRUD on contact messages; `/submit` (public) | Contact form |
-| `ConversationsController.cs` | CRUD; threaded user↔admin chat | |
-| `FaqsController.cs` | CRUD | FAQ entries |
-| `GalleryController.cs` | CRUD; `/programmes` (legacy list) | |
-| `OrganizationsController.cs` | CRUD on partner NGOs | |
-| `SupportersController.cs` | CRUD on supporters | |
-| `TeamController.cs` | CRUD on team members | |
-| `ProgrammesController.cs` | ⚠️ LEGACY — marked `[Obsolete]`. Use CampaignsController | |
-| `AdminDashboardController.cs` | `/stats`, `/recent-donations`, `/user-stats`, `/all-donations` | Uses `JwtHelper.CheckAdmin(Request)` |
-| `AdminUsersController.cs` | CRUD on users | |
-| `HealthController.cs` | `GET /api/health` | Liveness check |
+### `Common/` and `ValueObjects/`
 
-### `Models/`
+- `Result.cs` — `Result<T>` for command outcomes
+- `Money.cs`, `Address.cs` — value objects
 
-| File | Role |
-|---|---|
-| `EntityModels.cs` | All DB entities (one per table). **Edit this when adding a new table.** |
-| `ViewModels.cs` | DTOs for request/response. **Edit this when adding a new API response shape.** |
-| `CampaignDto.cs` | Strongly-typed campaign mapping (used by `CampaignsController.MapCampaign`) |
+---
 
-### `Helpers/`
+## Application — `src/Application/`
 
-| File | Role |
-|---|---|
-| `JwtSettings.cs` | Typed accessor for JWT config; throws on missing/invalid values |
-| `JwtHelper.cs` | Token generation, validation, role-check (`CheckAdmin(Request)`) |
-| `JwtAuthorizeAttribute.cs` | Custom `[JwtAuthorize]` — replaces stock `[Authorize]` (no OWIN needed) |
-| `PasswordHasher.cs` | BCrypt wrap (work factor 11) |
-| `AuthBootstrap.cs` | One-shot BCrypt hash utility for admin/demo reset |
-| `EmailService.cs` | Mock SMTP sender (logs to debug output; swap for real SMTP in prod) |
-| `EntityExtensions.cs` | `UpdatedAtSafe()` extension method |
+### Top-level
 
-### `Data/`
+| File                                  | Purpose                                          |
+|---------------------------------------|--------------------------------------------------|
+| `GiveAID.V2.Application.csproj`       | MSBuild project — depends on `Domain` only       |
+| `GlobalUsings.cs`                     | Common `using` imports (MediatR, FluentValidation) |
+| `DependencyInjection.cs`              | `AddApplicationServices()` extension method      |
 
-| File | Role |
-|---|---|
-| `GiveAIDContext.cs` | EF DbContext. DbSets + snake_case convention + SeedDatabase() |
+### `Common/`
+
+| File / Folder              | Purpose                                          |
+|----------------------------|--------------------------------------------------|
+| `Behaviors/`               | MediatR pipeline behaviors (Validation, Logging, Performance) |
+| `Exceptions/`              | `ValidationException`, `NotFoundException`, etc. |
+| `Mappings/`                | AutoMapper profiles                              |
+| `Models/`                  | `PagedResult<T>`, `Result<T>`                    |
+| `Interfaces/`              | `IApplicationDbContext`, `IJwtTokenService`, ... |
+
+### `Features/` (one folder per feature)
+
+```
+Features/
+├── Auth/
+│   ├── Commands/
+│   │   ├── Login/        { LoginCommand.cs, LoginCommandHandler.cs, LoginCommandValidator.cs }
+│   │   ├── Register/
+│   │   └── Refresh/
+│   └── Queries/
+│       └── Me/
+├── Campaigns/
+│   ├── Commands/
+│   │   ├── CreateCampaign/
+│   │   ├── UpdateCampaign/
+│   │   └── DeleteCampaign/
+│   └── Queries/
+│       ├── GetCampaigns/
+│       └── GetCampaignById/
+├── Donations/             (same shape)
+├── Causes/                (same shape)
+├── Gallery/               (same shape)
+├── ... (one folder per controller)
+```
+
+### `Services/`
+
+Cross-cutting helpers used by handlers — `DateTimeService`, `CurrentUserAccessor`, etc.
+
+---
+
+## Infrastructure — `src/Infrastructure/`
+
+### `Persistence/`
+
+| File / Folder                       | Purpose                                |
+|-------------------------------------|----------------------------------------|
+| `GiveAIDDbContext.cs`               | EF Core 8 DbContext                    |
+| `Configurations/`                   | `IEntityTypeConfiguration<T>` per entity |
+| `Migrations/`                       | EF Core migrations (auto-generated)    |
+| `Seed/DatabaseSeeder.cs`            | Seeds admin user + demo data           |
+| `Seed/RoleSeeder.cs`                | Seeds roles                             |
+
+### `Security/`
+
+| File                | Purpose                                  |
+|---------------------|------------------------------------------|
+| `JwtTokenService.cs`| HS256 token issue + validate             |
+| `PasswordHasher.cs` | PBKDF2 SHA-256 with random salt          |
+
+### `Email/`
+
+| File                          | Purpose                          |
+|-------------------------------|----------------------------------|
+| `SmtpEmailService.cs`         | System.Net.Mail SMTP sender      |
+| `EmailTemplateRenderer.cs`    | Razor template rendering         |
+| `Templates/`                  | `.cshtml` email templates        |
+
+### `Payment/`
+
+| File                       | Purpose                            |
+|----------------------------|------------------------------------|
+| `StripePaymentService.cs`  | PaymentIntent + webhook signature  |
+| `StripeWebhookHandler.cs`  | Processes Stripe events            |
+
+### `Caching/`
+
+| File                       | Purpose                          |
+|----------------------------|----------------------------------|
+| `MemoryCacheService.cs`    | IMemoryCache wrapper with TTL + tags |
+
+### Top-level
+
+| File                                  | Purpose                                |
+|---------------------------------------|----------------------------------------|
+| `GiveAID.V2.Infrastructure.csproj`    | MSBuild — refs Domain + Application    |
+| `DependencyInjection.cs`              | `AddInfrastructureServices(IConfiguration)` |
+
+---
+
+## WebApi — `src/WebApi/`
+
+### Entry
+
+| File                          | Purpose                                          |
+|-------------------------------|--------------------------------------------------|
+| `Program.cs`                  | App startup, DI, middleware pipeline            |
+| `appsettings.json`            | Connection strings, JWT, SMTP, Stripe, CORS     |
+| `appsettings.Development.json`| Dev overrides (verbose logging)                  |
+| `GiveAID.V2.WebApi.csproj`    | MSBuild — refs Application + Infrastructure     |
+| `GiveAID.V2.WebApi.http`      | `.http` file for testing endpoints in Rider/VS  |
+
+### `Controllers/` (24 controllers)
+
+See [API Reference](API_REFERENCE.md) for the full list.
+
+| Controller                        | Route prefix                |
+|-----------------------------------|-----------------------------|
+| `HealthController.cs`             | `/api/v1/health`            |
+| `AuthController.cs`               | `/api/v1/auth`              |
+| `AuthBootstrapController.cs`      | `/api/v1/auth-bootstrap`    |
+| `UsersController.cs`              | `/api/v1/users`             |
+| `CausesController.cs`             | `/api/v1/causes`            |
+| `CampaignsController.cs`          | `/api/v1/campaigns`         |
+| `CampaignReportsController.cs`    | `/api/v1/campaign-reports`  |
+| `DonationsController.cs`          | `/api/v1/donations`         |
+| `GalleryController.cs`            | `/api/v1/gallery`           |
+| `TeamController.cs`               | `/api/v1/team`              |
+| `AchievementsController.cs`       | `/api/v1/achievements`      |
+| `OrganizationsController.cs`      | `/api/v1/supporters`        |
+| `CareersController.cs`            | `/api/v1/careers`           |
+| `CareerApplicationsController.cs` | `/api/v1/careers/{id}/applications` |
+| `FaqsController.cs`               | `/api/v1/faqs`              |
+| `ContactsController.cs`           | `/api/v1/contacts`          |
+| `ConversationsController.cs`      | `/api/v1/conversations`     |
+| `InvitationsController.cs`        | `/api/v1/invitations`       |
+| `CmsPagesController.cs`           | `/api/v1/cms/pages`         |
+| `StatisticsController.cs`         | `/api/v1/statistics`        |
+| `AdminDashboardController.cs`     | `/api/v1/admin/dashboard`   |
+| `AdminPaymentsController.cs`      | `/api/v1/admin/payments`    |
+| `AdminEmailLogsController.cs`     | `/api/v1/admin/emails`      |
+| `AdminUsersController.cs`         | `/api/v1/admin/users`       |
+
+### `Middleware/`
+
+| File                              | Purpose                              |
+|-----------------------------------|--------------------------------------|
+| `ExceptionHandlingMiddleware.cs`  | Catches unhandled exceptions, returns envelope error |
+
+---
+
+## Web (Admin) — `src/Web/`
+
+ASP.NET Core 8 MVC + Razor. AdminLTE 3.2 UI kit. **No DbContext** — talks to WebApi via HttpClient.
+
+### Entry
+
+| File                          | Purpose                                          |
+|-------------------------------|--------------------------------------------------|
+| `Program.cs`                  | DI, cookie auth, session, ApiClient              |
+| `appsettings.json`            | `Api:BaseUrl = http://localhost:5231`            |
+
+### `Areas/Admin/Controllers/`
+
+| Controller                          | Purpose                              |
+|-------------------------------------|--------------------------------------|
+| `AuthController.cs`                 | Login, logout, access denied         |
+| `DashboardController.cs`            | Stats overview                       |
+| `CampaignsController.cs`            | Full CRUD + delete                   |
+| `DonationsController.cs`            | List + details                       |
+| `CausesController.cs`               | Full CRUD + delete                   |
+| `UsersController.cs`                | List + create + edit                 |
+| `GalleryController.cs`              | Stub                                 |
+| `ReportsController.cs`              | Stub                                 |
+| `CareersController.cs`              | Stub                                 |
+| `FaqsController.cs`                 | Stub                                 |
+| `TeamController.cs`                 | Stub                                 |
+| `AchievementsController.cs`         | Stub                                 |
+| `OrganizationsController.cs`        | Stub                                 |
+| `CmsPagesController.cs`             | Stub                                 |
+| `EmailLogsController.cs`            | Stub                                 |
+| `ConversationsController.cs`        | Stub                                 |
+| `SettingsController.cs`             | Stub                                 |
+
+### `Areas/Admin/Views/`
+
+```
+Areas/Admin/Views/
+├── Shared/
+│   ├── _Layout.cshtml         (AdminLTE master layout)
+│   ├── _LoginLayout.cshtml
+│   └── _Sidebar.cshtml
+├── Auth/
+│   ├── Login.cshtml
+│   └── AccessDenied.cshtml
+├── Dashboard/Index.cshtml
+├── Campaigns/
+│   ├── Index.cshtml           (DataTable list)
+│   ├── Create.cshtml          (form)
+│   ├── Edit.cshtml            (form populated from API)
+│   └── Details.cshtml
+├── ... (similar folders for each entity)
+```
+
+### `Services/`
+
+| File                  | Purpose                                                |
+|-----------------------|--------------------------------------------------------|
+| `ApiClient.cs`        | HttpClient wrapper — auto JWT, envelope unwrap         |
+| `AdminSession.cs`     | Session-based admin state (UserId, Email, Role, JWT)   |
+| `LoginResponse.cs`    | DTO matching `/auth/login` response shape              |
+| `ApiModels.cs`        | `ApiEnvelope<T>`, `PaginatedResult<T>`                 |
+
+### `wwwroot/`
+
+Static assets (CSS, JS, fonts) — minimal; AdminLTE is loaded from CDN.
+
+---
+
+## Tests — `tests/`
+
+| Project                                         | Tests | Purpose                                  |
+|-------------------------------------------------|-------|------------------------------------------|
+| `Domain.UnitTests/`                             | 71    | Entity business rules                    |
+| `Application.UnitTests/`                        | 43    | CQRS handlers + FluentValidation rules   |
+| `Infrastructure.IntegrationTests/`              | 28    | PasswordHasher, JwtTokenService, Cache   |
+| `WebApi.FunctionalTests/`                       | 27    | HTTP endpoints with WebApplicationFactory |
+
+Each project follows the layout:
+
+```
+<Project>/
+├── <Project>.csproj
+├── Fixtures/         (test fixtures + shared setup)
+├── <Area>/           (tests grouped by feature)
+└── Smoke/            (sanity tests)
+```
 
 ---
 
 ## Frontend — `GiveAID.Client/`
 
-### Entry points
+React 18 SPA. **Not part of the .slnx** — sibling directory.
 
-| File | Role |
-|---|---|
-| `package.json` | Frontend deps + npm scripts |
-| `src/index.js` | React root |
-| `src/App.js` | **All routes live here** — public + admin. Edit this when adding a page. |
-| `src/config.js` | API base URL, endpoint map, status enums |
-| `public/index.html` | HTML shell |
+### Entry
 
-### `src/pages/` (public)
-
-| File | Purpose |
-|---|---|
-| `HomePage.js` | Landing page (hero, donate tiers, featured campaigns, mission pillars) |
-| `LoginPage.js` | Login form |
-| `RegisterPage.js` | Registration form |
-| `CausesPage.js` | 2-level cause taxonomy (parent cause → sub-causes) |
-| `CampaignsPage.js` | Campaign listing with filters |
-| `CampaignDetailPage.js` | Single campaign detail |
-| `DonatePage.js` | Donation form (cause/campaign selection, amount, payment) |
-| `DashboardPage.js` | User dashboard |
-| `MyDonationsPage.js` | User's donation history |
-| `MyRegistrationsPage.js` | User's event registrations |
-| `ProfilePage.js` | Profile edit + password change |
-| `AboutPage.js` | About us (CMS-driven) |
-| `OurTeamPage.js` | Team listing |
-| `AchievementsPage.js` | Impact stats |
-| `CareerPage.js` | Careers |
-| `ContactPage.js` | Contact form |
-| `GalleryPage.js` | Photo gallery |
-| `HelpCentrePage.js` | FAQ |
-| `RaiseQueryPage.js` | User-to-admin query form |
-| `SupportersPage.js` | Supporters |
-| `OurPartnersPage.js` | Partners |
-| `ProgrammesPage.js` | ⚠️ LEGACY — redirects to `/campaigns?eventsOnly=true` |
-| `ProgrammeDetailPage.js` | ⚠️ LEGACY — redirects to `/campaigns/:id` |
-
-### `src/pages/admin/`
-
-All admin pages wrap their content in `<AdminPageFrame>` (consistent header + banners).
-
-| File | Purpose |
-|---|---|
-| `AdminDashboard.js` | KPIs, recent donations, user stats |
-| `AdminCampaignPage.js` | Full CRUD on campaigns |
-| `AdminCampaignReportsPage.js` | Campaign financial reports + charts |
-| `AdminDonationsPage.js` | All donations list |
-| `AdminUsersPage.js` | User management |
-| `AdminAchievementsPage.js` | Achievements CRUD |
-| `AdminQueriesPage.js` | Conversation management |
-| `AdminInvitationsPage.js` | Invitations list |
-| `AdminNgoPage.js` | NGO CRUD |
-| `AdminPartnersPage.js` | Supporters/partners CRUD |
-| `AdminGalleryPage.js` | Photo gallery CRUD |
-| `AdminCmsPage.js` | Tabbed CMS shell (team, careers, FAQs, etc.) |
-| `AdminAboutPage.js` | Same as AdminCmsPage but under `/admin/about` |
-| `AdminContactPage.js` | Contact messages |
-| `AdminFaqManager.js` | FAQ CRUD (used inside AdminCmsPage tabs) |
-| `AdminSiteSettings.js` | Site settings (terms, privacy) |
-| `CmsPagesAdmin.js` | CMS pages CRUD |
-| `CareersAdmin.js` | Job postings CRUD |
-| `SupportersAdmin.js` | Supporters CRUD |
-| `TeamAdmin.js` | Team members CRUD |
-| `AdminContactInfo.js` | Contact info editor |
-| `AdminForm.css` | Shared admin form styling |
-
-### `src/components/` (reusable UI)
-
-| File | Purpose |
-|---|---|
-| `Navbar.js` | Top navigation |
-| `Footer.js` | Footer |
-| `AdminPageFrame.js` | **Shared admin page wrapper** — use this for every new admin page |
-| `AdminLayout.js` | Admin chrome (sidebar, topbar) |
-| `ProtectedRoute.js` | Route guard (auth check) |
-| `AuthBootstrap.js` | Listens for `giveaid:auth:expired` events → redirect to login |
-| `InviteFriendsModal.js` | Referral invitation modal |
-
-### `src/contexts/`
-
-| File | Purpose |
-|---|---|
-| `AuthContext.js` | Current user, login/logout, role check |
+| File                          | Purpose                                    |
+|-------------------------------|--------------------------------------------|
+| `package.json`                | Deps + scripts (`start`, `build`, `test`)  |
+| `src/index.js`                | ReactDOM render root                       |
+| `src/App.js`                  | Top-level router                            |
+| `src/config.js`               | API base URL + endpoint catalogue          |
 
 ### `src/services/`
 
-| File | Purpose |
-|---|---|
-| `api.js` | Axios instance + JWT interceptor + error envelope |
-| `index.js` | **All service methods** — `authService`, `campaignsService`, `donationsService`, etc. Add new endpoints here. |
+| File                       | Purpose                                          |
+|----------------------------|--------------------------------------------------|
+| `api.js`                   | Axios instance + interceptors (JWT, envelope)    |
+| `authService.js`           | Login / register / me                            |
+| `statisticsService.js`     | Statistics endpoints                             |
+| `stripeService.js`         | Stripe.js integration helpers                    |
+| `index.js`                 | Barrel re-export                                 |
 
-### `src/data/`
+### `src/pages/` (≈ 30 pages)
 
-| File | Purpose |
-|---|---|
-| `sampleCampaigns.js` | Static fallback data for offline / first-paint |
-
-### `src/styles/`
-
-| File | Purpose |
-|---|---|
-| `global.css` | Design tokens (`--c4k-*` CSS custom properties), base resets |
-
----
-
-## Scripts (PowerShell, in `GiveAID.Client/scripts/`)
-
-| File | Role |
-|---|---|
-| `start-backend.ps1` | Kills port 44300/61508, then runs IIS Express for `GiveAID.Web` |
-| `stop-backend.ps1` | Kills IIS Express / dotnet holding the backend port |
-| `start-frontend.ps1` | Kills port 3000, then `npm start` (auto-falls back to 3001) |
-| `stop-frontend.ps1` | Kills the frontend dev server |
+`HomePage`, `CampaignsPage`, `CampaignDetailPage`, `CausesPage`, `DonatePage`,
+`AboutPage`, `ContactPage`, `CareerPage`, `HelpCentrePage`, `GalleryPage`,
+`MyDonationsPage`, `DonationHistoryDetailPage`, `DonationReceiptPage`,
+`LoginPage`, `RegisterPage`, `ForgotPasswordPage`, `ResetPasswordPage`,
+`PrivacyPage`, `TermsPage`, and a folder `admin/` with admin pages.
 
 ---
 
-## Where to add what (cheat-sheet)
+## Database — `database/`
 
-| I want to… | Edit this |
-|---|---|
-| Add a public page | `App.js` + new file in `src/pages/` |
-| Add an admin page | `App.js` + new file in `src/pages/admin/` (use `AdminPageFrame`) |
-| Add an API endpoint | `Controllers/XxxController.cs` + DTO in `Models/ViewModels.cs` + method in `services/index.js` + URL in `config.js` |
-| Add a DB table | New entity in `EntityModels.cs` + DbSet in `GiveAIDContext` + new `*.sql` migration in project root |
-| Add a new role | Update role-check helpers (`JwtHelper.CheckAdmin` + `[JwtAuthorize(Roles="…")]` call sites) |
-| Add a new global style | Add a CSS variable in `styles/global.css` |
-| Change the DB connection | `Web.config` → `connectionStrings["GiveAIDContext"]` |
-| Change JWT settings | `Web.config` → `appSettings` (`JwtSecret`, `JwtIssuer`, `JwtAudience`, `JwtExpiryMinutes`) |
+| Folder            | Purpose                                                  |
+|-------------------|----------------------------------------------------------|
+| `migrations/`     | Numbered SQL scripts applied in order                    |
+| `seeds/`          | Reference data for local development                     |
+| `archive/`        | Legacy v1 scripts kept for traceability                 |
+
+---
+
+## Documentation — `docs/`
+
+| File                       | Purpose                                            |
+|----------------------------|----------------------------------------------------|
+| `README.md`                | Docs index                                         |
+| `ARCHITECTURE.md`          | Clean Architecture overview                        |
+| `API_REFERENCE.md`         | REST endpoint catalogue                            |
+| `DATABASE.md`              | ER diagram + migration order                       |
+| `PROJECT_MAP.md`           | This file                                          |
+| `CONVENTIONS.md`           | Coding standards + Git workflow                    |
+| `MIGRATION_GUIDE.md`       | v1 → v2 migration steps                            |
+| `TESTING.md`               | Test strategy + how to run                         |
+| `DEPLOYMENT.md`            | Local + production deploy + runbook                |

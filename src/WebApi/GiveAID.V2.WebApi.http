@@ -1,0 +1,6 @@
+@GiveAID.V2.WebApi_HostAddress = http://localhost:5231
+
+GET {{GiveAID.V2.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

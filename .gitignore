@@ -68,6 +68,9 @@ desktop.ini
 *.bak
 
 # Connection strings (if contains sensitive data)
+appsettings.Development.json
+appsettings.Staging.json
+appsettings.Production.json
 # Web.config (uncomment if needed)
 
 # Compiled files

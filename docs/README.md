@@ -1,107 +1,36 @@
-# Care4Kids NGO Platform — Master Documentation Index
+# GiveAID v2.0 — Documentation
 
-> **Audience:** This documentation is written for AI coding assistants and human developers
-> who need to **quickly understand the project** before making changes. Read this index first,
-> then drill into the topic-specific files linked below.
-
----
-
-## What is this project?
-
-**Care4Kids** (working name "GiveAID") is a full-stack donation / volunteer platform for a
-fictional Vietnamese children's welfare NGO. The system supports:
-
-- Public-facing pages (home, causes, campaigns, donations, contact, gallery)
-- Authenticated user dashboard (donation history, registrations, profile)
-- Admin console (campaigns CRUD, donations list, users, CMS, FAQs, gallery, etc.)
-- Two-level cause taxonomy (`parent_cause → sub_cause`)
-- Hierarchical campaigns that absorb the legacy `programmes` concept
-
-The application is a hybrid:
-- **Backend:** ASP.NET MVC 5 / Web API 2 on .NET Framework 4.7.2, Entity Framework 6
-- **Frontend:** React 18 + react-router-dom v6 + react-bootstrap
-- **Database:** Microsoft SQL Server (Express)
-
----
+Welcome to the GiveAID v2.0 documentation set. These documents are the authoritative
+reference for the architecture, API surface, deployment procedures, and developer workflow.
 
 ## Table of Contents
 
-| File | Purpose |
-|---|---|
-| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | High-level system architecture, layers, request lifecycle |
-| **[DATABASE.md](./DATABASE.md)** | Schema overview, table list, migrations, ER summary |
-| **[CONVENTIONS.md](./CONVENTIONS.md)** | Coding conventions for both backend (C#) and frontend (JS/React) |
-| **[PROJECT_MAP.md](./PROJECT_MAP.md)** | Annotated file map: every important file and what it does |
-| **[RUNBOOK.md](./RUNBOOK.md)** | How to run, debug, reset, and deploy the project locally |
-| **[API_REFERENCE.md](./API_REFERENCE.md)** | REST endpoints summary (auto-derived from controllers) |
+| Document | Description |
+|----------|-------------|
+| [Architecture](ARCHITECTURE.md) | Clean Architecture layers, dependency rules, CQRS, request lifecycle |
+| [API Reference](API_REFERENCE.md) | All REST endpoints with request/response schemas, auth requirements |
+| [Database Schema](DATABASE.md) | ER diagram, tables, indexes, migration order |
+| [Project Map](PROJECT_MAP.md) | Repository layout, file responsibilities, naming conventions |
+| [Conventions](CONVENTIONS.md) | C# coding standards, Git workflow, commit message format |
+| [Migration Guide](MIGRATION_GUIDE.md) | v1 (legacy ASP.NET WebForms) → v2.0 migration steps |
+| [Testing Strategy](TESTING.md) | Test pyramid, xUnit patterns, fixtures, coverage targets |
+| [Deployment & Runbook](DEPLOYMENT.md) | Local + production deployment, ops procedures, troubleshooting |
 
----
+## Quick Links
 
-## Quick Start
+- [Project README](../README.md)
+- [API OpenAPI spec](../src/WebApi) (Scalar UI at runtime)
+- [Database migrations](../database/migrations/)
 
-If you just opened this project, do this in order:
+## How to Use These Docs
 
-1. **Read `PROJECT_MAP.md`** — get a mental model of where things live.
-2. **Read `ARCHITECTURE.md`** — understand the request flow and authentication model.
-3. **Read `RUNBOOK.md`** — boot the project (backend + frontend together via `npm start`).
-4. **Read `DATABASE.md`** — only when working on schema, data seeding, or migrations.
+1. **New developer onboarding** — read [Architecture](ARCHITECTURE.md) first, then [Project Map](PROJECT_MAP.md), then [Conventions](CONVENTIONS.md).
+2. **Integrating with the API** — start with [API Reference](API_REFERENCE.md). Live docs available at `http://localhost:5231/scalar/v1`.
+3. **Database changes** — see [Database Schema](DATABASE.md) for migration order and ER diagram.
+4. **Going to production** — read [Deployment & Runbook](DEPLOYMENT.md) end-to-end.
+5. **Migrating from v1** — follow [Migration Guide](MIGRATION_GUIDE.md) step by step.
 
----
+## Document Status
 
-## Tech Stack at a Glance
-
-| Layer | Technology | Version |
-|---|---|---|
-| Backend framework | ASP.NET Web API 2 (MVC 5 host) | .NET Framework 4.7.2 |
-| ORM | Entity Framework | 6.4.4 |
-| Auth | JWT (HS256, custom `[JwtAuthorize]`) | — |
-| Password hashing | BCrypt.Net-Next | 4.0.3 |
-| Database | Microsoft SQL Server | Express 2019+ |
-| Frontend framework | React | 18.2 |
-| Routing | react-router-dom | 6.16 |
-| UI library | react-bootstrap + bootstrap | 2.9 / 5.3 |
-| HTTP client | axios | 1.5 |
-| Build tool | react-scripts | 5.0.1 |
-| Process orchestration | concurrently | 10.0.5 |
-
----
-
-## Demo Accounts (development only)
-
-```
-Admin   →  admin@give-aid.org   /  Admin@123     (role: SuperAdmin)
-User    →  user@example.com     /  User@123      (role: User)
-```
-
-If passwords stop working, call `POST /api/auth/bootstrap` with the SuperAdmin JWT to reset.
-
----
-
-## Project Layout (top-level)
-
-```
-project NGO/
-├── GiveAID.Client/         ← React frontend (npm start runs both)
-├── GiveAID.Web/            ← ASP.NET backend (IIS Express)
-├── GiveAID.Web.sln         ← Visual Studio solution
-├── docs/                   ← This documentation folder
-├── *.sql                   ← Database migration scripts (apply in order)
-└── README.md               ← (you are here's neighbour)
-```
-
----
-
-## When in doubt…
-
-| Question | Look in |
-|---|---|
-| "Where is the route for X?" | `GiveAID.Client/src/App.js` (public + admin) |
-| "Where is the API for X?" | `GiveAID.Web/Controllers/*Controller.cs` |
-| "What's the DB schema for X?" | `DATABASE.md` + the matching `EntityModels.cs` class |
-| "How do I run it?" | `RUNBOOK.md` |
-| "How is auth implemented?" | `ARCHITECTURE.md` → "Authentication" |
-| "What's the styling system?" | `CONVENTIONS.md` → "Frontend Style" |
-
----
-
-_Last updated: 2026-09-15_
+All documents are kept in sync with the codebase as part of the cutover phase (Phase 9).
+Last reviewed: September 2026.

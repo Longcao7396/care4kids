@@ -1,0 +1,123 @@
+@{
+    ViewData["Title"] = "Campaign Details";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Campaign Details</h3>
+        <div class="card-tools">
+            <a asp-area="Admin" asp-controller="Campaigns" asp-action="Index" class="btn btn-default btn-sm">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <a asp-area="Admin" asp-controller="Campaigns" asp-action="Edit" class="btn btn-warning btn-sm" id="btnEdit">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        </div>
+    </div>
+    <div class="card-body" id="campaignDetails">
+        <div class="text-center py-5">
+            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+            <p class="text-muted mt-2">Loading campaign details...</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(async function() {
+    const match = window.location.pathname.match(/\/Campaigns\/Details\/(\d+)/);
+    const id = match ? match[1] : 0;
+    document.getElementById('btnEdit').href = '/Admin/Campaigns/Edit/' + id;
+
+    try {
+        const resp = await fetch('/api/v1/campaigns/' + id, {
+            headers: { 'Authorization': 'Bearer ' + getJwtToken() }
+        });
+        if (!resp.ok) throw new Error();
+        const json = await resp.json();
+        renderCampaign(json.data, id);
+    } catch {
+        document.getElementById('campaignDetails').innerHTML =
+            '<div class="alert alert-warning">Campaign details unavailable. API may not be implemented yet.</div>';
+    }
+})();
+
+function renderCampaign(c, id) {
+    if (!c) {
+        document.getElementById('campaignDetails').innerHTML =
+            '<div class="alert alert-warning">Campaign not found.</div>';
+        return;
+    }
+
+    var progress = c.goalAmount > 0 ? Math.min(100, Math.round((c.raisedAmount / c.goalAmount) * 100)) : 0;
+    var statusClass = getStatusClass(c.status);
+    var imageHtml = '';
+    if (c.imageUrl) {
+        imageHtml = '<img src="' + c.imageUrl + '" alt="Campaign" class="img-fluid rounded mt-3">';
+    }
+
+    document.getElementById('campaignDetails').innerHTML =
+        '<div class="row">' +
+            '<div class="col-md-8">' +
+                '<table class="table table-striped">' +
+                    '<tr><th width="35%">Campaign Name</th><td>' + escapeHtml(c.name || '') + '</td></tr>' +
+                    '<tr><th>Cause</th><td>' + escapeHtml(c.causeName || '—') + '</td></tr>' +
+                    '<tr><th>Goal Amount</th><td>$' + (c.goalAmount || 0).toLocaleString() + '</td></tr>' +
+                    '<tr><th>Raised Amount</th><td>$' + (c.raisedAmount || 0).toLocaleString() + '</td></tr>' +
+                    '<tr><th>Status</th><td><span class="badge badge-' + statusClass + '">' + (c.status || '—') + '</span></td></tr>' +
+                    '<tr><th>Featured</th><td>' + (c.isFeatured ? 'Yes' : 'No') + '</td></tr>' +
+                    '<tr><th>Location</th><td>' + escapeHtml(c.location || '—') + '</td></tr>' +
+                    '<tr><th>Start Date</th><td>' + formatDate(c.startDate) + '</td></tr>' +
+                    '<tr><th>End Date</th><td>' + formatDate(c.endDate) + '</td></tr>' +
+                    '<tr><th>Created</th><td>' + formatDate(c.createdAt) + '</td></tr>' +
+                '</table>' +
+            '</div>' +
+            '<div class="col-md-4">' +
+                '<div class="card card-success">' +
+                    '<div class="card-header"><h3 class="card-title">Fundraising Progress</h3></div>' +
+                    '<div class="card-body text-center">' +
+                        '<h2>' + progress + '%</h2>' +
+                        '<div class="progress mb-2" style="height:25px">' +
+                            '<div class="progress-bar bg-success" style="width:' + progress + '%"></div>' +
+                        '</div>' +
+                        '<p class="mb-0"><strong>$' + (c.raisedAmount || 0).toLocaleString() + '</strong> raised of $' + (c.goalAmount || 0).toLocaleString() + ' goal</p>' +
+                    '</div>' +
+                '</div>' +
+                imageHtml +
+            '</div>' +
+        '</div>' +
+        '<div class="row mt-3">' +
+            '<div class="col-12">' +
+                '<h5>Description</h5>' +
+                '<p>' + escapeHtml(c.description || 'No description provided.') + '</p>' +
+            '</div>' +
+        '</div>';
+}
+
+function getJwtToken() {
+    const cookies = document.cookie.split('; ');
+    const session = cookies.find(r => r.startsWith('GiveAID.Admin.Session='));
+    return session ? session.split('=')[1] : '';
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatDate(str) {
+    if (!str) return '—';
+    return new Date(str).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function getStatusClass(s) {
+    switch (s?.toLowerCase()) {
+        case 'active': return 'success';
+        case 'draft': return 'secondary';
+        case 'completed': return 'info';
+        case 'cancelled': return 'danger';
+        default: return 'secondary';
+    }
+}
+</script>
+}

@@ -3,6 +3,7 @@ import {
   Container, Row, Col, Alert, Spinner, Modal,
 } from 'react-bootstrap';
 import { supportersService } from '../services';
+import { SAMPLE_ORGANIZATIONS, buildSampleStats } from '../data/sampleOrganizations';
 import '../styles/AboutPages.css';
 
 /* ── Helpers ──────────────────────────────────────── */
@@ -267,9 +268,14 @@ function OurPartnersPage() {
       const params = { activeOnly: true };
       if (type) params.type = type;
       const response = await supportersService.getAll(params);
-      if (response.success) setItems(response.data || []);
-    } catch {
-      setError('Failed to load partners.');
+      const apiItems = response?.success ? (response.data || []) : [];
+      // Fallback: if the API returns an empty list (e.g. backend not seeded
+      // or unreachable), show local sample partners so the page is never empty.
+      setItems(apiItems.length > 0 ? apiItems : SAMPLE_ORGANIZATIONS);
+    } catch (err) {
+      console.warn('Partners fetch failed, using sample data:', err);
+      setItems(SAMPLE_ORGANIZATIONS);
+      setError(null); // Don't surface an error banner when we have sample data
     } finally {
       setLoading(false);
     }
@@ -278,8 +284,16 @@ function OurPartnersPage() {
   const fetchStats = useCallback(async () => {
     try {
       const response = await supportersService.getStats();
-      if (response.success) setStats(response.data);
-    } catch { /* non-fatal */ }
+      if (response?.success && response.data) {
+        setStats(response.data);
+      } else {
+        setStats(buildSampleStats());
+      }
+    } catch {
+      // Non-fatal — fall back to derived sample stats so the header still
+      // shows real-looking counts instead of "–".
+      setStats(buildSampleStats());
+    }
   }, []);
 
   useEffect(() => { fetchPartners(); }, [fetchPartners]);

@@ -50,8 +50,12 @@ function RegisterPage() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email address.';
     if (!form.fullName.trim()) errs.fullName = 'Full name is required.';
     if (!form.password) errs.password = 'Password is required.';
-    else if (form.password.length < 6) errs.password = 'Password must be at least 6 characters.';
-    if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match.';
+    else if (form.password.length < 8) errs.password = 'Password must be at least 8 characters.';
+    else if (!/[A-Z]/.test(form.password)) errs.password = 'Password must contain at least one uppercase letter.';
+    else if (!/[a-z]/.test(form.password)) errs.password = 'Password must contain at least one lowercase letter.';
+    else if (!/[0-9]/.test(form.password)) errs.password = 'Password must contain at least one number.';
+    else if (!/[^a-zA-Z0-9]/.test(form.password)) errs.password = 'Password must contain at least one special character.';
+    if (form.confirmPassword && form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match.';
     if (!form.agreeTerms) errs.agreeTerms = 'You must agree to the terms.';
     return errs;
   };
@@ -81,7 +85,9 @@ function RegisterPage() {
       setAlert({ type: 'success', message: 'Account created successfully! Redirecting to login…' });
       setTimeout(() => navigate('/login'), 2200);
     } catch (err) {
-      setAlert({ type: 'danger', message: err.response?.data?.message || err.message || 'Registration failed. Please try again.' });
+      const rawMsg = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
+      const cleanMsg = rawMsg.replace(/^\d+\s+/, ''); // strip leading "400 " etc.
+      setAlert({ type: 'danger', message: cleanMsg });
     } finally {
       setLoading(false);
     }
@@ -222,7 +228,7 @@ function RegisterPage() {
                           <Form.Control
                             type={showPassword ? 'text' : 'password'}
                             name="password"
-                            placeholder="At least 6 characters"
+                            placeholder="At least 8 characters: uppercase, lowercase, number, special"
                             value={form.password}
                             onChange={handleChange}
                             className={`auth-input ${errors.password ? 'is-invalid' : ''}`}

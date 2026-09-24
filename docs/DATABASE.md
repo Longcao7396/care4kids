@@ -1,223 +1,303 @@
-# Database
+# Database — GiveAID v2.0
 
-> Audience: AI coding assistants. The DB schema is owned by SQL scripts in the project root.
-> Entity Framework is read-only (`Database.SetInitializer(null)`) — it never modifies the schema.
+## 1. Schema Overview
 
----
+SQL Server 2019+ (Express edition supported). Schema managed by **EF Core 8 migrations**
+in `src/Infrastructure/Persistence/Migrations/`.
 
-## 1. Connection
-
-`Web.config` → `connectionStrings["GiveAIDContext"]`:
+### ER Diagram (textual)
 
 ```
-Data Source=.\SQLEXPRESS; Initial Catalog=GiveAIDDB; Integrated Security=True
+┌──────────────┐         ┌──────────────┐         ┌──────────────────┐
+│ Users        │────┐    │ Causes       │────┐    │ Campaigns        │
+│              │    │    │              │    │    │                  │
+│ UserId (PK)  │    │    │ CauseId (PK) │◀───┼────│ CauseId (FK)     │
+│ Email        │    │    │ Name         │    │    │ CampaignId (PK)  │
+│ PasswordHash │    │    │ ParentCauseId│──┐ │    │ Name             │
+│ Role         │    │    │ Code         │  │ │    │ Goal             │
+│ FullName     │    │    └──────────────┘  │ │    │ Raised           │
+│ IsActive     │    │                       │ │    │ Status           │
+└──────────────┘    │                       │ │    └────────┬─────────┘
+       │            │                       │ │             │
+       │ 1          │                       │ │             │ 1
+       │            └───────────────────────┘ │             │
+       │                                      │             │
+       │ *                                    │ *           │ *
+┌──────▼─────────────┐         ┌──────────────▼──────┐  ┌───▼───────────────┐
+│ Donations          │         │ CampaignRegistrations│  │ CampaignReports   │
+│                    │         │                      │  │                   │
+│ DonationId (PK)    │         │ RegId (PK)           │  │ ReportId (PK)     │
+│ UserId (FK)        │         │ CampaignId (FK)      │  │ CampaignId (FK)   │
+│ CampaignId (FK)    │         │ UserId (FK)          │  │ Title             │
+│ Amount             │         │ RegisteredAt         │  │ Content           │
+│ Currency           │         │ Status               │  │ PublishedAt       │
+│ Status             │         └──────────────────────┘  └───────────────────┘
+│ PaymentMethod      │
+│ TransactionId      │
+│ StripeIntentId     │
+└────────────────────┘
 ```
 
-To change the connection, edit `Web.config` only. Do not move it to code.
+(Other entities — Gallery, Team, Achievements, Careers, FAQs, Contact, Conversations,
+Invitations, CMS, EmailLogs, WebhookLogs — follow the same pattern.)
 
----
+## 2. Tables
 
-## 2. Migration order (run once on a fresh DB)
+### 2.1. `Users`
 
-The `*.sql` scripts in the project root are the canonical schema source. Apply them in this order:
+| Column        | Type            | Null | Notes                                    |
+|---------------|-----------------|------|------------------------------------------|
+| UserId        | int             | No   | PK, identity                             |
+| Email         | nvarchar(256)   | No   | Unique index                             |
+| Username      | nvarchar(64)    | Yes  | Optional display name                    |
+| PasswordHash  | nvarchar(512)   | No   | PBKDF2 SHA-256 base64                    |
+| Role     | nvarchar(32)    | No   | `User`, `Admin`, `ContentManager`      |
+| FullName      | nvarchar(128)   | Yes  |                                          |
+| IsActive      | bit             | No   | Default 1                                |
+| IsLocked      | bit             | No   | Default 0                                |
+| FailedLoginCount | int          | No   | Default 0                                |
+| LockoutEnd    | datetime2       | Yes  |                                          |
+| LastLoginAt   | datetime2       | Yes  |                                          |
+| CreatedAt     | datetime2       | No   | Default `SYSUTCDATETIME()`               |
+| UpdatedAt     | datetime2       | Yes  |                                          |
 
-| # | Script | Purpose | Idempotent? |
-|---|---|---|---|
-| 1 | `NGO_Database_Causes_Restructure_Migration.sql` | Adds `parent_cause_id` to `Causes`; restructures to 9 parent causes + 27 sub-causes | ⚠️  Run once on dev DB only |
-| 2 | `NGO_Database_CampaignProgramme_Merge.sql` | Adds `programme_type`, `registration_required`, etc. to `Campaigns`; backfills from `Programmes` | ⚠️  Run once |
-| 3 | `NGO_Database_Invitations_Migration.sql` | Creates `Invitations` table | ✅  IF NOT EXISTS |
-| 4 | `NGO_Database_Invitations_PascalCase_Patch.sql` | Renames PascalCase columns to snake_case if needed | ✅  Guards on column existence |
-| 5 | `DB_Patch_Combined.sql` | Master patch: Invitations rename + Gallery FK drop + donation_date DEFAULT | ✅  All steps guarded |
-| 6 | `Donation_DonationDate_Default_Patch.sql` | Adds DEFAULT GETDATE() on `Donations.donation_date` (subsumed by step 5) | ✅ |
-| 7 | `Campaigns_DataSeed.sql` | Seeds 8 realistic campaigns + 13 donations using `MERGE` | ✅  Idempotent |
-| 8 | `Campaigns_Fixup.sql` | Cleans up placeholder campaigns + inserts Warm Winter (dev only) | ⚠️  Destructive |
+Indexes: `Email` (unique), `Role`.
 
-**Combined one-shot** for an existing dev DB:
+### 2.2. `Causes`
 
-```sql
-USE GiveAIDDB;
-GO
+| Column        | Type            | Null | Notes                                  |
+|---------------|-----------------|------|----------------------------------------|
+| CauseId       | int             | No   | PK                                     |
+| Name          | nvarchar(128)   | No   |                                        |
+| Code          | nvarchar(16)    | No   | `CHILD`, `EDU`, `DIS`, etc.            |
+| Description   | nvarchar(2000)  | Yes  |                                        |
+| ParentCauseId | int             | Yes  | Self-FK for hierarchy                  |
+| IsActive      | bit             | No   | Default 1                              |
+| DisplayOrder  | int             | No   | Default 0                              |
+| CreatedAt     | datetime2       | No   |                                        |
 
--- Step A — structural
-DB_Patch_Combined.sql
+Indexes: `Code` (unique), `ParentCauseId`.
 
--- Step B — causes + campaign/programme merge
-NGO_Database_Causes_Restructure_Migration.sql
-NGO_Database_CampaignProgramme_Merge.sql
+### 2.3. `Campaigns`
 
--- Step C — invitations
-NGO_Database_Invitations_Migration.sql
+| Column              | Type           | Null | Notes                              |
+|---------------------|----------------|------|------------------------------------|
+| CampaignId          | int            | No   | PK                                 |
+| Name                | nvarchar(200)  | No   |                                    |
+| Description         | nvarchar(max)  | Yes  |                                    |
+| CauseId             | int            | No   | FK → Causes                        |
+| Goal                | decimal(18,2)  | No   |                                    |
+| Raised              | decimal(18,2)  | No   | Default 0                          |
+| StartDate           | datetime2      | No   |                                    |
+| EndDate             | datetime2      | No   |                                    |
+| Status              | nvarchar(32)   | No   | `Draft`, `Active`, `Completed`, `Cancelled` |
+| Featured            | bit            | No   | Default 0                          |
+| RegistrationRequired| bit            | No   | Default 0 — true = registration-only |
+| ImageUrl            | nvarchar(1024) | Yes  |                                    |
+| CreatedAt           | datetime2      | No   |                                    |
+| UpdatedAt           | datetime2      | Yes  |                                    |
 
--- Step D — data
-Campaigns_DataSeed.sql
+Indexes: `CauseId`, `Status`, `Featured`.
+
+### 2.4. `Donations`
+
+| Column                | Type           | Null | Notes                              |
+|-----------------------|----------------|------|------------------------------------|
+| DonationId            | int            | No   | PK                                 |
+| UserId                | int            | Yes  | FK → Users (null = anonymous)      |
+| CampaignId            | int            | No   | FK → Campaigns                     |
+| Amount                | decimal(18,2)  | No   |                                    |
+| Currency              | nvarchar(3)    | No   | ISO 4217, default `USD`            |
+| PaymentMethod         | nvarchar(32)   | No   | `CreditCard`, `DebitCard`, etc.    |
+| Status                | nvarchar(32)   | No   | `Pending`, `Completed`, `Failed`, `Refunded` |
+| TransactionId         | nvarchar(64)   | No   | Unique, format `TXN-<guid>`        |
+| StripePaymentIntentId | nvarchar(128)  | Yes  |                                    |
+| CardLast4             | nvarchar(4)    | Yes  |                                    |
+| Anonymous             | bit            | No   | Default 0                          |
+| DonorName             | nvarchar(128)  | Yes  | For anonymous donations            |
+| DonorEmail            | nvarchar(256)  | Yes  |                                    |
+| DonorMessage          | nvarchar(2000) | Yes  |                                    |
+| CreatedAt             | datetime2      | No   |                                    |
+| CompletedAt           | datetime2      | Yes  |                                    |
+
+Indexes: `UserId`, `CampaignId`, `Status`, `TransactionId` (unique).
+
+### 2.5. `Galleries`
+
+| Column        | Type           | Null | Notes                                |
+|---------------|----------------|------|--------------------------------------|
+| GalleryId     | int            | No   | PK                                   |
+| Title         | nvarchar(200)  | No   |                                      |
+| Description   | nvarchar(2000) | Yes  |                                      |
+| ImageUrl      | nvarchar(1024) | No   |                                      |
+| ThumbnailUrl  | nvarchar(1024) | Yes  |                                      |
+| Category      | nvarchar(64)   | Yes  |                                      |
+| ProgrammeId   | int            | Yes  | Legacy FK                             |
+| CauseId       | int            | Yes  |                                      |
+| DisplayOrder  | int            | No   | Default 0                            |
+| IsActive      | bit            | No   | Default 1                            |
+| CreatedAt     | datetime2      | No   |                                      |
+
+### 2.6. `Conversations` and `ConversationMessages`
+
+Two-table design: `Conversations` is the thread, `ConversationMessages` is each post.
+
+`Conversations`:
+| Column              | Type          | Null | Notes                                  |
+|---------------------|---------------|------|----------------------------------------|
+| ConversationId      | int           | No   | PK                                     |
+| UserId              | int           | No   | FK → Users                             |
+| AssignedAdminId     | int           | Yes  | FK → Users                             |
+| Subject             | nvarchar(200) | No   |                                        |
+| Status              | nvarchar(32)  | No   | `Open`, `Closed`, `Pending`            |
+| LastMessageAt       | datetime2     | Yes  |                                        |
+| CreatedAt           | datetime2     | No   |                                        |
+
+`ConversationMessages`:
+| Column        | Type           | Null | Notes                          |
+|---------------|----------------|------|--------------------------------|
+| MessageId     | int            | No   | PK                             |
+| ConversationId| int            | No   | FK → Conversations             |
+| SenderId      | int            | No   | FK → Users                     |
+| SenderRole    | nvarchar(16)   | No   | `User`, `Admin`                |
+| Body          | nvarchar(max)  | No   |                                |
+| ReadAt        | datetime2      | Yes  |                                |
+| CreatedAt     | datetime2      | No   |                                |
+
+### 2.7. `EmailLogs`
+
+| Column        | Type           | Null | Notes                              |
+|---------------|----------------|------|------------------------------------|
+| EmailLogId    | bigint         | No   | PK, identity                       |
+| To            | nvarchar(256)  | No   |                                    |
+| From          | nvarchar(256)  | No   |                                    |
+| Subject       | nvarchar(512)  | No   |                                    |
+| Body          | nvarchar(max)  | Yes  |                                    |
+| TemplateKey   | nvarchar(64)   | Yes  |                                    |
+| Status        | nvarchar(32)   | No   | `Queued`, `Sent`, `Failed`, `Retrying` |
+| ErrorMessage  | nvarchar(2000) | Yes  |                                    |
+| RetryCount    | int            | No   | Default 0                          |
+| SentAt        | datetime2      | Yes  |                                    |
+| CreatedAt     | datetime2      | No   |                                    |
+
+Indexes: `Status`, `CreatedAt`.
+
+### 2.8. `WebhookLogs`
+
+| Column        | Type           | Null | Notes                              |
+|---------------|----------------|------|------------------------------------|
+| WebhookLogId  | bigint         | No   | PK                                 |
+| Source        | nvarchar(32)   | No   | `Stripe`, `PayPal`, etc.           |
+| EventType     | nvarchar(64)   | No   |                                    |
+| EventId       | nvarchar(128)  | Yes  | Idempotency key                    |
+| Payload       | nvarchar(max)  | No   | Raw JSON                           |
+| Signature     | nvarchar(512)  | Yes  | For verification                   |
+| Status        | nvarchar(32)   | No   | `Received`, `Processed`, `Failed`  |
+| ErrorMessage  | nvarchar(2000) | Yes  |                                    |
+| ProcessedAt   | datetime2      | Yes  |                                    |
+| CreatedAt     | datetime2      | No   |                                    |
+
+Indexes: `Source`, `EventType`, `EventId` (unique within source).
+
+## 3. Migration Order
+
+EF Core generates timestamped migrations. For a fresh database:
+
+```powershell
+# Apply all pending migrations
+dotnet ef database update --project src/Infrastructure/GiveAID.V2.Infrastructure.csproj --startup-project src/WebApi/GiveAID.V2.WebApi.csproj
 ```
 
----
+The first run also runs `DatabaseSeeder` which inserts:
+- 1 `Admin` user (`admin@give-aid.org` / `Admin@123`)
+- 5 demo causes (`CHILD`, `EDU`, `DIS`, `WOMAN`, `YOUTH`)
+- 3 demo FAQs
 
-## 3. Tables (high-level)
+For the **legacy v1 → v2** migration path, see [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
+and `database/migrations/`.
 
-| Table | Purpose | Key columns |
-|---|---|---|
-| `Users` | All user accounts (admin + regular) | `email` UNIQUE, `role`, `is_active`, `password_hash` |
-| `Causes` | 2-level cause taxonomy | `cause_code`, `parent_cause_id` (nullable, self-FK), `is_parent_cause` |
-| `Organizations` | Partner NGOs | `name`, `is_active` |
-| `Campaigns` | Donation + event campaigns | `cause_id`, `campaign_code` UNIQUE, `goal_amount`, `raised_amount`, `status`, `programme_type` |
-| `CampaignReports` | Per-campaign financial reports | `campaign_id`, `total_received`, `total_spent` |
-| `Donations` | Donation records | `user_id`, `campaign_id`, `cause_id`, `amount`, `payment_method`, `payment_status`, `transaction_id` |
-| `CampaignRegistrations` | User event registrations | `(campaign_id, user_id)` UNIQUE |
-| `Conversations` | User-to-admin queries | `user_id`, `subject`, `status` |
-| `ConversationMessages` | Messages in a conversation | `conversation_id`, `sender_id` |
-| `CmsPages` | Editable CMS content blocks | `slug`, `title`, `content` |
-| `Careers` | Job postings | `slug`, `is_active`, `application_deadline` |
-| `CareerApplications` | Job applications | `career_id`, `user_id` |
-| `Gallery` | Photo gallery items | `programme_id` (nullable, FK dropped), `campaign_id` (optional) |
-| `ContactMessages` | Contact form submissions | `email`, `subject`, `status` |
-| `TeamMembers` | About-us team profiles | `is_active`, `display_order` |
-| `Achievements` | Impact stats (numeric) | `metric_value`, `featured` |
-| `Faqs` | FAQ entries | `is_active`, `display_order`, `category` |
-| `Invitations` | Referral invitations | `invitation_token`, `invitee_email`, `status` |
-| `Programmes` *(legacy)* | Read-only via `ProgrammesController` | kept for Gallery FK |
-| `ProgrammePhotos` *(legacy)* | — | — |
-| `ProgrammeRegistrations` *(legacy)* | — | — |
+## 4. Indexes Cheat Sheet
 
-Full entity definitions are in `GiveAID.Web/Models/EntityModels.cs`.
+| Table                    | Indexes                                                |
+|--------------------------|--------------------------------------------------------|
+| Users                    | `Email` UNIQUE, `Role`                                 |
+| Causes                   | `Code` UNIQUE, `ParentCauseId`                         |
+| Campaigns                | `CauseId`, `Status`, `Featured`                        |
+| Donations                | `UserId`, `CampaignId`, `Status`, `TransactionId` UNIQUE |
+| Conversations            | `UserId`, `AssignedAdminId`, `Status`, `LastMessageAt` |
+| ConversationMessages     | `ConversationId`, `SenderId`                           |
+| ContactMessages          | `Status`, `CreatedAt`                                  |
+| Invitations              | `ReferrerId`, `Status`, `Token` UNIQUE                 |
+| EmailLogs                | `Status`, `CreatedAt`                                  |
+| WebhookLogs              | `Source`, `EventType`, `EventId` UNIQUE                |
+| Galleries                | `Category`, `CauseId`, `ProgrammeId`                   |
 
----
-
-## 4. Cause hierarchy (current)
-
-The migration script seeds **9 parent causes** + **27 sub-causes**:
-
-```
-EDU      → Education for children         (5 sub-causes)
-NUTRI    → Nutrition & food               (3 sub-causes)
-HEALTH   → Medical care                   (3 sub-causes)
-WATER    → Clean water & sanitation        (2 sub-causes)
-SPECIAL  → Special circumstances          (4 sub-causes)
-CLOTH    → Clothing & essentials          (2 sub-causes)
-PROTECT  → Child protection               (2 sub-causes)
-EMERG    → Emergency relief               (3 sub-causes)
-FUTURE   → Future development             (3 sub-causes)
-```
-
-Each parent has `is_parent_cause = 1`; sub-causes have `parent_cause_id` set to the parent.
-The `CausesController.GetTree()` endpoint returns this hierarchy as a nested JSON for the
-frontend `CausesPage`.
-
----
-
-## 5. Naming conventions
-
-- **Tables & columns:** `snake_case` (`user_id`, `campaign_id`, `goal_amount`)
-- **C# entity properties:** `PascalCase` (`UserId`, `CampaignId`, `GoalAmount`)
-- **JSON DTOs:** `camelCase` (`userId`, `campaignId`, `goalAmount`)
-- **Money columns:** `DECIMAL(18,2)` — never `FLOAT` or `MONEY`
-
-The mapping C# → SQL is automatic via `SnakeCaseColumnNameConvention` in
-`GiveAIDContext.OnModelCreating()`. Don't add manual `.HasColumnName(...)` calls unless you
-absolutely need to break the convention.
-
----
-
-## 6. Common SQL pitfalls (and how we avoided them)
-
-| Pitfall | How we handled it |
-|---|---|
-| `donation_date` defaulting to `0001-01-01` (C# min value) | `DB_Patch_Combined.sql` adds `DEFAULT GETDATE()` + backfills any bad rows |
-| `Invitations` columns in PascalCase (legacy migration) | `DB_Patch_Combined.sql` renames them via `sp_rename` + rebuilds indexes |
-| `Gallery.programme_id` FK prevents deletion of orphan Programmes | `DB_Patch_Combined.sql` drops the FK + makes column nullable |
-| Orphan `Campaigns.cause_id` after causes restructure | `NGO_Database_CampaignProgramme_Merge.sql` adds CHECK `CHK_Campaigns_CauseExists` (guard) |
-| Hardcoded seed campaign cause IDs breaking after restructure | `Campaigns_DataSeed.sql` resolves by `cause_code`, not by ID |
-
----
-
-## 7. Soft delete vs hard delete
-
-| Entity | Strategy | Field |
-|---|---|---|
-| `Causes` | Soft delete (sets `is_active = 0`) | `IsActive` |
-| `Campaigns` | Hard delete + FK cascade to Donations | — |
-| `Gallery` | Hard delete | — |
-| `Users` | Soft delete (set `is_active = 0`) | `IsActive` |
-| `Achievements`, `Faqs`, `TeamMembers` | Soft delete via `is_active` | `IsActive` |
-| `Donations` | Never deleted (audit trail) | — |
-| `ContactMessages` | Soft-mark via `status` | `Status` |
-
----
-
-## 8. JSON contract (for the API layer)
-
-Successful response:
+## 5. Connection String
 
 ```json
 {
-  "success": true,
-  "message": "OK",
-  "data": { /* entity or list */ }
-}
-```
-
-Failed response (single error):
-
-```json
-{
-  "success": false,
-  "message": "Campaign not found.",
-  "data": null
-}
-```
-
-Validation failure:
-
-```json
-{
-  "success": false,
-  "message": "Validation failed.",
-  "errors": {
-    "Email": ["Email is required.", "Email is not valid."],
-    "Password": ["Password must be at least 8 characters."]
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.\\SQLEXPRESS;Database=GiveAIDDB;Integrated Security=True;TrustServerCertificate=True"
   }
 }
 ```
 
-Frontend services assume this shape; if you change it, update `services/api.js` and every
-`response.success`/`response.data` consumer.
+Production uses SQL auth or managed identity — see [DEPLOYMENT.md](DEPLOYMENT.md).
 
----
+## 6. Backup & Recovery
 
-## 9. Money handling
+| Schedule     | Type        | Retention |
+|--------------|-------------|-----------|
+| Daily 02:00  | Full        | 30 days   |
+| Hourly       | Differential | 7 days    |
+| Weekly       | Full + offsite | 1 year |
 
-- DB stores `DECIMAL(18,2)` to avoid float drift
-- C# properties are `decimal`
-- JSON serialises as a **string** to preserve precision across the wire (e.g. `"21500000.00"`)
-- Frontend formats with `Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })`
+Restore command:
 
-If you add a new money field, follow the same pattern or the UI will show `21,500,000.00 ₫`
-incorrectly.
-
----
-
-## 10. Resetting the DB (development only)
-
-```sql
-USE master;
-GO
-ALTER DATABASE GiveAIDDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-GO
-DROP DATABASE GiveAIDDB;
-GO
-CREATE DATABASE GiveAIDDB;
-GO
-USE GiveAIDDB;
-GO
-
--- Re-run migrations in order
-:r C:\path\to\DB_Patch_Combined.sql
-:r C:\path\to\NGO_Database_Causes_Restructure_Migration.sql
-:r C:\path\to\NGO_Database_CampaignProgramme_Merge.sql
-:r C:\path\to\NGO_Database_Invitations_Migration.sql
-:r C:\path\to\Campaigns_DataSeed.sql
+```powershell
+sqlcmd -S .\SQLEXPRESS -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Full.bak' WITH NORECOVERY, REPLACE"
+sqlcmd -S .\SQLEXPRESS -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Diff.bak' WITH RECOVERY"
 ```
 
-After reset, restart the backend — `GiveAIDContext.SeedDatabase()` will recreate the admin +
-demo users.
+## 7. Seeding
+
+`src/Infrastructure/Persistence/Seed/DatabaseSeeder.cs` runs on app start (idempotent):
+
+```csharp
+public async Task SeedAsync()
+{
+    if (!await _context.Users.AnyAsync(u => u.Role == "Admin"))
+    {
+        _context.Users.Add(new User
+        {
+            Email = "admin@give-aid.org",
+            PasswordHash = _hasher.Hash("Admin@123"),
+            Role = "Admin",
+            IsActive = true
+        });
+        await _context.SaveChangesAsync();
+    }
+}
+```
+
+## 8. Performance Notes
+
+- All FK columns are indexed
+- All `Status` enum columns are indexed (used in every list query)
+- `Donations.TransactionId` is unique-indexed for idempotency
+- `EmailLogs.CreatedAt` is indexed for retention queries
+- Hot reads (statistics, causes list) are cached via `MemoryCacheService`
+- Use `AsNoTracking()` in query handlers for read-only paths
+
+## 9. Data Retention
+
+| Table         | Retention                          |
+|---------------|------------------------------------|
+| EmailLogs     | 90 days, then soft-archive         |
+| WebhookLogs   | 30 days, then hard-delete          |
+| ContactMessages | 1 year                            |
+| Conversations | Indefinite (user data)             |
+| Donations     | Indefinite (financial record)      |
+| EmailLogs (PII) | Anonymise after 90 days          |
+
+Run nightly via SQL Agent job — see `database/migrations/retention.sql`.

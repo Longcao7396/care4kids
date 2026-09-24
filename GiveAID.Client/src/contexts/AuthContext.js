@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authService } from '../services/authService';
+import { STORAGE_KEYS } from '../config';
 
 const AuthContext = createContext(null);
 
@@ -28,24 +29,53 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = useCallback(async (credentials) => {
-    const result = await authService.login(credentials);
-    if (result.success && result.data?.user) {
-      setUser(result.data.user);
-      return result;
+    // authService.login() returns the raw token object { token, userId, email, username, role, expiresAt }
+    // directly (api.js interceptor already unwraps the { success, message, data } envelope).
+    // It throws an Error on failure with .response.data preserved from the axios error.
+    let result;
+    try {
+      result = await authService.login(credentials);
+    } catch (err) {
+      // Preserve the server's specific error code/message (e.g. EMAIL_NOT_VERIFIED,
+      // INVALID_CREDENTIALS) instead of overwriting with a generic message.
+      const status = err.response?.status;
+      const code = err.response?.data?.code;
+      const serverMsg = err.response?.data?.message || err.message;
+      const userMessage =
+        code === 'EMAIL_NOT_VERIFIED'
+          ? 'Please verify your email before logging in. Check your inbox for the verification link.'
+          : code === 'INVALID_CREDENTIALS' || status === 401
+          ? 'Invalid username or password.'
+          : serverMsg || 'Login failed. Please try again.';
+      const error = new Error(userMessage);
+      error.response = { status, data: { ...(err.response?.data || {}), message: userMessage, code } };
+      error.code = code;
+      throw error;
     }
-    const error = new Error(result.message || 'Login failed');
-    error.response = { data: { message: result.message } };
-    throw error;
+    if (!result || !result.token) {
+      const error = new Error('Login failed. Please check your credentials and try again.');
+      error.response = { data: { message: 'Invalid username or password.', code: 'INVALID_CREDENTIALS' } };
+      error.code = 'INVALID_CREDENTIALS';
+      throw error;
+    }
+    // Store user info (exclude token from localStorage user object).
+    const { token: _t, ...userInfo } = result;
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userInfo));
+    setUser(userInfo);
+    return result; // Returns { token, userId, email, username, role, expiresAt }
   }, []);
 
   const register = useCallback(async (userData) => {
+    // authService.register() returns { success, message } on success.
+    // On failure it throws an Error with .response.data.message set by api.js interceptor.
     const result = await authService.register(userData);
-    if (result.success) {
-      return result;
+    if (!result || !result.success) {
+      const msg = result?.message || 'Registration failed';
+      const error = new Error(msg);
+      error.response = { data: { message: msg } };
+      throw error;
     }
-    const error = new Error(result.message || 'Registration failed');
-    error.response = { data: { message: result.message } };
-    throw error;
+    return result; // { success: true, message: '...' }
   }, []);
 
   const logout = useCallback(async () => {

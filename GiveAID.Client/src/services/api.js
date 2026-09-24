@@ -1,16 +1,15 @@
 import axios from 'axios';
-import { API_BASE_URL, BACKEND_CANDIDATES, STORAGE_KEYS } from '../config';
+import { API_BASE_URL, STORAGE_KEYS } from '../config';
 
-// Create axios instance
+// Create axios instance — baseURL matches v2.0 API contract
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
+  timeout: 30000,
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor - Add auth token
+// ── Request interceptor ──────────────────────────────────────────────────────────
+// Attaches JWT Bearer token from localStorage to every outgoing request.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -19,103 +18,65 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - normalize PascalCase -> camelCase.
-// IMPORTANT: We must NOT touch keys that are already camelCase — only the
-// first character that is UPPERCASE should be lowercased. Previous version
-// lowercased every first char unconditionally, turning `userId` into
-// `userid` and breaking all frontend destructuring.
-const toCamel = (obj) => {
-  if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(toCamel);
-  if (typeof obj !== 'object' || obj instanceof Date || obj instanceof Blob || obj instanceof File) return obj;
-  const out = {};
-  for (const key of Object.keys(obj)) {
-    // Only rewrite keys whose FIRST character is uppercase (i.e. PascalCase).
-    // Already-camelCase keys (userId, fullName) start lowercase and stay as-is.
-    const camel = /^[A-Z]/.test(key)
-      ? key.charAt(0).toLowerCase() + key.slice(1)
-      : key;
-    out[camel] = toCamel(obj[key]);
-  }
-  return out;
-};
-
+// ── Response interceptor ─────────────────────────────────────────────────────────
+// v2.0 API returns { success, message, data, errors? } envelope.
+// We unwrap it here so all service functions get the raw data directly.
+// Any non-2xx response is normalized into a plain Error with a user-friendly message.
 api.interceptors.response.use(
   (response) => {
-    // Normalize response.data keys from PascalCase (Success, Data, Message, Errors)
-    // to camelCase (success, data, message, errors) so React code can use the
-    // standard { success, data } shape.
-    if (response && response.data && typeof response.data === 'object') {
-      response.data = toCamel(response.data);
+    const body = response.data;
+    // Only unwrap the v2.0 envelope when present AND it carries actual data.
+    // This preserves message strings from POST responses like contact-submit
+    // (where data is null but message is the user's confirmation text).
+    if (body && typeof body === 'object' && 'success' in body) {
+      if (!body.success) {
+        return Promise.reject(
+          Object.assign(new Error(body.message || 'API call failed'), { _raw: body })
+        );
+      }
+      // Return body.data when it exists and is not null; otherwise return the
+      // full envelope so callers can read body.message (e.g. contact-submit
+      // confirmation, register success).
+      // The null check covers register (data=null) and forgot-password (data=null)
+      // responses that need body.message.
+      return body.data != null ? body.data : body;
     }
-    return response;
+    // No envelope — return as-is (e.g. HTML from /health)
+    return body;
   },
   (error) => {
-    if (error.response) {
-      // Server responded with error
-      const { status } = error.response;
+    // Normalize the error message from v2.0 envelope or network failure
+    const msg =
+      error.response?.data?.message ||
+      error.response?.data?.Message ||
+      error.message ||
+      'An unexpected error occurred.';
 
-      if (status === 401) {
-        // Unauthorized - clear token and dispatch a soft-redirect event.
-        // We do NOT use window.location.href here because that wipes out
-        // React Router state, including location.state.from which carries
-        // the user's intended destination. The AuthBootstrap component
-        // listens for this event and navigates with React Router, so the
-        // `from` state survives a token-expired flow.
-        localStorage.removeItem(STORAGE_KEYS.TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER);
-        window.dispatchEvent(new CustomEvent('giveaid:auth:expired', {
-          detail: { from: window.location.pathname + window.location.search }
-        }));
-      } else if (status === 403) {
-        // Forbidden - explicit friendly message so callers can show it.
-        error.friendlyMessage = 'You do not have permission to perform this action.';
-      } else if (status >= 500) {
-        // Server error - generic friendly message.
-        error.friendlyMessage = 'Server error. Please try again later or contact support.';
+    if (error.response?.status === 401) {
+      // Token expired or invalid — clear auth state and redirect to login.
+      // We use window.location instead of React Router here because this
+      // interceptor doesn't have access to the router context, and AuthBootstrap
+      // / ProtectedRoute will not mount for a non-React navigation.
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.USER);
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
-
-      // Build a friendly message that includes the API-supplied message
-      // (when present) for the caller to surface to the user.
-      const apiMessage = error.response.data?.message
-        || error.response.data?.Message
-        || error.response.data?.title
-        || error.response.statusText;
-      if (apiMessage && !error.message?.includes(apiMessage)) {
-        error.friendlyMessage = error.friendlyMessage
-          ? `${error.friendlyMessage} (${apiMessage})`
-          : `${status} ${apiMessage}`;
-      }
-    } else if (error.request) {
-      // Try the next backend candidate if current one failed
-      const currentBase = error.config?.baseURL || API_BASE_URL;
-      const currentIdx = BACKEND_CANDIDATES.indexOf(currentBase);
-      const nextBase = currentIdx >= 0 && currentIdx < BACKEND_CANDIDATES.length - 1
-        ? BACKEND_CANDIDATES[currentIdx + 1]
-        : null;
-
-      if (nextBase && !error.config?._retried) {
-        console.warn(`[api] ${currentBase} unreachable, retrying with ${nextBase}`);
-        const retriedConfig = {
-          ...error.config,
-          baseURL: nextBase,
-          _retried: true,
-        };
-        return axios.request(retriedConfig).catch((retryErr) => {
-          retryErr.friendlyMessage = retryErr.friendlyMessage || '⚠️ Backend không phản hồi. Vui lòng khởi động backend.';
-          return Promise.reject(retryErr);
-        });
-      }
-
-      error.friendlyMessage = '⚠️ Backend không phản hồi. Vui lòng khởi động backend.';
-      console.error(error.friendlyMessage);
+    } else if (error.response?.status === 403) {
+      error.friendlyMessage = 'You do not have permission to perform this action.';
+    } else if (error.response?.status >= 500) {
+      error.friendlyMessage = 'Server error. Please try again later or contact support.';
     }
-    return Promise.reject(error);
+
+    // Build a user-friendly error for callers
+    const friendly = error.friendlyMessage
+      ? `${error.friendlyMessage} (${msg})`
+      : msg;
+
+    return Promise.reject(Object.assign(new Error(friendly), { _raw: error.response?.data }));
   }
 );
 

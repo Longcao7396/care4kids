@@ -13,7 +13,7 @@ Dự án đã được cập nhật từ **Give-AID** sang mô hình **Care4Kids
 ✅ **Chiến dịch cụ thể (Campaigns)** thay vì chỉ danh mục chung (Causes)  
 ✅ **Minh bạch tài chính** với báo cáo chi tiết  
 ✅ **Admin Dashboard** với thống kê đầy đủ  
-✅ **Phân quyền rõ ràng** (User, Admin, SuperAdmin)  
+✅ **Phân quyền rõ ràng** (User, Admin)  
 ✅ **Cấu trúc database tối ưu** theo chuẩn production  
 
 ---
@@ -397,7 +397,7 @@ Truy cập: http://localhost:3000/admin
 ✅ Campaign có start/end date, goal, raised  
 ✅ Admin Dashboard với stats đầy đủ  
 ✅ Minh bạch với CampaignReports  
-✅ Phân quyền User/Admin/SuperAdmin  
+✅ Phân quyền User/Admin  
 ✅ Payment tracking với PaymentStatus  
 ✅ Donation link tới Campaign  
 
@@ -526,7 +526,7 @@ localStorage.getItem('giveaid_token')
 Admin routes require role check:
 
 ```csharp
-[Authorize(Roles = "SuperAdmin,Admin")]
+[Authorize(Roles = "Admin")]
 ```
 
 ---

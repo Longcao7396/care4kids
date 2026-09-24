@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "Create Cause";
+}
+
+<div class="card card-success">
+    <div class="card-header"><h3 class="card-title">Create New Cause</h3></div>
+    <form method="post" asp-area="Admin" asp-controller="Causes" asp-action="Create">
+        @Html.AntiForgeryToken()
+        <div class="card-body">
+            <div class="form-group">
+                <label>Cause Name *</label>
+                <input type="text" name="Name" class="form-control" required maxlength="255">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="Description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Parent Cause</label>
+                <select name="ParentCauseId" class="form-control" id="parentSelect">
+                    <option value="">— None (Top-level) —</option>
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Sort Order</label>
+                        <input type="number" name="SortOrder" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Active</label>
+                        <div class="mt-2">
+                            <input type="checkbox" name="IsActive" value="true" checked>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Create</button>
+            <a asp-area="Admin" asp-controller="Causes" asp-action="Index" class="btn btn-default float-right">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+(async function() {
+    try {
+        const resp = await fetch('/api/v1/causes?activeOnly=true');
+        if (!resp.ok) return;
+        const json = await resp.json();
+        (json.data || []).forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.causeId || c.id;
+            opt.textContent = c.name;
+            document.getElementById('parentSelect').appendChild(opt);
+        });
+    } catch {}
+})();
+</script>
+}

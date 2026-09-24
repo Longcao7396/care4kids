@@ -43,12 +43,14 @@ function CampaignsPage() {
       const response = await api.get('/campaigns', { params });
 
       if (response.data.success) {
-        const data = response.data.data || [];
+        // API returns { items: [...], page, pageSize, totalCount }
+        const result = response.data.data;
+        const items = result?.items || [];
         // If API returns empty array, fall back to sample data
-        if (data.length === 0) {
+        if (items.length === 0) {
           setCampaigns(SAMPLE_CAMPAIGNS);
         } else {
-          setCampaigns(data);
+          setCampaigns(items);
         }
       } else {
         // Use sample campaigns silently so users always see something

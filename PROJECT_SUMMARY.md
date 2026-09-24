@@ -168,7 +168,7 @@ Dự án **Give-AID NGO Website Platform** đã được tạo hoàn chỉnh v�
 - ✅ User Registration with validation
 - ✅ Login with JWT token
 - ✅ Logout functionality
-- ✅ Role-based access control (User, Admin, SuperAdmin)
+- ✅ Role-based access control (User, Admin)
 - ✅ Protected routes
 - ✅ Token refresh mechanism
 
@@ -256,7 +256,7 @@ Dự án **Give-AID NGO Website Platform** đã được tạo hoàn chỉnh v�
 **Admin Account:**
 - Email: admin@give-aid.org
 - Password: Admin@123
-- Role: SuperAdmin
+- Role: Admin
 
 **Demo User:**
 - Email: user@example.com

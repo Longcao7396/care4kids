@@ -1,0 +1,139 @@
+================================================================
+                 GIVEAID v2.0 - HƯỚNG DẪN SỬ DỤNG
+              (Cho người không biết lập trình)
+================================================================
+
+Mục đích: Chạy website GiveAID trên máy tính cá nhân để test.
+
+────────────────────────────────────────────────────────────────
+  BƯỚC 1 — CÀI ĐẶT MÔI TRƯỜNG (CHỈ LÀM MỘT LẦN)
+────────────────────────────────────────────────────────────────
+
+Cần cài 2 thứ trước khi chạy được:
+
+  1) .NET SDK 10
+     → Tải: https://dotnet.microsoft.com/download/dotnet/10.0
+     → Chọn "SDK 10.0.x → Windows → x64"
+     → Mở file .exe vừa tải → nhấn Install → đợi xong → đóng lại
+
+  2) Node.js (phiên bản 18 trở lên)
+     → Tải: https://nodejs.org/
+     → Nhấn nút "LTS" lớn màu xanh (khoảng 20MB)
+     → Mở file .msi vừa tải → Next liên tục → Install → Finish
+
+  Sau khi cài xong, MỞ TERMINAL MỚI (Win + R → gõ cmd → Enter)
+  rồi gõ:
+        dotnet --version
+        node --version
+  Thấy hiện số phiên bản là OK.
+
+────────────────────────────────────────────────────────────────
+  BƯỚC 2 — KHỞI ĐỘNG WEBSITE
+────────────────────────────────────────────────────────────────
+
+  1) Giải nén thư mục GiveAID-v2.0.zip vào ổ C:\ hoặc Desktop
+     (KHÔNG giải nén vào Program Files — sẽ bị lỗi quyền)
+
+  2) Mở thư mục vừa giải nén, TÌM FILE "START.bat"
+     → Double-click vào file đó
+
+  3) Lần đầu chạy sẽ hỏi mật khẩu / cảnh báo Windows Defender
+     → Chọn "Run anyway" / "Thông tin thêm → Chạy"
+
+  4) Đợi khoảng 20–60 giây (lần đầu tiên lâu hơn vì đang cài đặt)
+     → Trình duyệt tự động mở trang http://localhost:3000
+
+  5) Nếu trình duyệt KHÔNG tự mở, mở Chrome/Edge gõ thủ công:
+     → http://localhost:3000
+
+────────────────────────────────────────────────────────────────
+  BƯỚC 3 — TÀI KHOẢN TEST CÓ SẴN
+────────────────────────────────────────────────────────────────
+
+  Admin:
+    Username: admin
+    Password: DevAdmin@123  (dat trong env var ADMIN_PASSWORD khi chay START.bat)
+
+  User thường:
+    Username: demo
+    Password: Demo@123  (dat trong env var DEMO_PASSWORD khi chay START.bat)
+
+  Hoặc tự đăng ký tài khoản mới qua nút "Đăng ký" trên website.
+
+  ⚠ START.bat đã tự động set sẵn các biến môi trường trên cho dev.
+    KHÔNG dùng các password này cho môi trường production.
+  ⚠ Trong môi trường dev, đăng ký xong là đăng nhập được luôn
+    (không cần verify email).
+
+────────────────────────────────────────────────────────────────
+  BƯỚC 4 — TẮT SERVER
+────────────────────────────────────────────────────────────────
+
+  Cách 1 (khuyến nghị): Double-click file "STOP.bat" cùng thư mục.
+
+  Cách 2: Trong cửa sổ cmd đang chạy, nhấn Ctrl + C.
+
+  Cách 3 (khi treo): Mở Task Manager (Ctrl + Shift + Esc) →
+    End task các tiến trình tên "dotnet" và "node".
+
+────────────────────────────────────────────────────────────────
+  XỬ LÝ LỖI THƯỜNG GẶP
+────────────────────────────────────────────────────────────────
+
+  ❌ "Chua cai .NET SDK 10"
+     → Quay lại Bước 1, cài .NET SDK 10.
+
+  ❌ "Chua cai Node.js"
+     → Quay lại Bước 1, cài Node.js.
+
+  ❌ Cổng 3000 hoặc 5231 bị chiếm
+     → Chạy file STOP.bat trước, rồi chạy lại START.bat.
+
+  ❌ npm install lỗi / mạng chậm
+     → Mở cmd, gõ:
+           cd GiveAID.Client
+           npm cache clean --force
+           npm install --registry https://registry.npmmirror.com
+       (dùng mirror Trung Quốc, nhanh hơn nếu mạng quốc tế chậm)
+
+  ❌ Backend crash với "STATUS_DLL_NOT_FOUND"
+     → Đã fix sẵn trong code (dùng managed networking). Nếu vẫn
+       lỗi, xóa thư mục GiveAID.Client\node_modules rồi chạy lại.
+
+  ❌ "Database GiveAIDDB not found"
+     → Backend sẽ TỰ ĐỘNG tạo database lần đầu. Đợi ~30 giây.
+
+  ❌ Lỗi khác
+     → Mở file GiveAID.Client\scripts\backend.log và frontend.log
+       để xem chi tiết, rồi gửi cho người giao dự án.
+
+────────────────────────────────────────────────────────────────
+  CẤU TRÚC THƯ MỤC (chỉ tham khảo, KHÔNG cần đụng)
+────────────────────────────────────────────────────────────────
+
+  START.bat                ← double-click để chạy
+  STOP.bat                 ← double-click để tắt
+  GiveAID.Client/          ← React frontend
+    package.json
+    src/
+    scripts/               ← PowerShell scripts
+  src/                     ← .NET backend
+    WebApi/                ← API chính (port 5231)
+    Application/           ← business logic
+    Domain/                ← entities
+    Infrastructure/        ← DB, security, services
+  docs/                    ← tài liệu kỹ thuật
+  HUONG_DAN.txt            ← file này
+
+────────────────────────────────────────────────────────────────
+  LIÊN HỆ HỖ TRỢ
+────────────────────────────────────────────────────────────────
+
+  Gửi kèm các file log sau khi báo lỗi:
+    - GiveAID.Client\scripts\backend.log
+    - GiveAID.Client\scripts\frontend.log
+    - Ảnh chụp màn hình lỗi
+
+  Phiên bản: GiveAID v2.0
+  Ngày đóng gói: xem file CHANGELOG.txt
+================================================================

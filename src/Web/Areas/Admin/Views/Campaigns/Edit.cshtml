@@ -1,0 +1,185 @@
+@{
+    ViewData["Title"] = "Edit Campaign";
+}
+
+@model CampaignViewModel
+
+<div class="card card-warning">
+    <div class="card-header">
+        <h3 class="card-title">Edit Campaign</h3>
+    </div>
+    <form method="post" asp-area="Admin" asp-controller="Campaigns" asp-action="Edit"
+          enctype="multipart/form-data" id="campaignForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="CampaignId" value="@Model.CampaignId" />
+
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label>Campaign Name *</label>
+                        <input type="text" name="Name" class="form-control" required maxlength="255"
+                               value="@Model.Name">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Cause</label>
+                        <select name="CauseId" class="form-control select2" id="causeSelect">
+                            <option value="">— Select Cause —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="Description" class="form-control" rows="4">@Model.Description</textarea>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Goal Amount ($) *</label>
+                        <input type="number" name="GoalAmount" class="form-control" required min="0" step="0.01"
+                               value="@Model.GoalAmount">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" name="StartDate" class="form-control"
+                               value="@Model.StartDate?.ToString("yyyy-MM-dd")">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" name="EndDate" class="form-control"
+                               value="@Model.EndDate?.ToString("yyyy-MM-dd")">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="Status" class="form-control">
+                            @foreach (var s in new[] { "Draft", "Active", "Completed", "Cancelled" })
+                            {
+                                <option value="@s" selected="@(Model.Status == s)">@s</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Featured</label>
+                        <div class="mt-2">
+                            <input type="checkbox" name="IsFeatured" value="true"
+                                   checked="@Model.IsFeatured" data-bootstrap-switch>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Active</label>
+                        <div class="mt-2">
+                            <input type="checkbox" name="IsActive" value="true"
+                                   checked="@Model.IsActive" data-bootstrap-switch>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" name="Location" class="form-control" value="@Model.Location">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Max Participants</label>
+                        <input type="number" name="MaxParticipants" class="form-control" min="0"
+                               value="@Model.MaxParticipants">
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <div class="form-group">
+                    <label>Current Image</label>
+                    <div>
+                        <img src="@Model.ImageUrl" alt="Campaign Image" style="max-height:150px; border-radius:4px;">
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <label>Replace Image</label>
+                <div class="input-group">
+                    <div class="custom-file">
+                        <input type="file" name="ImageFile" class="custom-file-input" id="imageInput" accept="image/*">
+                        <label class="custom-file-label" for="imageInput">Choose new file...</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a asp-area="Admin" asp-controller="Campaigns" asp-action="Index"
+               class="btn btn-default float-right">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<script>
+$(function() {
+    $('.select2').select2();
+
+    // Pre-select cause if set
+    @if (Model.CauseId.HasValue)
+    {
+        <text>
+        $(function() {
+            $('#causeSelect').val(@Model.CauseId.Value);
+        });
+        </text>
+    }
+
+    $('#imageInput').on('change', function() {
+        $(this).next('.custom-file-label').text($(this).prop('files')[0]?.name || 'Choose new file...');
+    });
+
+    loadCauses();
+});
+
+async function loadCauses() {
+    try {
+        const resp = await fetch('/api/v1/causes?activeOnly=true');
+        if (!resp.ok) return;
+        const json = await resp.json();
+        const causes = json.data || [];
+        const select = document.getElementById('causeSelect');
+        causes.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.causeId || c.id;
+            opt.textContent = c.name;
+            if (c.causeId === @Model.CauseId.GetValueOrDefault(0) || c.id === @Model.CauseId.GetValueOrDefault(0))
+                opt.selected = true;
+            select.appendChild(opt);
+        });
+    } catch { /* Causes unavailable */ }
+}
+</script>
+}

@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Donation Details";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Donation Details</h3>
+        <div class="card-tools">
+            <a asp-area="Admin" asp-controller="Donations" asp-action="Index" class="btn btn-default btn-sm">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+    <div class="card-body" id="donationDetails">
+        <div class="text-center py-5">
+            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+            <p class="text-muted mt-2">Loading...</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(async function() {
+    const match = window.location.pathname.match(/\/Donations\/Details\/(\d+)/);
+    const id = match ? match[1] : 0;
+    try {
+        const resp = await fetch('/api/v1/donations/' + id, {
+            headers: { 'Authorization': 'Bearer ' + getJwtToken() }
+        });
+        if (!resp.ok) throw new Error();
+        const json = await resp.json();
+        renderDonation(json.data);
+    } catch {
+        document.getElementById('donationDetails').innerHTML =
+            '<div class="alert alert-warning">Donation details unavailable. API may not be implemented yet.</div>';
+    }
+})();
+
+function renderDonation(d) {
+    if (!d) {
+        document.getElementById('donationDetails').innerHTML = '<div class="alert alert-warning">Donation not found.</div>';
+        return;
+    }
+    document.getElementById('donationDetails').innerHTML = \`
+    <div class="row">
+        <div class="col-md-6">
+            <table class="table table-striped">
+                <tr><th>Donor</th><td>\${d.isAnonymous ? '<em>Anonymous</em>' : escapeHtml(d.donorName || '—')}</td></tr>
+                <tr><th>Email</th><td>\${escapeHtml(d.donorEmail || '—')}</td></tr>
+                <tr><th>Campaign</th><td>\${escapeHtml(d.campaignName || '—')}</td></tr>
+                <tr><th>Amount</th><td><strong>$\${(d.amount || 0).toLocaleString()}</strong></td></tr>
+                <tr><th>Status</th><td><span class="badge badge-\${getStatusClass(d.status)}">\${d.status || '—'}</span></td></tr>
+                <tr><th>Payment Method</th><td>\${escapeHtml(d.paymentMethod || '—')}</td></tr>
+                <tr><th>Transaction ID</th><td>\${escapeHtml(d.transactionId || '—')}</td></tr>
+                <tr><th>Date</th><td>\${formatDate(d.createdAt)}</td></tr>
+            </table>
+        </div>
+        <div class="col-md-6">
+            \${d.message ? \`<div class="alert alert-info"><h5>Donor Message</h5><p>\${escapeHtml(d.message)}</p></div>\` : ''}
+        </div>
+    </div>\`;
+}
+
+function getJwtToken() {
+    const cookies = document.cookie.split('; ');
+    const session = cookies.find(r => r.startsWith('GiveAID.Admin.Session='));
+    return session ? session.split('=')[1] : '';
+}
+function escapeHtml(str) { return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function formatDate(str) { return str ? new Date(str).toLocaleDateString() : '—'; }
+function getStatusClass(s) {
+    switch (s?.toLowerCase) { case 'confirmed': return 'success'; case 'pending': return 'warning'; case 'cancelled': return 'danger'; default: return 'secondary'; }
+}
+</script>
+}

@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Causes";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Causes</h3>
+        <div class="card-tools">
+            <a asp-area="Admin" asp-controller="Causes" asp-action="Create" class="btn btn-success btn-sm">
+                <i class="fas fa-plus"></i> Add Cause
+            </a>
+        </div>
+    </div>
+    <div class="card-body" id="causesBody">
+        <div class="text-center py-4"><i class="fas fa-spinner fa-spin text-muted"></i> Loading...</div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(async function() {
+    try {
+        const resp = await fetch('/api/v1/causes?activeOnly=false');
+        if (!resp.ok) throw new Error();
+        const json = await resp.json();
+        renderCauses(json.data || []);
+    } catch {
+        document.getElementById('causesBody').innerHTML = '<div class="alert alert-warning">Causes data unavailable. API may not be implemented.</div>';
+    }
+})();
+
+function renderCauses(causes) {
+    if (!causes.length) {
+        document.getElementById('causesBody').innerHTML = '<div class="alert alert-info">No causes found.</div>';
+        return;
+    }
+    const html = '<table class="table table-bordered table-striped"><thead><tr><th>Name</th><th>Parent</th><th>Campaigns</th><th>Active</th><th>Actions</th></tr></thead><tbody>' +
+        causes.map(c => \`<tr>
+            <td>\${escapeHtml(c.name || '')}</td>
+            <td>\${escapeHtml(c.parentName || '—')}</td>
+            <td>\${c.campaignCount || 0}</td>
+            <td>\${c.isActive ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-secondary">No</span>'}</td>
+            <td>
+                <a href="/Admin/Causes/Edit/\${c.causeId || c.id}" class="btn btn-xs btn-warning"><i class="fas fa-edit"></i></a>
+                <form action="/Admin/Causes/Delete/\${c.causeId || c.id}" method="post" style="display:inline" onsubmit="return confirm('Delete this cause?')">@Html.AntiForgeryToken()<button class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></button></form>
+            </td>
+        </tr>\`).join('') + '</tbody></table>';
+    document.getElementById('causesBody').innerHTML = html;
+}
+function escapeHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+}

@@ -4,13 +4,14 @@ import {
 } from 'react-bootstrap';
 import { faqService } from '../services';
 import { sanitizeHtml } from '../utils/safeHtml';
+import { SAMPLE_FAQS } from '../data/sampleFaqs';
 import '../styles/AboutPages.css';
 
 function FaqItem({ item, onSelect }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="faq-item mb-3">
+    <div className="faq-item mb-2">
       <button
         type="button"
         className={`faq-question ${open ? 'open' : ''}`}
@@ -56,11 +57,41 @@ function HelpCentrePage() {
       if (activeCategory) params.category = activeCategory;
       if (debouncedSearch) params.search = debouncedSearch;
       const response = await faqService.getAll(params);
-      if (response.success) {
-        setFaqs(response.data || []);
+      const apiItems = response?.success ? (response.data || []) : [];
+      // Filter by category / search client-side as well, so the sample
+      // fallback honours the same UX as the API.
+      let items = apiItems;
+      if (!items.length) {
+        items = SAMPLE_FAQS;
       }
+      const filtered = items.filter((f) => {
+        if (activeCategory && f.category !== activeCategory) return false;
+        if (debouncedSearch) {
+          const q = debouncedSearch.toLowerCase();
+          return (
+            (f.question || '').toLowerCase().includes(q) ||
+            (f.answer || '').toLowerCase().includes(q)
+          );
+        }
+        return true;
+      });
+      setFaqs(filtered);
     } catch (err) {
-      setError('Failed to load FAQs.');
+      console.warn('FAQs fetch failed, using sample data:', err);
+      // Apply client-side filter to sample data too.
+      const filtered = SAMPLE_FAQS.filter((f) => {
+        if (activeCategory && f.category !== activeCategory) return false;
+        if (debouncedSearch) {
+          const q = debouncedSearch.toLowerCase();
+          return (
+            (f.question || '').toLowerCase().includes(q) ||
+            (f.answer || '').toLowerCase().includes(q)
+          );
+        }
+        return true;
+      });
+      setFaqs(filtered);
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -69,11 +100,17 @@ function HelpCentrePage() {
   const fetchCategories = useCallback(async () => {
     try {
       const response = await faqService.getCategories();
-      if (response.success) {
-        setCategories(response.data || []);
+      const apiCats = response?.success ? (response.data || []) : [];
+      if (apiCats.length === 0) {
+        // Derive unique categories from sample data so dropdown still works.
+        const cats = [...new Set(SAMPLE_FAQS.map((f) => f.category).filter(Boolean))].sort();
+        setCategories(cats);
+      } else {
+        setCategories(apiCats);
       }
-    } catch (err) {
-      // Non-fatal
+    } catch {
+      const cats = [...new Set(SAMPLE_FAQS.map((f) => f.category).filter(Boolean))].sort();
+      setCategories(cats);
     }
   }, []);
 
@@ -195,8 +232,8 @@ function HelpCentrePage() {
             {/* Featured FAQs */}
             {featuredFaqs.length > 0 && !debouncedSearch && (
               <div className="mb-4">
-                <h4 className="text-light mb-3">
-                  <i className="bi bi-star-fill text-warning me-2"></i>
+                <h4 className="text-charcoal d-flex align-items-center gap-2 mb-3">
+                  <i className="bi bi-star-fill text-warning"></i>
                   Popular Questions
                 </h4>
                 {featuredFaqs.map((item) => (
@@ -209,9 +246,8 @@ function HelpCentrePage() {
             {regularFaqs.length > 0 && (
               <div>
                 {(featuredFaqs.length > 0 || debouncedSearch) && (
-                  <h4 className="text-light mb-3">
+                  <h4 className="text-charcoal d-flex align-items-center gap-2 mb-3">
                     {debouncedSearch ? 'Search Results' : 'All Questions'}
-                    <span className="badge bg-primary ms-2">{regularFaqs.length}</span>
                   </h4>
                 )}
                 {regularFaqs.map((item) => (

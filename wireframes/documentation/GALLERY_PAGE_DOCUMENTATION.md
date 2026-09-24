@@ -454,7 +454,7 @@ View Filtered Results
 ## 📂 Related Files
 
 ```
-C:\Users\admin\Desktop\project NGO\wireframes\
+<PROJECT_NGO_ROOT>\wireframes\
 ├── campaign-list-final.html           (Master reference)
 ├── donate-page-wireframe.html         (Donation flow)
 ├── programmes-list-wireframe.html     (Volunteer programmes)

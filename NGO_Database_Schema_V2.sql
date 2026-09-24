@@ -193,7 +193,7 @@ GO
 -- =====================================================
 CREATE TABLE Donations (
     donation_id INT PRIMARY KEY IDENTITY(1,1),
-    user_id INT NOT NULL,
+    user_id INT NULL,  -- Nullable to support anonymous donations
     cause_id INT NOT NULL,
     campaign_id INT,                    -- Optional: specific campaign
     organization_id INT,                -- Optional: specific NGO

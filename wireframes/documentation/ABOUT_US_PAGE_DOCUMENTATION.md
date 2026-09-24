@@ -332,7 +332,7 @@ This is a desktop-only wireframe. Responsive behavior would need:
 
 ## File Information
 
-**Location**: `C:\Users\admin\Desktop\project NGO\wireframes\about-us-wireframe.html`  
+**Location**: `<PROJECT_NGO_ROOT>\wireframes\about-us-wireframe.html`  
 **Size**: ~625 lines of HTML + CSS  
 **Dependencies**: Google Fonts (Architects Daughter, Courier Prime)  
 **Browser Compatibility**: All modern browsers (Chrome, Firefox, Safari, Edge)

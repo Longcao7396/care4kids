@@ -54,7 +54,7 @@ erDiagram
         nvarchar profession
         date date_of_birth
         nvarchar gender
-        nvarchar role "SuperAdmin, Admin, ContentManager, User"
+        nvarchar role "Admin, ContentManager, User"
         nvarchar permissions "JSON array"
         bit is_verified
         varchar verification_token
@@ -274,14 +274,14 @@ erDiagram
 
 | Field | Type | Mô tả |
 |-------|------|-------|
-| `role` | NVARCHAR(20) | 'SuperAdmin', 'Admin', 'ContentManager', 'User' |
+| `role` | NVARCHAR(20) | 'Admin', 'ContentManager', 'User' |
 | `permissions` | NVARCHAR(MAX) | JSON array cho permissions chi tiết |
 | `profession` | NVARCHAR(100) | Nghề nghiệp (cho user thường) |
 | `date_of_birth` | DATE | Ngày sinh |
 | `is_verified` | BIT | Email đã xác thực |
 
 **Enum values:**
-- `role`: SuperAdmin, Admin, ContentManager, User
+- `role`: Admin, ContentManager, User
 
 ---
 

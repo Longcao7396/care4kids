@@ -17,7 +17,7 @@ simple problems itself, and reports everything it could not auto-fix.
 ## Usage
 
 ```powershell
-cd 'C:\Users\admin\Desktop\project NGO'
+cd '<REPO_ROOT>'
 powershell -ExecutionPolicy Bypass -File scripts/auditor.ps1
 ```
 

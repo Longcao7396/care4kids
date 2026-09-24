@@ -1,0 +1,31 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Application/">
+    <Project Path="src/Application/GiveAID.V2.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Domain/">
+    <Project Path="src/Domain/GiveAID.V2.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src/Infrastructure/GiveAID.V2.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Web/">
+    <Project Path="src/Web/GiveAID.V2.Web.csproj" />
+  </Folder>
+  <Folder Name="/src/WebApi/">
+    <Project Path="src/WebApi/GiveAID.V2.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Application.UnitTests/">
+    <Project Path="tests/Application.UnitTests/GiveAID.V2.Application.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Domain.UnitTests/">
+    <Project Path="tests/Domain.UnitTests/GiveAID.V2.Domain.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Infrastructure.IntegrationTests/">
+    <Project Path="tests/Infrastructure.IntegrationTests/GiveAID.V2.Infrastructure.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/WebApi.FunctionalTests/">
+    <Project Path="tests/WebApi.FunctionalTests/GiveAID.V2.WebApi.FunctionalTests.csproj" />
+  </Folder>
+</Solution>

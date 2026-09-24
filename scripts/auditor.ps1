@@ -8,6 +8,10 @@
     safe, reversible fixes. Reports anything it could not auto-fix to
     scripts/audit-report.md.
 
+    Configurable via environment variable:
+      $env:OLD_PROJECT_ROOT — path to the old project NGO codebase
+      (defaults to the sibling of this repo's parent if not set)
+
 .PARAMETER AutoFix
     When set, the auditor will apply safe fixes (default behavior).
 
@@ -29,9 +33,26 @@ $reportPath = Join-Path $PSScriptRoot 'audit-report.md'
 $issues = New-Object System.Collections.Generic.List[string]
 $applied = New-Object System.Collections.Generic.List[string]
 
+# ── Resolve path to the OLD project (v1 / project NGO) ────────────────────────
+# The auditor lives in NGO.v2/scripts/. The old project sits as a sibling
+# at the same Desktop level. Use the env var to override if needed.
+$script:OLD_PROJECT_ROOT = if ($env:OLD_PROJECT_ROOT) {
+    $env:OLD_PROJECT_ROOT
+} else {
+    # Navigate: scripts/ -> NGO.v2/ -> Desktop/ -> sibling "project NGO"
+    $desktop = (Get-Item (Join-Path $PSScriptRoot '..\..')).Parent.FullName  # Desktop
+    $oldCandidate = Join-Path $desktop 'project NGO'
+    if (Test-Path $oldCandidate) { $oldCandidate } else { $null }
+}
+
+if (-not $script:OLD_PROJECT_ROOT) {
+    Write-Host "[auditor] WARNING: Could not locate old project at '$desktop\project NGO'" -ForegroundColor Yellow
+    Write-Host "[auditor] Set `$env:OLD_PROJECT_ROOT to override. Some checks will be skipped." -ForegroundColor Yellow
+}
+
 function Write-Section($title) {
     Write-Host ""
-    Write-Host "â•â•â• $title â•â•â•" -ForegroundColor Cyan
+    Write-Host "──── $title ────" -ForegroundColor Cyan
 }
 
 function Write-Ok($msg)   { Write-Host "  [OK]   $msg" -ForegroundColor Green }
@@ -39,9 +60,9 @@ function Write-Warn($msg) { Write-Host "  [WARN] $msg" -ForegroundColor Yellow; 
 function Write-Err($msg)  { Write-Host "  [ERR]  $msg" -ForegroundColor Red;     $issues.Add($msg) | Out-Null }
 function Write-Fix($msg) { Write-Host "  [FIX]  $msg" -ForegroundColor Magenta; $applied.Add($msg) | Out-Null }
 
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 # 1. Runtime health
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 Write-Section "1. Runtime health"
 
 $ports = @(3000, 44300, 61508)
@@ -67,7 +88,7 @@ if ($portsUp[44300] -or $portsUp[61508]) {
         $sr = New-Object System.IO.StreamReader($resp.GetResponseStream())
         $body = $sr.ReadToEnd()
         $sr.Close()
-        Write-Ok "Backend /health â†’ HTTP $($resp.StatusCode): $body"
+        Write-Ok "Backend /health → HTTP $($resp.StatusCode): $body"
     } catch {
         Write-Err "Backend /health FAILED: $($_.Exception.Message)"
     }
@@ -95,14 +116,15 @@ if ($portsUp[44300]) {
     try {
         $w = [Net.WebRequest]::Create('http://localhost:44300/api/auth/login')
         $w.Method = 'POST'; $w.ContentType = 'application/json'; $w.Timeout = 30000
-        $body = [Text.Encoding]::UTF8.GetBytes('{"Email":"admin@give-aid.org","Password":"Admin@123"}')
+        # Login by username (preferred) — email also supported
+        $body = [Text.Encoding]::UTF8.GetBytes('{"Username":"admin","Password":"Admin@123"}')
         $s = $w.GetRequestStream(); $s.Write($body, 0, $body.Length); $s.Close()
         $resp = $w.GetResponse()
         $sr = New-Object System.IO.StreamReader($resp.GetResponseStream())
         $content = $sr.ReadToEnd()
         $sr.Close(); $resp.Close()
         if ($content -match '"success":true') {
-            Write-Ok "Login API OK (admin@give-aid.org)"
+            Write-Ok "Login API OK (admin)"
         } else {
             Write-Err "Login API returned non-success: $content"
         }
@@ -118,9 +140,9 @@ if ($portsUp[44300]) {
     }
 }
 
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 # 2. IIS Express integrity
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 Write-Section "2. IIS Express integrity"
 
 $iis = Get-CimInstance Win32_Process | Where-Object {
@@ -132,13 +154,13 @@ if ($iis) {
     Write-Err "IIS Express for GiveAID.Web NOT running"
 }
 
-$configPath = 'C:\Users\admin\Desktop\project NGO\GiveAID.Web\.vs\GiveAID.Web\config\applicationhost.config'
-if (Test-Path $configPath) {
+$configPath = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Web\.vs\GiveAID.Web\config\applicationhost.config'
+if ($script:OLD_PROJECT_ROOT -and (Test-Path $configPath)) {
     $cfg = Get-Content $configPath -Raw
     if ($cfg -match '<location path="GiveAID\.Web">[\s\S]*?<windowsAuthentication enabled="false"') {
         Write-Ok "Windows Auth disabled for GiveAID.Web"
     } else {
-        Write-Err "Windows Auth still enabled â€” popup will appear"
+        Write-Err "Windows Auth still enabled — popup will appear"
         if ($AutoFix) {
             $newCfg = $cfg -replace '(<location path="GiveAID\.Web">[\s\S]*?<windowsAuthentication enabled=)"true"', '$1"false"'
             if ($newCfg -ne $cfg) {
@@ -149,136 +171,152 @@ if (Test-Path $configPath) {
             }
         }
     }
+} elseif (-not $script:OLD_PROJECT_ROOT) {
+    Write-Warn "OLD_PROJECT_ROOT not set — skipping IIS Express checks"
 } else {
     Write-Warn "applicationhost.config not found at $configPath"
 }
 
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 # 3. Backend code quality
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 Write-Section "3. Backend code quality"
 
-$csproj = 'C:\Users\admin\Desktop\project NGO\GiveAID.Web\GiveAID.Web.csproj'
-$helpersDir = 'C:\Users\admin\Desktop\project NGO\GiveAID.Web\Helpers'
-$controllersDir = 'C:\Users\admin\Desktop\project NGO\GiveAID.Web\Controllers'
-
-# Check for custom CryptoHelper (should not exist)
-$cryptoFile = Join-Path $helpersDir 'CryptoHelper.cs'
-if (Test-Path $cryptoFile) {
-    Write-Err "CryptoHelper.cs still present (should use BCrypt.Net-Next nuget)"
-    $issues.Add("Backend: CryptoHelper.cs exists - replace with PasswordHasher.cs using BCrypt.Net-Next")
+if (-not $script:OLD_PROJECT_ROOT) {
+    Write-Warn "OLD_PROJECT_ROOT not set — skipping old project code checks"
 } else {
-    Write-Ok "CryptoHelper.cs removed"
-}
+    $csproj = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Web\GiveAID.Web.csproj'
+    $helpersDir = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Web\Helpers'
+    $controllersDir = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Web\Controllers'
 
-# Check for PasswordHasher
-$hasherFile = Join-Path $helpersDir 'PasswordHasher.cs'
-if (Test-Path $hasherFile) {
-    $h = Get-Content $hasherFile -Raw
-    if ($h -match 'BCrypt\.Net\.BCrypt') {
-        Write-Ok "PasswordHasher uses BCrypt.Net-Next"
+    # Check for custom CryptoHelper (should not exist)
+    $cryptoFile = Join-Path $helpersDir 'CryptoHelper.cs'
+    if (Test-Path $cryptoFile) {
+        Write-Err "CryptoHelper.cs still present (should use BCrypt.Net-Next nuget)"
+        $issues.Add("Backend: CryptoHelper.cs exists - replace with PasswordHasher.cs using BCrypt.Net-Next")
     } else {
-        Write-Warn "PasswordHasher exists but doesn't use BCrypt"
+        Write-Ok "CryptoHelper.cs removed"
     }
-} else {
-    Write-Err "PasswordHasher.cs missing"
-}
 
-# Check ApiResponse non-generic support
-$vmFile = 'C:\Users\admin\Desktop\project NGO\GiveAID.Web\Models\ViewModels.cs'
-if (Test-Path $vmFile) {
-    $vm = Get-Content $vmFile -Raw
-    if ($vm -match 'class ApiResponse\s*:\s*ApiResponse<object>') {
-        Write-Ok "ApiResponse non-generic alias present"
+    # Check for PasswordHasher
+    $hasherFile = Join-Path $helpersDir 'PasswordHasher.cs'
+    if (Test-Path $hasherFile) {
+        $h = Get-Content $hasherFile -Raw
+        if ($h -match 'BCrypt\.Net\.BCrypt') {
+            Write-Ok "PasswordHasher uses BCrypt.Net-Next"
+        } else {
+            Write-Warn "PasswordHasher exists but doesn't use BCrypt"
+        }
     } else {
-        Write-Err "ApiResponse non-generic alias missing (build will fail)"
-        if ($AutoFix) {
-            $newVm = $vm -replace '(// RESPONSE WRAPPERS\r?\n\s*public class ApiResponse<T>)', "public class ApiResponse : ApiResponse<object> { }`r`n`r`n    public class ApiResponse<T>"
-            if ($newVm -ne $vm) {
-                Set-Content -Path $vmFile -Value $newVm -Encoding UTF8
-                Write-Fix "Added ApiResponse non-generic alias"
+        Write-Err "PasswordHasher.cs missing"
+    }
+
+    # Check ApiResponse non-generic support
+    $vmFile = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Web\Models\ViewModels.cs'
+    if (Test-Path $vmFile) {
+        $vm = Get-Content $vmFile -Raw
+        if ($vm -match 'class ApiResponse\s*:\s*ApiResponse<object>') {
+            Write-Ok "ApiResponse non-generic alias present"
+        } else {
+            Write-Err "ApiResponse non-generic alias missing (build will fail)"
+            if ($AutoFix) {
+                $newVm = $vm -replace '(// RESPONSE WRAPPERS\r?\n\s*public class ApiResponse<T>)', "public class ApiResponse : ApiResponse<object> { }`r`n`r`n    public class ApiResponse<T>"
+                if ($newVm -ne $vm) {
+                    Set-Content -Path $vmFile -Value $newVm -Encoding UTF8
+                    Write-Fix "Added ApiResponse non-generic alias"
+                }
             }
         }
     }
+
+    # Check no controller uses hardcoded JwtSecret
+    $badPattern = 'JwtSecret.*=.*"[A-Za-z0-9@#$%^&*]'
+    if (Test-Path $controllersDir) {
+        $controllers = Get-ChildItem $controllersDir -Filter '*.cs' -ErrorAction SilentlyContinue
+        $bad = $controllers | Where-Object { (Get-Content $_.FullName -Raw) -match $badPattern }
+        if ($bad) {
+            Write-Err "Controllers with hardcoded JWT secret: $($bad.Name -join ', ')"
+        } else {
+            Write-Ok "No hardcoded JWT secrets in controllers"
+        }
+    }
 }
 
-# Check no controller uses hardcoded JwtSecret
-$badPattern = 'JwtSecret.*=.*"[A-Za-z0-9@#$%^&*]'
-$controllers = Get-ChildItem $controllersDir -Filter '*.cs'
-$bad = $controllers | Where-Object { (Get-Content $_.FullName -Raw) -match $badPattern }
-if ($bad) {
-    Write-Err "Controllers with hardcoded JWT secret: $($bad.Name -join ', ')"
-} else {
-    Write-Ok "No hardcoded JWT secrets in controllers"
-}
-
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 # 4. Frontend code quality
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 Write-Section "4. Frontend code quality"
 
-$clientSrc = 'C:\Users\admin\Desktop\project NGO\GiveAID.Client\src'
+if (-not $script:OLD_PROJECT_ROOT) {
+    Write-Warn "OLD_PROJECT_ROOT not set — skipping old project frontend checks"
+} else {
+    $clientSrc = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Client\src'
 
-# Check flash-and-redirect bug
-$loginPage = Join-Path $clientSrc 'pages\LoginPage.js'
-if (Test-Path $loginPage) {
-    $lp = Get-Content $loginPage -Raw
-    if ($lp -match 'await login\(' -and $lp -match "navigate\(.dashboard.,\s*\{\s*replace:\s*true\s*\}\s*\)") {
-        # Check if there's a useEffect watching user after login
-        if ($lp -match 'useEffect[\s\S]*?user[\s\S]*?navigate\(.dashboard.') {
-            Write-Ok "LoginPage uses post-login useEffect (fixes flash-and-redirect)"
+    # Check flash-and-redirect bug
+    $loginPage = Join-Path $clientSrc 'pages\LoginPage.js'
+    if (Test-Path $loginPage) {
+        $lp = Get-Content $loginPage -Raw
+        if ($lp -match 'await login\(' -and $lp -match "navigate\(.dashboard.,\s*\{\s*replace:\s*true\s*\}\s*\)") {
+            # Check if there's a useEffect watching user after login
+            if ($lp -match 'useEffect[\s\S]*?user[\s\S]*?navigate\(.dashboard.') {
+                Write-Ok "LoginPage uses post-login useEffect (fixes flash-and-redirect)"
+            } else {
+                Write-Err "LoginPage has flash-and-redirect bug (calls navigate before setUser propagates)"
+                $issues.Add("Frontend: LoginPage.js needs useEffect to watch user state after login")
+            }
         } else {
-            Write-Err "LoginPage has flash-and-redirect bug (calls navigate before setUser propagates)"
-            $issues.Add("Frontend: LoginPage.js needs useEffect to watch user state after login")
+            Write-Ok "LoginPage flow is OK"
         }
-    } else {
-        Write-Ok "LoginPage flow is OK"
+    }
+
+    # Check ProtectedRoute has localStorage fallback
+    $protectedRoute = Join-Path $clientSrc 'components\ProtectedRoute.js'
+    if (Test-Path $protectedRoute) {
+        $pr = Get-Content $protectedRoute -Raw
+        if ($pr -match "localStorage\.getItem\(.giveaid_token.\)") {
+            Write-Ok "ProtectedRoute has localStorage fallback"
+        } else {
+            Write-Err "ProtectedRoute missing localStorage fallback"
+            $issues.Add("Frontend: ProtectedRoute.js should check localStorage as fallback")
+        }
+    }
+
+    # Check AuthService.login error handling
+    $authService = Join-Path $clientSrc 'services\authService.js'
+    if (Test-Path $authService) {
+        $as = Get-Content $authService -Raw
+        if ($as -match 'friendlyMessage') {
+            Write-Ok "AuthService has friendly error messages"
+        } else {
+            Write-Warn "AuthService missing friendly error messages"
+        }
     }
 }
 
-# Check ProtectedRoute has localStorage fallback
-$protectedRoute = Join-Path $clientSrc 'components\ProtectedRoute.js'
-if (Test-Path $protectedRoute) {
-    $pr = Get-Content $protectedRoute -Raw
-    if ($pr -match "localStorage\.getItem\(.giveaid_token.\)") {
-        Write-Ok "ProtectedRoute has localStorage fallback"
-    } else {
-        Write-Err "ProtectedRoute missing localStorage fallback"
-        $issues.Add("Frontend: ProtectedRoute.js should check localStorage as fallback")
-    }
-}
-
-# Check AuthService.login error handling
-$authService = Join-Path $clientSrc 'services\authService.js'
-if (Test-Path $authService) {
-    $as = Get-Content $authService -Raw
-    if ($as -match 'friendlyMessage') {
-        Write-Ok "AuthService has friendly error messages"
-    } else {
-        Write-Warn "AuthService missing friendly error messages"
-    }
-}
-
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 # 5. Security smoke
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 Write-Section "5. Security smoke"
 
-$webConfig = 'C:\Users\admin\Desktop\project NGO\GiveAID.Web\Web.config'
-if (Test-Path $webConfig) {
-    $w = Get-Content $webConfig -Raw
-    if ($w -match 'JwtSecret.*value="([^"]+)"') {
-        $secret = $Matches[1]
-        if ($secret.Length -ge 32) {
-            Write-Ok "JWT secret length OK ($($secret.Length) chars)"
+if (-not $script:OLD_PROJECT_ROOT) {
+    Write-Warn "OLD_PROJECT_ROOT not set — skipping Web.config checks"
+} else {
+    $webConfig = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Web\Web.config'
+    if (Test-Path $webConfig) {
+        $w = Get-Content $webConfig -Raw
+        if ($w -match 'JwtSecret.*value="([^"]+)"') {
+            $secret = $Matches[1]
+            if ($secret.Length -ge 32) {
+                Write-Ok "JWT secret length OK ($($secret.Length) chars)"
+            } else {
+                Write-Err "JWT secret too short: $($secret.Length) chars (need ≥32)"
+            }
+            if ($secret -match 'YourSuperSecretKey123!@#') {
+                Write-Warn "JWT secret is the well-known default value — change in production"
+            }
         } else {
-            Write-Err "JWT secret too short: $($secret.Length) chars (need â‰¥32)"
+            Write-Err "JWT secret not found in Web.config"
         }
-        if ($secret -match 'YourSuperSecretKey123!@#') {
-            Write-Warn "JWT secret is the well-known default value â€” change in production"
-        }
-    } else {
-        Write-Err "JWT secret not found in Web.config"
     }
 }
 
@@ -309,31 +347,36 @@ try {
     Write-Warn "Could not query DB: $($_.Exception.Message)"
 }
 
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 # 6. Optional rebuild
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 if (-not $SkipRebuild -and $AutoFix) {
     Write-Section "6. Backend rebuild check"
-    $dll = 'C:\Users\admin\Desktop\project NGO\GiveAID.Web\bin\GiveAID.Web.dll'
-    if (Test-Path $dll) {
-        $age = (Get-Date) - (Get-Item $dll).LastWriteTime
-        Write-Host "  DLL age: $([Math]::Round($age.TotalMinutes, 1)) minutes"
-        if ($age.TotalMinutes -gt 30) {
-            Write-Warn "DLL is older than 30 min â€” consider rebuilding"
-        } else {
-            Write-Ok "DLL is fresh"
+    if (-not $script:OLD_PROJECT_ROOT) {
+        Write-Warn "OLD_PROJECT_ROOT not set — skipping DLL age check"
+    } else {
+        $dll = Join-Path $script:OLD_PROJECT_ROOT 'GiveAID.Web\bin\GiveAID.Web.dll'
+        if (Test-Path $dll) {
+            $age = (Get-Date) - (Get-Item $dll).LastWriteTime
+            Write-Host "  DLL age: $([Math]::Round($age.TotalMinutes, 1)) minutes"
+            if ($age.TotalMinutes -gt 30) {
+                Write-Warn "DLL is older than 30 min — consider rebuilding"
+            } else {
+                Write-Ok "DLL is fresh"
+            }
         }
     }
 }
 
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 # 7. Report
-#â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#─────────────────────────────────────────────────────────────────────────────
 Write-Section "7. Report"
 
 $report = @"
 # GiveAID Audit Report
 Generated: $timestamp
+OLD_PROJECT_ROOT: $($script:OLD_PROJECT_ROOT)
 
 ## Summary
 - **Issues found:** $($issues.Count)
@@ -347,12 +390,12 @@ $($issues | ForEach-Object { "- $_" } | Out-String)
 "@
 
 Set-Content -Path $reportPath -Value $report -Encoding UTF8
-Write-Host "  â†’ Report written to: $reportPath"
+Write-Host "  → Report written to: $reportPath"
 
 if ($issues.Count -eq 0) {
     Write-Host ""
-    Write-Host "  âœ… All checks passed." -ForegroundColor Green
+    Write-Host "  All checks passed." -ForegroundColor Green
 } else {
     Write-Host ""
-    Write-Host "  âš  $($issues.Count) issue(s) require attention." -ForegroundColor Yellow
+    Write-Host "  $($issues.Count) issue(s) require attention." -ForegroundColor Yellow
 }

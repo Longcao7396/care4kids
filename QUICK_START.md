@@ -127,9 +127,11 @@ Frontend sẽ chạy tại: `http://localhost:3000`
 ### Test 1: Login với Admin Account
 ```
 URL: http://localhost:3000/login
-Email: admin@give-aid.org
+Username: admin
 Password: Admin@123
 ```
+
+> **Lưu ý:** Trường login chỉ chấp nhận **username** (case-insensitive). Email không còn là identifier hợp lệ.
 
 ### Test 2: Login với Demo User
 ```
@@ -221,7 +223,7 @@ taskkill /PID <PID> /F
 ### Users
 | Email | Password | Role |
 |-------|----------|------|
-| admin@give-aid.org | Admin@123 | SuperAdmin |
+| admin@give-aid.org | Admin@123 | Admin |
 | user@example.com | User@123 | User |
 
 ### Causes (3)
@@ -249,7 +251,7 @@ GET    /causes              - Get all causes
 GET    /causes/{id}         - Get cause details
 POST   /causes              - Create cause (Admin)
 PUT    /causes/{id}         - Update cause (Admin)
-DELETE /causes/{id}         - Delete cause (SuperAdmin)
+DELETE /causes/{id}         - Delete cause (Admin)
 GET    /causes/stats        - Get statistics (Admin)
 ```
 

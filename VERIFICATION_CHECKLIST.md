@@ -377,7 +377,7 @@ Test these URLs in browser or Postman:
 
 **Admin Dashboard** ← NEW in V2.0
 - [ ] Admin Dashboard loads (`http://localhost:3000/admin`)
-- [ ] Only accessible by Admin/SuperAdmin role
+- [ ] Only accessible by Admin role
 - [ ] Regular users redirected away
 - [ ] **Overview cards display:**
   - [ ] Total Donations amount
@@ -612,7 +612,7 @@ If something doesn't work, check these:
   - Verify CurrentAmount calculation in database
   - Check if donations are linked to CampaignID
 - [ ] **Admin dashboard empty:**
-  - Verify user has Admin or SuperAdmin role
+  - Verify user has Admin role
   - Check if statistics queries return data
   - Verify at least 10 donations exist
 

@@ -272,16 +272,16 @@ const ContactPage = () => {
                   <p className="eyebrow">Find Us</p>
                   <h3 className="cp-map-title">Ho Chi Minh City Office</h3>
                   <div className="cp-map">
-                    <iframe
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4868245765676!2d106.70042347485675!3d10.773476259241107!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f47866c1b87%3A0x6e98a4e2c5a5e6db!2sHo%20Chi%20Minh%20City%2C%20Vietnam!5e0!3m2!1sen!2s!4v1700000000000"
-                      width="100%"
-                      height="280"
-                      style={{ border: 0, borderRadius: 'var(--radius-md)' }}
-                      allowFullScreen=""
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Care4Kids HCMC Office Location"
-                    />
+                    <a 
+                      href="https://maps.app.goo.gl/gnP5Hu95CLuoiq6w9"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cp-map-link"
+                    >
+                      <i className="bi bi-geo-alt-fill"></i>
+                      <span>Mở trong Google Maps</span>
+                      <i className="bi bi-box-arrow-up-right"></i>
+                    </a>
                   </div>
                 </div>
               </div>

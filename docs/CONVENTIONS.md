@@ -1,213 +1,331 @@
-# Coding Conventions
+# Coding Conventions — GiveAID v2.0
 
-> Audience: AI coding assistants and human contributors. Follow these to keep the codebase
-> consistent and easy to upgrade.
+These conventions keep the codebase consistent and reviewable. They apply to all C# code
+in `src/` and `tests/`.
 
----
+## 1. C# Style
 
-## Backend (C# / .NET Framework 4.7.2)
+### 1.1. Naming
 
-### 1. Naming
+| Element                | Convention                  | Example                            |
+|------------------------|-----------------------------|------------------------------------|
+| Namespace              | PascalCase, dot-separated    | `GiveAID.Application.Features.Auth` |
+| Class                  | PascalCase                   | `LoginCommandHandler`              |
+| Interface               | `I` + PascalCase             | `IJwtTokenService`                 |
+| Method                 | PascalCase                   | `GetCampaignsAsync`                |
+| Property               | PascalCase                   | `EmailAddress`                     |
+| Private field          | `_camelCase`                 | `_httpClient`                      |
+| Local variable         | camelCase                    | `campaignId`                       |
+| Constant               | PascalCase                   | `DefaultPageSize`                  |
+| Enum value             | PascalCase                   | `CampaignStatus.Active`            |
+| Async method           | suffix `Async`               | `HandleAsync`                      |
 
-| Element | Convention | Example |
-|---|---|---|
-| Class | `PascalCase` | `CampaignsController` |
-| Method | `PascalCase` | `GetDashboardStats` |
-| Public property | `PascalCase` | `CampaignName` |
-| Private field | `_camelCase` | `_validationContext` |
-| Local variable | `camelCase` | `campaignList` |
-| Constant | `PascalCase` | `AdminHash` |
-| Enum | `PascalCase` (member also) | `CampaignStatus.Active` |
-| Interface | `IPascalCase` | `IJwtTokenProvider` |
-| Route prefix | `kebab-case` | `api/campaigns` |
-| Attribute | `PascalCase` | `[JwtAuthorize]` |
+### 1.2. File Layout
 
-### 2. Controllers
+```
+// Copyright header (optional)
+using System.Text;          // System.*
+using Microsoft.Extensions.*; // Third-party
+using GiveAID.Domain.*;       // Project
+namespace GiveAID.Application.Features.Campaigns;
 
-- One controller per top-level resource. Sub-resources get nested routes.
-- All controller actions returning entities **must** use a DTO from `Models/CampaignDto.cs`
-  or `Models/ViewModels.cs`. Never return raw EF entities to the client.
-- `[RoutePrefix]` is mandatory. Don't rely on action-name conventions.
-- Use `[HttpGet]`, `[HttpPost]`, etc. for explicit verb mapping.
-- Always wrap multi-step operations in `using (var ctx = new GiveAIDContext())` if not using DI
-  (this project doesn't use Unity/Autofac — context is created per request).
+public class CreateCampaignCommandHandler : IRequestHandler<CreateCampaignCommand, Result<int>>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
 
-**Required attributes per endpoint type:**
+    public CreateCampaignCommandHandler(IApplicationDbContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
 
-| Endpoint type | Attribute |
-|---|---|
-| Public read | (none) |
-| Public write (login, register) | (none) but **always validate input manually** |
-| Authenticated user | `[JwtAuthorize]` |
-| Admin only | `[JwtAuthorize(Roles = "SuperAdmin,Admin")]` |
-| SuperAdmin only | `[JwtAuthorize(Roles = "SuperAdmin")]` |
-| Owner-or-admin (e.g. own donation) | `[JwtAuthorize]` + manual `UserId` check inside the action |
-
-### 3. Error responses
-
-Every action returns `IHttpActionResult`. Use `Ok(data)`, `BadRequest(msg)`, `Unauthorized()`,
-`Content(HttpStatusCode.Xxx, body)`. The body **must** follow the shape:
-
-```csharp
-new { success = true/false, message = "...", data = ... }
+    public async Task<Result<int>> Handle(CreateCampaignCommand request, CancellationToken cancellationToken)
+    {
+        // ...
+    }
+}
 ```
 
-Don't return plain strings or naked objects — the frontend services assume the envelope.
+### 1.3. Braces
 
-### 4. LINQ & performance
+Allman style (brace on its own line):
 
-- **Avoid N+1.** If you need related data, use `.Include(...)` or pre-fetch into a `Dictionary`
-  (see `CampaignsController` `causeLookup` pattern).
-- Use `.AsNoTracking()` for read-only queries (this codebase doesn't always do this — consider
-  adding for hot paths).
-- Project to DTOs inside the LINQ query (`Select(...)`) to avoid materialising full entities.
+```csharp
+public void Method()
+{
+    if (condition)
+    {
+        DoSomething();
+    }
+}
+```
 
-### 5. Money
+### 1.4. `var` vs Explicit Type
 
-- Always `decimal`, never `double` or `float`.
-- Use `HasPrecision(18, 2)` in EF fluent config (see `GiveAIDContext.OnModelCreating`).
-- Currency: VND. Symbol: `₫` (Unicode U+20AB, NOT `VND` or `d`).
+Use `var` when the type is obvious from the right-hand side:
 
-### 6. Security
+```csharp
+var user = new User();              // OK
+var count = _context.Users.Count(); // OK — clear
+int count = _context.Users.Count();  // OK if you prefer explicit
+```
 
-- **Never** log raw JWT, password, or card data. Use `Debug.WriteLine("[Component] message: " + ...)` carefully.
-- **Never** store raw card numbers. Use `PaymentToken` + `CardLast4`.
-- Always check `user.IsActive` in `JwtHelper.ValidateToken` (it does — don't bypass).
-- Prefer `[Authorize]`-equivalent checks via `[JwtAuthorize]`. Don't add raw OWIN bearer.
+Use explicit type when the type isn't obvious:
 
-### 7. Entity models (`EntityModels.cs`)
+```csharp
+IEnumerable<Campaign> result = await _mediator.Send(query); // explicit
+```
 
-- One file, one namespace (`GiveAID.Web.Models`).
-- Entity name = table name (PascalCase).
-- Snake-case is automatic — don't add `.HasColumnName(...)` unless breaking convention.
-- Navigation properties: `Cause` (singular) and `Causes` (collection).
-- Soft-delete columns named `is_active` (bool, default `true`).
-- Audit columns: `created_at` (DateTime), `updated_at` (DateTime?).
-- Always use `[Table("...")]` to make SQL table explicit.
+## 2. Nullable Reference Types
 
-### 8. Comments
+`Nullable` is enabled project-wide. All reference types are non-nullable by default.
 
-- Use XML doc comments (`///`) on all public classes and methods.
-- Don't add inline comments to explain *what* the code does — the code should be self-evident.
-- Add inline comments to explain *why* a non-obvious decision was made.
+```csharp
+public string Name { get; set; } = string.Empty;   // never null
+public string? Description { get; set; }            // explicitly nullable
+```
 
----
+Rules:
+- Initialise non-nullable strings to `string.Empty` or a sensible default
+- Initialise non-nullable collections to `new List<T>()` or `Array.Empty<T>()`
+- Avoid `null!` unless absolutely necessary (and document why)
 
-## Frontend (React 18 / JavaScript)
+## 3. Project Structure
 
-### 1. Naming
+```
+<Project>/
+├── <Project>.csproj
+├── Common/
+├── Features/<FeatureName>/
+│   ├── Commands/<Action>/
+│   └── Queries/<Action>/
+├── Interfaces/
+└── Services/
+```
 
-| Element | Convention | Example |
-|---|---|---|
-| Component file | `PascalCase.js` | `CampaignCard.js` |
-| Component | `PascalCase` | `function CampaignCard()` |
-| Hook | `camelCase` (starts with `use`) | `useAuth` |
-| Constant | `UPPER_SNAKE` or `PascalCase` for objects | `API_ENDPOINTS`, `STATUS.Active` |
-| Service method | `camelCase` | `campaignsService.getAll` |
-| CSS class | `kebab-case` (BEM-like) | `c4k-card__title` |
-| CSS file | `PascalCase.css` matching component | `CampaignCard.css` |
-| Folder | `camelCase` or `kebab-case` | `pages/admin/` |
+Each handler lives in its own file: `LoginCommand.cs`, `LoginCommandHandler.cs`,
+`LoginCommandValidator.cs`. One public type per file.
 
-### 2. Components
+## 4. CQRS Patterns
 
-- **One component per file.** Default-export the main component.
-- Pages go in `pages/` or `pages/admin/`. Reusable UI goes in `components/`.
-- Pages compose components; components don't import from `pages/`.
-- Admin pages **must** wrap their content in `<AdminPageFrame>` (provides header + banners).
+### 4.1. Command
 
-### 3. State
+```csharp
+public record LoginCommand(string Email, string Password) : IRequest<Result<LoginResponse>>;
+```
 
-- Local state via `useState`.
-- Shared state via `useContext` (`AuthContext` is the only context today; add new ones in `contexts/`).
-- Server state via local `useEffect` + `useState` (no Redux/React Query yet — keep it simple).
-- Always clean up `useEffect` (cancel flag, `AbortController`, or unsubscribe).
+Use `record` for immutable value semantics.
 
-### 4. API access
+### 4.2. Handler
 
-- **Never call axios directly in components.** Go through `services/index.js`.
-- If you need a new endpoint, add it to `services/index.js` + add the URL to `config.js`'s
-  `API_ENDPOINTS` map.
-- Always wrap async work in try/catch and surface errors via local `error` state.
-- The `api.js` interceptor handles 401 → redirect to `/login`. Don't reinvent it.
+```csharp
+public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
+{
+    public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken ct)
+    {
+        // ...
+        return Result.Success(response);
+    }
+}
+```
 
-### 5. Styling
+### 4.3. Validator
 
-- **Bootstrap 5 + react-bootstrap first.** Use their components, classes, and utilities.
-- Custom CSS lives next to the component (`Foo.js` + `Foo.css`).
-- Custom design tokens are CSS custom properties on `:root` (see `styles/global.css`):
-  - `--c4k-teal`, `--c4k-coral`, `--c4k-warm-yellow`, `--c4k-ink`, `--c4k-cream`
-- **Never** inline `style={{ color: '#…' }}` — use a CSS class with a token.
-- **Grid layout**: use CSS Grid for full-row layouts (`display: grid; grid-template-columns:
-  repeat(N, 1fr)`) and Bootstrap `Row`/`Col` for content that needs Bootstrap's gutters.
+```csharp
+public class LoginCommandValidator : AbstractValidator<LoginCommand>
+{
+    public LoginCommandValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+    }
+}
+```
 
-### 6. Accessibility
+### 4.4. Query
 
-- Every interactive element must have an accessible name (label, aria-label, or visible text).
-- Form inputs: wrap in `<Form.Group controlId="…">` so labels are wired up.
-- Modals: react-bootstrap's `<Modal>` handles focus trap — don't roll your own.
-- Colour contrast: never use the coral/red colour for body text; it's a brand accent only.
+```csharp
+public record GetCampaignsQuery(int Page = 1, int PageSize = 10) : IRequest<PagedResult<CampaignDto>>;
+```
 
-### 7. Linting
+Queries don't return `Result<T>` — they either return data or throw `NotFoundException`.
 
-ESLint config (`.eslintrc` equivalent in `package.json`) enforces:
+## 5. Error Handling
 
-- No unused imports / variables
-- No BOM at start of file
-- React hooks rules
+- **Don't** catch `Exception` unless you re-throw or log + translate
+- **Throw** domain-specific exceptions: `ValidationException`, `NotFoundException`,
+  `UnauthorizedAccessException`
+- **Let the middleware** translate exceptions into HTTP responses
 
-**Always run `npx eslint src/` before committing.** The current baseline is **0 errors, 0 warnings**.
+```csharp
+public async Task<User> Handle(GetUserByIdQuery query, CancellationToken ct)
+{
+    var user = await _context.Users.FindAsync(query.Id, ct);
+    return user ?? throw new NotFoundException($"User {query.Id} not found");
+}
+```
 
-### 8. Imports
+## 6. Async/Await
 
-Order (enforced by ESLint `import/order`):
+- Use `async`/`await` everywhere an I/O call exists
+- Append `Async` to method names that return `Task`/`Task<T>`
+- Don't use `.Result` or `.Wait()` — they deadlock under sync contexts
 
-1. React core (`react`, `react-dom`, `react-router-dom`)
-2. Third-party (`react-bootstrap`, `axios`, …)
-3. Project (`../components/...`, `../services`, `../contexts/...`)
-4. Relative (`./Foo.css`)
+```csharp
+public async Task<Campaign> GetByIdAsync(int id, CancellationToken ct)
+{
+    return await _context.Campaigns.FindAsync(new object[] { id }, ct);
+}
+```
 
-### 9. File headers
+## 7. Entity Framework Core
 
-No copyright headers. Keep the first line of every file as the import block.
+### 7.1. No Lazy Loading
 
----
+Use eager loading with `Include`:
 
-## Database (SQL)
+```csharp
+var campaign = await _context.Campaigns
+    .Include(c => c.Cause)
+    .Include(c => c.Donations)
+    .FirstOrDefaultAsync(c => c.Id == id, ct);
+```
 
-### 1. Migration scripts
+### 7.2. Async Querying
 
-- One script per logical change. Name with `NGO_Database_<Topic>_<Action>.sql`.
-- New scripts live in project root, NOT inside `GiveAID.Web/`.
-- **Always idempotent** — use `IF NOT EXISTS`, `IF OBJECT_ID('…') IS NOT NULL`, etc.
-- Wrap destructive operations in `BEGIN TRANSACTION` + `BEGIN TRY / END TRY / BEGIN CATCH /
-  ROLLBACK` for atomicity.
-- Add a `PRINT` at the end so the operator sees confirmation.
+Always `await` queries; never `.ToList()` synchronously.
 
-### 2. Data seeding
+### 7.3. Configuration
 
-- Seed scripts use `MERGE` keyed on a stable business identifier (`campaign_code`, `cause_code`)
-  — never on auto-increment IDs.
-- Resolve IDs dynamically: `DECLARE @EDU_ID INT = (SELECT cause_id FROM Causes WHERE cause_code = 'EDU')`.
-- Guard donations with `IF NOT EXISTS (SELECT 1 FROM Donations WHERE transaction_id = 'TXN-…')`.
+Entity configurations live in `src/Infrastructure/Persistence/Configurations/`, **not**
+data annotations on entities.
 
-### 3. Naming
+```csharp
+public class CampaignConfiguration : IEntityTypeConfiguration<Campaign>
+{
+    public void Configure(EntityTypeBuilder<Campaign> builder)
+    {
+        builder.HasKey(c => c.Id);
+        builder.Property(c => c.Name).HasMaxLength(200).IsRequired();
+        builder.HasOne(c => c.Cause).WithMany().HasForeignKey(c => c.CauseId);
+    }
+}
+```
 
-- Tables and columns: `snake_case`
-- Constraints: `FK_<Table>_<ReferencedTable>_<Column>` (FK), `CHK_<Table>_<Rule>` (CHECK),
-  `IX_<Table>_<Column>` (index), `DF_<Table>_<Column>` (default)
+## 8. Tests
 
----
+- One assertion concept per `[Fact]`
+- AAA structure with blank lines between
+- FluentAssertions: `result.Should().Be(...)`
+- Mock dependencies with Moq
+- For data setup, use builders or AutoFixture
 
-## Git / commits
+```csharp
+[Fact]
+public async Task Login_WithValidCredentials_ReturnsToken()
+{
+    // Arrange
+    var user = new User { Email = "test@example.com", IsActive = true };
+    _ctx.Setup(c => c.Users).Returns(BuildMockDbSet(new[] { user }).Object);
 
-- Branch name: `feat/<short-desc>`, `fix/<short-desc>`, `chore/<short-desc>`
-- Commit messages: imperative present tense ("Add / Fix / Refactor / Update")
-- One logical change per commit. Don't bundle unrelated fixes.
+    // Act
+    var result = await _handler.Handle(new LoginCommand("test@example.com", "pwd"), default);
 
----
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    result.Value.Token.Should().NotBeNullOrEmpty();
+}
+```
 
-## When unsure
+## 9. Git Workflow
 
-- Read `ARCHITECTURE.md` first.
-- Search for an existing pattern in the codebase before inventing a new one.
-- Prefer simple, boring solutions over clever ones.
+### Branch naming
+
+```
+feature/<ticket>-<short-description>
+bugfix/<ticket>-<short-description>
+chore/<short-description>
+release/<version>
+```
+
+### Commit messages — Conventional Commits
+
+```
+feat(auth): add password reset endpoint
+fix(donations): handle Stripe timeout gracefully
+docs(readme): update quick start
+test(campaigns): add progress calculation tests
+chore(deps): bump MediatR to 12.2.0
+```
+
+Format: `<type>(<scope>): <description>`
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
+
+### Pull request checklist
+
+- [ ] Build passes locally (`dotnet build`)
+- [ ] All tests pass (`dotnet test`)
+- [ ] No new warnings
+- [ ] Migration script added (if DB schema changed)
+- [ ] Documentation updated (if API changed)
+- [ ] Self-reviewed before requesting review
+- [ ] PR description explains **why**, not just **what**
+
+## 10. Logging
+
+Use `ILogger<T>` with structured logging:
+
+```csharp
+_logger.LogInformation("Campaign {CampaignId} created by user {UserId}", id, userId);
+```
+
+Log levels:
+- `Trace` / `Debug` — verbose, off in production
+- `Information` — normal flow (created, updated, sent)
+- `Warning` — recoverable issues (retries, deprecated usage)
+- `Error` — handled exceptions, recoverable failures
+- `Critical` — application-level failures, requires alerting
+
+**Don't log:**
+- Passwords (even hashed)
+- JWT tokens
+- Credit card numbers (use last 4 only)
+- PII without consent
+
+## 11. Security
+
+- All inputs are untrusted — validate with FluentValidation
+- All outputs to HTML are sanitised (Ganss.XSS)
+- All SQL goes through EF Core (no string concatenation)
+- JWT secret must be ≥ 64 bytes
+- Use `[Authorize]` + policies (`Admin`) on protected endpoints
+- CORS allow-list is explicit, never `*` in production
+- Rate limit applied at `/api/v1/*` by default
+
+## 12. Performance
+
+- Use `AsNoTracking()` for read-only queries
+- Paginate lists — never return unbounded collections
+- Index foreign keys and frequently filtered columns (configured in migrations)
+- Use `ResponseCache` for read-heavy endpoints
+- Use `MemoryCacheService` for hot data (statistics, lookups)
+
+## 13. Don't Do
+
+- ❌ Reference `Infrastructure` from `Application`
+- ❌ Reference `WebApi` from `Domain` or `Application`
+- ❌ Catch `Exception` broadly without re-throwing
+- ❌ Use `async void` (except event handlers)
+- ❌ Use `.Result` / `.Wait()`
+- ❌ Store secrets in source control
+- ❌ Commit `appsettings.Development.json` with real credentials
+- ❌ Disable nullable warnings with `!` (without justification)
+
+## 14. Code review etiquette
+
+- Review **the change, not the author**
+- Be specific: "Add a null check on `user.Email`" beats "this might break"
+- Approve if you wouldn't change anything significant
+- Ask questions rather than demand changes when uncertain

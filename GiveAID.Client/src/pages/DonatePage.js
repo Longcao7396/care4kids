@@ -74,9 +74,11 @@ const DonatePage = () => {
   const [causeTree, setCauseTree] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [subCauses, setSubCauses] = useState([]);
+  const [treeLoading, setTreeLoading] = useState(true);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [formData, setFormData] = useState({
-    causeId: location.state?.causeId || '',
-    campaignId: location.state?.campaignId || '',
+    causeId: location.state?.causeId != null ? String(location.state.causeId) : '',
+    campaignId: location.state?.campaignId != null ? String(location.state.campaignId) : '',
     amount: '500000',
     paymentMethod: 'BankTransfer',
     // Card fields — PCI-DSS: never sent to server
@@ -154,21 +156,25 @@ const DonatePage = () => {
         const treeResp = await api.get('/causes/tree', {
           params: { activeOnly: true }, signal: ac.signal
         });
-        if (treeResp.data?.success) {
-          const treeData = treeResp.data.data || [];
-          setCauseTree(treeData);
-          const flat = [];
-          treeData.forEach((node) => {
-            flat.push(node.parent);
-            (node.subCauses || []).forEach((s) => flat.push(s));
+        // Interceptor strips the envelope → treeResp is the data array directly.
+        // Each element is a PARENT cause: { causeId, causeName, ..., subCauses: [...] }.
+        // No `parent` wrapper — `causeId` lives at the element root.
+        const rawTree = Array.isArray(treeResp) ? treeResp : [];
+        const safeTree = rawTree.filter((n) => n && typeof n === 'object');
+        setCauseTree(safeTree);
+        // Build flat list: parent + all its sub-causes, dropping null/invalid entries.
+        const flat = [];
+        safeTree.forEach((node) => {
+          if (node.causeId != null) flat.push(node);
+          (Array.isArray(node.subCauses) ? node.subCauses : []).forEach((s) => {
+            if (s && typeof s === 'object' && s.causeId != null) flat.push(s);
           });
-          setCauses(flat);
-        } else {
-          const r = await causesService.getAll(true, { signal: ac.signal });
-          if (r.success) setCauses(r.data);
-        }
+        });
+        setCauses(flat);
       } catch (e) {
-        if (e.name !== 'CanceledError') console.error(e);
+        if (e.name !== 'CanceledError') console.error('[DonatePage] Failed to load causes tree:', e);
+      } finally {
+        if (!ac.signal.aborted) setTreeLoading(false);
       }
     };
     const loadCampaigns = async () => {
@@ -176,9 +182,17 @@ const DonatePage = () => {
         const r = await api.get('/campaigns', {
           params: { status: 'Active' }, signal: ac.signal
         });
-        if (r.data.success) setCampaigns(r.data.data);
+        // Interceptor returns body.data → { items, page, pageSize, totalCount }
+        const items = Array.isArray(r?.items) ? r.items
+                    : Array.isArray(r) ? r
+                    : [];
+        // Defensive: filter out entries missing required fields.
+        const safeItems = items.filter((c) => c && typeof c === 'object' && c.campaignId != null);
+        setCampaigns(safeItems);
       } catch (e) {
-        if (e.name !== 'CanceledError') console.error(e);
+        if (e.name !== 'CanceledError') console.error('Failed to load campaigns:', e);
+      } finally {
+        if (!ac.signal.aborted) setCampaignsLoading(false);
       }
     };
     loadTree();
@@ -187,12 +201,18 @@ const DonatePage = () => {
   }, []);
 
   useEffect(() => {
-    if (formData.causeId) {
-      loadCampaignsByCause(formData.causeId);
-      const sel = causes.find((c) => String(c.causeId) === String(formData.causeId));
-      const parentId = sel?.parentCauseId || sel?.causeId;
-      const subs = causeTree.find((n) => n.parent.causeId === parentId)?.subCauses || [];
-      setSubCauses(subs);
+    const causeId = formData.causeId;
+    if (causeId !== '' && causeId !== null && causeId !== undefined) {
+      loadCampaignsByCause(causeId);
+      const sel = (causes || []).find((c) => c && String(c.causeId) === String(causeId));
+      const parentId = sel?.parentCauseId ?? sel?.causeId;
+      const subs = (causeTree || []).find(
+        (n) => n && n.causeId === parentId
+      )?.subCauses || [];
+      // Defensive: filter out null/invalid sub-cause entries before storing.
+      setSubCauses(
+        Array.isArray(subs) ? subs.filter((s) => s && typeof s === 'object' && s.causeId != null) : []
+      );
     } else {
       setSubCauses([]);
     }
@@ -222,7 +242,8 @@ const DonatePage = () => {
   const loadCampaignsByCause = async (causeId) => {
     try {
       const r = await api.get('/campaigns', { params: { status: 'Active', causeId } });
-      if (r.data.success) setCampaigns(r.data.data);
+      const items = r?.items || (Array.isArray(r) ? r : []);
+      setCampaigns(items);
     } catch (e) { console.error(e); }
   };
 
@@ -323,25 +344,49 @@ const DonatePage = () => {
                     <p className="dp-step-desc">Select the area you'd like your donation to support.</p>
                     <Form.Select
                       name="parentCauseId"
+                      disabled={treeLoading}
                       value={
-                        causeTree.find((n) =>
-                          n.parent.causeId === formData.causeId ||
-                          (n.subCauses || []).some((s) => s.causeId === formData.causeId)
-                        )?.parent.causeId || ''
+                        (() => {
+                          const selectedId = formData.causeId;
+                          if (selectedId === '' || selectedId === null || selectedId === undefined) return '';
+                          const numId = Number(selectedId);
+                          if (!Number.isFinite(numId) || numId === 0) return '';
+                          const found = (causeTree || []).find((n) =>
+                            n && (
+                              n.causeId === numId ||
+                              (Array.isArray(n.subCauses) && n.subCauses.some((s) => s && s.causeId === numId))
+                            )
+                          );
+                          return found?.causeId != null ? String(found.causeId) : '';
+                        })()
                       }
                       onChange={(e) => {
-                        const parent = causeTree.find((n) => n.parent.causeId === Number(e.target.value))?.parent;
-                        setFormData((p) => ({ ...p, causeId: parent?.causeId || '', campaignId: '' }));
+                        const raw = e.target.value;
+                        const parentId = Number(raw);
+                        if (!raw || !Number.isFinite(parentId) || parentId === 0) {
+                          setFormData((p) => ({ ...p, causeId: '', campaignId: '' }));
+                          return;
+                        }
+                        const parent = (causeTree || []).find(
+                          (n) => n && n.causeId === parentId
+                        );
+                        setFormData((p) => ({
+                          ...p,
+                          causeId: parent?.causeId != null ? String(parent.causeId) : '',
+                          campaignId: ''
+                        }));
                       }}
                       required
                       className="dp-select"
                     >
-                      <option value="">Choose a cause...</option>
-                      {causeTree.map((node) => (
-                        <option key={node.parent.causeId} value={node.parent.causeId}>
-                          {node.parent.causeName}
-                        </option>
-                      ))}
+                      <option value="">{treeLoading ? 'Loading causes…' : 'Choose a cause...'}</option>
+                      {(causeTree || [])
+                        .filter((n) => n && n.causeId != null)
+                        .map((node) => (
+                          <option key={node.causeId} value={node.causeId}>
+                            {node.causeName}
+                          </option>
+                        ))}
                     </Form.Select>
                   </div>
 
@@ -353,9 +398,11 @@ const DonatePage = () => {
                       <p className="dp-step-desc">Pick a specific area, or leave blank to support the whole cause.</p>
                       <Form.Select name="causeId" value={formData.causeId} onChange={handleChange} className="dp-select">
                         <option value="">Support the whole cause</option>
-                        {subCauses.map((sub) => (
-                          <option key={sub.causeId} value={sub.causeId}>{sub.causeName}</option>
-                        ))}
+                        {subCauses
+                          .filter((s) => s && typeof s === 'object' && s.causeId != null)
+                          .map((sub) => (
+                            <option key={sub.causeId} value={sub.causeId}>{sub.causeName}</option>
+                          ))}
                       </Form.Select>
                     </div>
                   )}
@@ -368,11 +415,13 @@ const DonatePage = () => {
                       <p className="dp-step-desc">Choose a specific campaign, or leave blank for a general donation.</p>
                       <Form.Select name="campaignId" value={formData.campaignId} onChange={handleChange} className="dp-select">
                         <option value="">General donation to this cause</option>
-                        {campaigns.map((c) => (
-                          <option key={c.campaignId} value={c.campaignId}>
-                            {c.campaignName} — {c.percentageReached?.toFixed(0) || 0}% funded
-                          </option>
-                        ))}
+                        {campaigns
+                          .filter((c) => c && typeof c === 'object' && c.campaignId != null)
+                          .map((c) => (
+                            <option key={c.campaignId} value={c.campaignId}>
+                              {c.campaignName} — {c.percentageReached?.toFixed(0) || 0}% funded
+                            </option>
+                          ))}
                       </Form.Select>
                     </div>
                   )}
@@ -563,14 +612,22 @@ const DonatePage = () => {
                   <div className="dp-summary-row">
                     <span className="dp-summary-label">Cause</span>
                     <span className="dp-summary-value">
-                      {causes.find((c) => c.causeId === parseInt(formData.causeId))?.causeName || 'Not selected'}
+                      {(() => {
+                        const id = Number(formData.causeId);
+                        if (!id) return 'Not selected';
+                        return causes.find((c) => Number(c.causeId) === id)?.causeName || 'Not selected';
+                      })()}
                     </span>
                   </div>
                   {formData.campaignId && (
                     <div className="dp-summary-row">
                       <span className="dp-summary-label">Campaign</span>
                       <span className="dp-summary-value">
-                        {campaigns.find((c) => c.campaignId === parseInt(formData.campaignId))?.campaignName || '—'}
+                        {(() => {
+                          const id = Number(formData.campaignId);
+                          if (!id) return '—';
+                          return campaigns.find((c) => Number(c.campaignId) === id)?.campaignName || '—';
+                        })()}
                       </span>
                     </div>
                   )}
