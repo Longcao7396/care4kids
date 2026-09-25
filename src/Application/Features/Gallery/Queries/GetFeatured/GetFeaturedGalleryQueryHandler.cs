@@ -36,7 +36,11 @@ public class GetFeaturedGalleryQueryHandler : IRequestHandler<GetFeaturedGallery
             OrganizationName = g.Organization?.OrganizationName,
             DisplayOrder = g.DisplayOrder,
             IsFeatured = g.IsFeatured,
-            UploadedAt = g.UploadedAt
+            UploadedAt = g.UploadedAt,
+            PublicId = g.PublicId,
+            OriginalFileName = g.OriginalFileName,
+            FileSizeBytes = g.FileSizeBytes,
+            ContentType = g.ContentType
         });
     }
 }

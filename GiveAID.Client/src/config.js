@@ -152,6 +152,9 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/gallery`,
     UPDATE: (id) => `${API_BASE_URL}/gallery/${id}`,
     DELETE: (id) => `${API_BASE_URL}/gallery/${id}`,
+    // Multipart upload endpoints (Cloudinary via server)
+    UPLOAD: `${API_BASE_URL}/gallery/upload`,
+    UPLOAD_UPDATE: (id) => `${API_BASE_URL}/gallery/${id}/upload`,
   },
 
   // Campaign Reports

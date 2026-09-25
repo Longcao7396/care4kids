@@ -4,7 +4,7 @@ using MediatR;
 namespace GiveAID.Application.Features.Gallery.Commands.Update;
 
 /// <summary>
-/// Command to update a gallery item.
+/// Command to update a gallery item. Supports both file upload and URL-based update.
 /// </summary>
 public class UpdateGalleryCommand : IRequest<GalleryDto>
 {
@@ -17,4 +17,14 @@ public class UpdateGalleryCommand : IRequest<GalleryDto>
     public int? OrganizationId { get; set; }
     public int DisplayOrder { get; set; }
     public bool IsFeatured { get; set; }
+
+    // NEW — set when file replaces existing image
+    public string? PublicId { get; set; }
+    public string? OriginalFileName { get; set; }
+    public long? FileSizeBytes { get; set; }
+    public string? ContentType { get; set; }
+
+    // Indicates that this update replaces the existing file (not just metadata).
+    // When true, handler will delete the OLD file from Cloudinary.
+    public bool ReplacingFile { get; set; }
 }

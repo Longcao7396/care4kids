@@ -1,3 +1,4 @@
+using GiveAID.Application.Common.Interfaces;
 using GiveAID.Application.Features.Gallery.Commands.Create;
 using GiveAID.Application.Features.Gallery.Commands.Delete;
 using GiveAID.Application.Features.Gallery.Commands.Update;
@@ -18,10 +19,17 @@ namespace GiveAID.V2.WebApi.Controllers;
 public class GalleryController : ControllerBase
 {
     private readonly ISender _mediator;
+    private readonly IImageStorageService _imageStorage;
+    private readonly ILogger<GalleryController> _logger;
 
-    public GalleryController(ISender mediator)
+    public GalleryController(
+        ISender mediator,
+        IImageStorageService imageStorage,
+        ILogger<GalleryController> logger)
     {
         _mediator = mediator;
+        _imageStorage = imageStorage;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -141,6 +149,124 @@ public class GalleryController : ControllerBase
         await _mediator.Send(new DeleteGalleryCommand { GalleryId = id });
         return Ok(new { success = true, message = "Gallery item deleted", data = (object?)null });
     }
+
+    /// <summary>
+    /// NEW: Create a gallery item by uploading a file to Cloudinary.
+    /// Replaces the legacy URL-paste endpoint with a proper multipart upload.
+    /// Auth: Admin only (preserved from the original Create endpoint).
+    /// </summary>
+    [HttpPost("upload")]
+    [Authorize(Roles = "Admin")]
+    [RequestSizeLimit(5_242_880)] // 5 MB — matches the agreed-upon max file size
+    public async Task<IActionResult> CreateWithUpload(
+        [FromForm] GalleryCreateFormDto form,
+        CancellationToken cancellationToken)
+    {
+        if (form.ImageFile == null || form.ImageFile.Length == 0)
+        {
+            return BadRequest(new { success = false, message = "ImageFile is required", data = (object?)null });
+        }
+
+        // Validate content type
+        var allowed = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+        if (!allowed.Contains(form.ImageFile.ContentType?.ToLowerInvariant()))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = $"Invalid image type '{form.ImageFile.ContentType}'. Allowed: jpeg, jpg, png, webp.",
+                data = (object?)null
+            });
+        }
+
+        // Upload to Cloudinary
+        var uploadResult = await _imageStorage.UploadAsync(
+            form.ImageFile.OpenReadStream(),
+            form.ImageFile.FileName,
+            form.ImageFile.ContentType ?? "image/jpeg",
+            folder: "gallery",
+            cancellationToken);
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        int.TryParse(userIdClaim, out var userId);
+
+        var command = new CreateGalleryCommand
+        {
+            Title = form.Title,
+            PhotoUrl = uploadResult.Url,
+            ThumbnailUrl = null, // Deprecated; computed from PhotoUrl via GalleryDto.Thumbnail
+            Category = form.Category,
+            Tags = form.Tags,
+            OrganizationId = form.OrganizationId,
+            DisplayOrder = form.DisplayOrder,
+            IsFeatured = form.IsFeatured,
+            UploadedBy = userId > 0 ? (int?)userId : null,
+            PublicId = uploadResult.PublicId,
+            OriginalFileName = form.ImageFile.FileName,
+            FileSizeBytes = uploadResult.FileSizeBytes,
+            ContentType = uploadResult.ContentType
+        };
+
+        var newId = await _mediator.Send(command, cancellationToken);
+        return Ok(new { success = true, message = "Gallery item created", data = new { id = newId } });
+    }
+
+    /// <summary>
+    /// NEW: Update a gallery item by uploading a new file. Deletes the old file from Cloudinary.
+    /// Use this when you want to REPLACE the image. For metadata-only updates, use PUT /gallery/{id}.
+    /// Auth: Admin only.
+    /// </summary>
+    [HttpPut("{id:int}/upload")]
+    [Authorize(Roles = "Admin")]
+    [RequestSizeLimit(5_242_880)] // 5 MB
+    public async Task<IActionResult> UpdateWithUpload(
+        int id,
+        [FromForm] GalleryUpdateFormDto form,
+        CancellationToken cancellationToken)
+    {
+        if (form.ImageFile == null || form.ImageFile.Length == 0)
+        {
+            return BadRequest(new { success = false, message = "ImageFile is required", data = (object?)null });
+        }
+
+        var allowed = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+        if (!allowed.Contains(form.ImageFile.ContentType?.ToLowerInvariant()))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = $"Invalid image type '{form.ImageFile.ContentType}'. Allowed: jpeg, jpg, png, webp.",
+                data = (object?)null
+            });
+        }
+
+        var uploadResult = await _imageStorage.UploadAsync(
+            form.ImageFile.OpenReadStream(),
+            form.ImageFile.FileName,
+            form.ImageFile.ContentType ?? "image/jpeg",
+            folder: "gallery",
+            cancellationToken);
+
+        await _mediator.Send(new UpdateGalleryCommand
+        {
+            GalleryId = id,
+            Title = form.Title,
+            PhotoUrl = uploadResult.Url,
+            ThumbnailUrl = null,
+            Category = form.Category,
+            Tags = form.Tags,
+            OrganizationId = form.OrganizationId,
+            DisplayOrder = form.DisplayOrder ?? 0,
+            IsFeatured = form.IsFeatured ?? false,
+            ReplacingFile = true,
+            PublicId = uploadResult.PublicId,
+            OriginalFileName = form.ImageFile.FileName,
+            FileSizeBytes = uploadResult.FileSizeBytes,
+            ContentType = uploadResult.ContentType
+        }, cancellationToken);
+
+        return Ok(new { success = true, message = "Gallery item updated with new image", data = (object?)null });
+    }
 }
 
 public class GalleryCreateDto
@@ -165,4 +291,28 @@ public class GalleryUpdateDto
     public int? OrganizationId { get; set; }
     public int? DisplayOrder { get; set; }
     public bool? IsFeatured { get; set; }
+}
+
+// ===== Form DTOs for multipart upload endpoints =====
+
+public class GalleryCreateFormDto
+{
+    public string? Title { get; set; }
+    public string? Category { get; set; }
+    public string? Tags { get; set; }
+    public int? OrganizationId { get; set; }
+    public int DisplayOrder { get; set; }
+    public bool IsFeatured { get; set; }
+    public IFormFile? ImageFile { get; set; }
+}
+
+public class GalleryUpdateFormDto
+{
+    public string? Title { get; set; }
+    public string? Category { get; set; }
+    public string? Tags { get; set; }
+    public int? OrganizationId { get; set; }
+    public int? DisplayOrder { get; set; }
+    public bool? IsFeatured { get; set; }
+    public IFormFile? ImageFile { get; set; }
 }

@@ -152,8 +152,12 @@ function GalleryItem({ item, onClick }) {
       aria-label={`View ${item.title}`}
     >
       <div className="gp-item-img-wrap">
+        {/* Grid uses Cloudinary auto-generated thumbnail (w_300,h_300,c_fill)
+            instead of the full PhotoUrl. This is the bandwidth-saving path.
+            When the user clicks and opens the lightbox, the lightbox swaps to
+            the original URL for the full-size view. */}
         <img
-          src={item.url}
+          src={item.thumbnail || item.url}
           alt={item.alt || item.title}
           loading="lazy"
           className="gp-item-img"
