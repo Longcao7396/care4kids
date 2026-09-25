@@ -4,6 +4,7 @@ using GiveAID.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GiveAID.V2.Infrastructure.Migrations
 {
     [DbContext(typeof(GiveAIDDbContext))]
-    partial class GiveAIDDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260924211000_AddImageUploadFields")]
+    partial class AddImageUploadFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1597,6 +1600,59 @@ namespace GiveAID.V2.Infrastructure.Migrations
                     b.ToTable("programmes", (string)null);
                 });
 
+            modelBuilder.Entity("GiveAID.Domain.Entities.ProgrammePhoto", b =>
+                {
+                    b.Property<int>("PhotoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("photo_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PhotoId"));
+
+                    b.Property<string>("Caption")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("caption");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("display_order");
+
+                    b.Property<string>("PhotoUrl")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("photo_url");
+
+                    b.Property<int>("ProgrammeId")
+                        .HasColumnType("int")
+                        .HasColumnName("programme_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<int?>("UploadedBy")
+                        .HasColumnType("int")
+                        .HasColumnName("uploaded_by");
+
+                    b.HasKey("PhotoId")
+                        .HasName("pk_programme_photos");
+
+                    b.HasIndex("ProgrammeId")
+                        .HasDatabaseName("ix_programme_photos_programme_id");
+
+                    b.ToTable("programme_photos", (string)null);
+                });
+
             modelBuilder.Entity("GiveAID.Domain.Entities.ProgrammeRegistration", b =>
                 {
                     b.Property<int>("RegistrationId")
@@ -2143,6 +2199,18 @@ namespace GiveAID.V2.Infrastructure.Migrations
                     b.Navigation("Organization");
                 });
 
+            modelBuilder.Entity("GiveAID.Domain.Entities.ProgrammePhoto", b =>
+                {
+                    b.HasOne("GiveAID.Domain.Entities.Programme", "Programme")
+                        .WithMany("Photos")
+                        .HasForeignKey("ProgrammeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_programme_photos_programmes_programme_id");
+
+                    b.Navigation("Programme");
+                });
+
             modelBuilder.Entity("GiveAID.Domain.Entities.ProgrammeRegistration", b =>
                 {
                     b.HasOne("GiveAID.Domain.Entities.Programme", "Programme")
@@ -2217,6 +2285,8 @@ namespace GiveAID.V2.Infrastructure.Migrations
             modelBuilder.Entity("GiveAID.Domain.Entities.Programme", b =>
                 {
                     b.Navigation("GalleryItems");
+
+                    b.Navigation("Photos");
 
                     b.Navigation("Registrations");
                 });

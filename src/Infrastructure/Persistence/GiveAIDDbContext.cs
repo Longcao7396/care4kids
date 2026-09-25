@@ -18,7 +18,6 @@ public class GiveAIDDbContext : DbContext, IApplicationDbContext
     public DbSet<Donation> Donations => Set<Donation>();
     public DbSet<Programme> Programmes => Set<Programme>();
     public DbSet<ProgrammeRegistration> ProgrammeRegistrations => Set<ProgrammeRegistration>();
-    public DbSet<ProgrammePhoto> ProgrammePhotos => Set<ProgrammePhoto>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<ConversationMessage> ConversationMessages => Set<ConversationMessage>();

@@ -118,6 +118,19 @@ public static class InfrastructureServiceCollectionExtensions
         // Password reset rate limiting with exponential backoff (SECURITY FIX #4)
         services.AddSingleton<IPasswordResetThrottleService, PasswordResetThrottleService>();
 
+        // Image storage (Cloudinary)
+        services.Configure<CloudinarySettings>(options =>
+        {
+            options.CloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME")
+                ?? configuration["Cloudinary:CloudName"] ?? "";
+            options.ApiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY")
+                ?? configuration["Cloudinary:ApiKey"] ?? "";
+            options.ApiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")
+                ?? configuration["Cloudinary:ApiSecret"] ?? "";
+            options.UploadFolder = configuration["Cloudinary:UploadFolder"] ?? "giveaid";
+        });
+        services.AddScoped<IImageStorageService, CloudinaryImageStorageService>();
+
         return services;
     }
 }

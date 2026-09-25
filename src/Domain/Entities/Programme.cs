@@ -47,6 +47,5 @@ public class Programme : BaseEntity
     public virtual Organization? Organization { get; set; }
 
     public virtual ICollection<ProgrammeRegistration> Registrations { get; set; } = new List<ProgrammeRegistration>();
-    public virtual ICollection<ProgrammePhoto> Photos { get; set; } = new List<ProgrammePhoto>();
     public virtual ICollection<Gallery> GalleryItems { get; set; } = new List<Gallery>();
 }

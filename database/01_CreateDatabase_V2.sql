@@ -10,6 +10,14 @@
 --   sqlcmd -S .\SQLEXPRESS -E -d master -i 01_CreateDatabase_V2.sql
 --   powershell -File 99_Apply-All.ps1
 -- =====================================================================
+--
+-- TODO Step 7 cleanup: programme_photos (lines ~284-298 + any related
+-- DROP/seed sections) is dropped in EF migration DropProgrammePhoto.
+-- When Step 7 lands, remove the CREATE programme_photos block here,
+-- drop related indexes, and remove programme_photos from the drift-
+-- check at the top of this script. Marked here because the schema
+-- will otherwise respawn programme_photos on every fresh dev setup.
+-- =====================================================================
 
 SET NOCOUNT ON;
 SET XACT_ABORT ON;

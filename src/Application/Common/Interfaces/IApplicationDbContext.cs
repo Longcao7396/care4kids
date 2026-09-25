@@ -60,7 +60,6 @@ public interface IApplicationDbContext
     // Programmes
     DbSet<Programme> Programmes { get; }
     DbSet<ProgrammeRegistration> ProgrammeRegistrations { get; }
-    DbSet<ProgrammePhoto> ProgrammePhotos { get; }
 
     /// <summary>
     /// Saves all changes made in this context to the database.
