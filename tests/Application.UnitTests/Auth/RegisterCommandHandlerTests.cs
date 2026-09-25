@@ -6,6 +6,7 @@ using GiveAID.Domain.Entities;
 using GiveAID.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace GiveAID.Tests.Unit.Application.Auth;
@@ -48,7 +49,8 @@ public class RegisterCommandHandlerTests
 
         var handler = new RegisterCommandHandler(
             _contextMock.Object, _passwordHasherMock.Object,
-            _emailSenderMock.Object, _loggerMock.Object);
+            _emailSenderMock.Object, _loggerMock.Object,
+            Options.Create(new EmailOptions()));
         var command = new RegisterCommand
         {
             Username = "newuser",
@@ -83,7 +85,8 @@ public class RegisterCommandHandlerTests
 
         var handler = new RegisterCommandHandler(
             _contextMock.Object, _passwordHasherMock.Object,
-            _emailSenderMock.Object, _loggerMock.Object);
+            _emailSenderMock.Object, _loggerMock.Object,
+            Options.Create(new EmailOptions()));
         var command = new RegisterCommand
         {
             Username = "duplicateuser",
@@ -111,7 +114,8 @@ public class RegisterCommandHandlerTests
 
         var handler = new RegisterCommandHandler(
             _contextMock.Object, _passwordHasherMock.Object,
-            _emailSenderMock.Object, _loggerMock.Object);
+            _emailSenderMock.Object, _loggerMock.Object,
+            Options.Create(new EmailOptions()));
         var command = new RegisterCommand
         {
             Username = "anotheruser",
@@ -142,7 +146,8 @@ public class RegisterCommandHandlerTests
 
         var handler = new RegisterCommandHandler(
             _contextMock.Object, _passwordHasherMock.Object,
-            _emailSenderMock.Object, _loggerMock.Object);
+            _emailSenderMock.Object, _loggerMock.Object,
+            Options.Create(new EmailOptions()));
         var command = new RegisterCommand
         {
             Username = "someuser",
