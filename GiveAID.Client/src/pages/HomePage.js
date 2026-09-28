@@ -43,7 +43,7 @@ useEffect(() => {
       <section className="c4k-hero">
         <div className="c4k-hero-bg">
           <img
-            src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80"
+            src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337347/giveaid/replacement/3-Em-gai-Moc-Chau-jpg-1355806129-1355806531_mithuz.webp"
             alt="Children smiling and learning"
           />
           <div className="c4k-hero-overlay" />
@@ -232,10 +232,10 @@ useEffect(() => {
                   <div key={campaign.campaignId} className="c4k-campaign-card">
                       <div className="c4k-campaign-image">
                         <img
-                          src={campaign.imageUrl || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80'}
+                          src={campaign.imageUrl || 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337366/giveaid/replacement/h-mong-9402-1396341888_y8hvch.webp'}
                           alt={campaign.campaignName}
                           onError={(e) => {
-                            e.target.src = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80';
+                            e.target.src = 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337366/giveaid/replacement/h-mong-9402-1396341888_y8hvch.webp';
                           }}
                         />
                         <div className="c4k-campaign-image-overlay">
@@ -284,36 +284,36 @@ useEffect(() => {
                 <>
                   {[
                     {
-                      title: 'Nutritious Meals for Children',
-                      cause: 'Food & Nutrition',
-                      desc: 'Daily balanced meals for children at care homes and community centres across Vietnam.',
+                      title: 'Supporting Children in Rural Communities',
+                      cause: 'Rural Communities',
+                      desc: 'Long-term support for children growing up in remote and underserved communes — food, learning, healthcare and a safe place to belong.',
                       raised: 21500000,
                       goal: 45000000,
                       percent: 47,
                       days: 82,
-                      img: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80',
+                      img: 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337366/giveaid/replacement/h-mong-9402-1396341888_y8hvch.webp',
                       id: 1
                     },
                     {
-                      title: 'School Supplies for a Brighter Future',
+                      title: 'Essential Supplies for Children',
                       cause: 'Education',
                       desc: 'Essential school supplies — backpacks, textbooks and learning kits for children in need.',
                       raised: 12750000,
                       goal: 30000000,
                       percent: 42,
                       days: 35,
-                      img: 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=600&q=80',
+                      img: 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337381/giveaid/replacement/thang3-4930-1396341890_cyjvnr.webp',
                       id: 2
                     },
                     {
-                      title: 'Children\'s Healthcare Support',
-                      cause: 'Healthcare',
-                      desc: 'Medical check-ups, essential medicines and emergency healthcare for underserved children.',
+                      title: 'Nutritious Meals for Children',
+                      cause: 'Food & Nutrition',
+                      desc: 'Daily balanced meals for children at care homes and community centres across Vietnam.',
                       raised: 18500000,
                       goal: 50000000,
                       percent: 37,
                       days: 112,
-                      img: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=600&q=80',
+                      img: 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337355/giveaid/replacement/thieunhi11-6736-1401513005_qhyasf.webp',
                       id: 3
                     }
                   ].map((c) => (
@@ -421,7 +421,7 @@ useEffect(() => {
             <Col lg={5}>
               <div className="c4k-story-image">
                 <img
-                  src="https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=700&q=80"
+                  src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337362/giveaid/replacement/thieunhi19-3239-1401513005_py9gb4.webp"
                   alt="Children at a care home"
                 />
               </div>

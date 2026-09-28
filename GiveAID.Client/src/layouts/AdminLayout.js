@@ -35,6 +35,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/admin/users', label: 'Users', icon: 'users' },
       { to: '/admin/partners', label: 'Partners & NGOs', icon: 'partners' },
+      { to: '/admin/registrations', label: 'Registrations', icon: 'registrations' },
     ],
   },
   {
@@ -161,6 +162,13 @@ const Icon = ({ name }) => {
         <svg {...common}>
           <path d="M22 2L11 13"/>
           <path d="M22 2L15 22 11 13 2 9 22 2z"/>
+        </svg>
+      );
+    case 'registrations':
+      return (
+        <svg {...common}>
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
         </svg>
       );
     case 'logout':

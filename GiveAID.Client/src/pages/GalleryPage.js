@@ -254,7 +254,7 @@ function GalleryPage() {
       <section className="gp-hero">
         <div className="gp-hero-bg">
           <img
-            src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=1800&q=80"
+            src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337412/giveaid/replacement/thieunhi-6226-1401513004_dqjcpq.webp"
             alt="Vietnamese schoolchildren studying"
           />
           <div className="gp-hero-overlay" />

@@ -14,6 +14,9 @@ function CampaignsPage() {
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 12;
 
   const fetchCauses = useCallback(async () => {
     try {
@@ -35,7 +38,7 @@ function CampaignsPage() {
     try {
       setLoading(true);
       setError(null);
-      const params = {};
+      const params = { page, pageSize };
       if (selectedStatus && selectedStatus !== 'All') params.status = selectedStatus;
       if (selectedCause) params.causeId = selectedCause;
       if (searchTerm.trim()) params.search = searchTerm.trim();
@@ -46,29 +49,42 @@ function CampaignsPage() {
         // API returns { items: [...], page, pageSize, totalCount }
         const result = response.data.data;
         const items = result?.items || [];
-        // If API returns empty array, fall back to sample data
-        if (items.length === 0) {
+        // If API returns empty array on page 1, fall back to sample data.
+        // Pages beyond 1 with no items just means we've reached the end.
+        if (items.length === 0 && page === 1) {
           setCampaigns(SAMPLE_CAMPAIGNS);
+          setTotalCount(SAMPLE_CAMPAIGNS.length);
         } else {
           setCampaigns(items);
+          setTotalCount(result?.totalCount ?? items.length);
         }
       } else {
         // Use sample campaigns silently so users always see something
         setCampaigns(SAMPLE_CAMPAIGNS);
+        setTotalCount(SAMPLE_CAMPAIGNS.length);
       }
     } catch (err) {
       // Network / server error → still show demo data instead of empty page
       console.error('Campaigns fetch failed, using sample data:', err);
       setCampaigns(SAMPLE_CAMPAIGNS);
+      setTotalCount(SAMPLE_CAMPAIGNS.length);
     } finally {
       setLoading(false);
     }
+  }, [selectedCause, selectedStatus, searchTerm, page, pageSize]);
+
+  // Reset to page 1 whenever filters/search change (not on page change itself).
+  useEffect(() => {
+    setPage(1);
   }, [selectedCause, selectedStatus, searchTerm]);
 
   useEffect(() => {
     fetchCauses();
+  }, [fetchCauses]);
+
+  useEffect(() => {
     fetchCampaigns();
-  }, [fetchCauses, fetchCampaigns]);
+  }, [fetchCampaigns]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -119,7 +135,7 @@ function CampaignsPage() {
       <section className="cp-hero">
         <div className="cp-hero-bg">
           <img
-            src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80"
+            src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337352/giveaid/replacement/7-1631871699_c2w5qf.webp"
             alt="Children smiling"
             className="cp-hero-image"
           />
@@ -267,10 +283,10 @@ function CampaignsPage() {
                 <Col lg={6}>
                   <div className="cp-featured-image">
                     <img
-                      src={featuredCampaign.imageUrl || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80'}
+                      src={featuredCampaign.imageUrl || 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337418/giveaid/replacement/thieunhi9-2869-1401513005_chlpkd.webp'}
                       alt={featuredCampaign.campaignName}
                       onError={(e) => {
-                        e.target.src = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80';
+                        e.target.src = 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337418/giveaid/replacement/thieunhi9-2869-1401513005_chlpkd.webp';
                       }}
                     />
                     <div className="cp-featured-badge-overlay">
@@ -420,10 +436,10 @@ function CampaignsPage() {
                     {/* Image */}
                     <div className="cp-card-image">
                       <img
-                        src={campaign.imageUrl || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80'}
+                        src={campaign.imageUrl || 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337366/giveaid/replacement/h-mong-9402-1396341888_y8hvch.webp'}
                         alt={campaign.campaignName}
                         onError={(e) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80';
+                          e.target.src = 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337366/giveaid/replacement/h-mong-9402-1396341888_y8hvch.webp';
                         }}
                       />
                       {campaign.isFeatured && (
@@ -486,9 +502,41 @@ function CampaignsPage() {
                 </Card.Body>
               </Card>
             </Col>
-          ))}
+              ))}
         </Row>
       )}
+
+          {/* Pagination */}
+          {!error && totalCount > pageSize && (
+            <nav className="cp-pagination" aria-label="Campaign pages">
+              <Button
+                className="cp-page-btn cp-page-nav"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <div className="cp-page-numbers">
+                {Array.from({ length: Math.ceil(totalCount / pageSize) }, (_, i) => i + 1).map((num) => (
+                  <Button
+                    key={num}
+                    className={`cp-page-btn cp-page-number ${num === page ? 'active' : ''}`}
+                    onClick={() => setPage(num)}
+                    aria-current={num === page ? 'page' : undefined}
+                  >
+                    {num}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                className="cp-page-btn cp-page-nav"
+                disabled={page >= Math.ceil(totalCount / pageSize)}
+                onClick={() => setPage((p) => Math.min(Math.ceil(totalCount / pageSize), p + 1))}
+              >
+                Next
+              </Button>
+            </nav>
+          )}
         </Container>
       </section>
 

@@ -49,6 +49,7 @@ import AdminDonationsPage from './pages/admin/AdminDonationsPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminAchievementsPage from './pages/admin/AdminAchievementsPage';
 import AdminInvitationsPage from './pages/admin/AdminInvitationsPage';
+import AdminRegistrationsPage from './pages/admin/AdminRegistrationsPage';
 
 // Styles
 import './styles/App.css';
@@ -88,6 +89,7 @@ function App() {
               <Route path="queries" element={<AdminQueriesPage />} />
               <Route path="contacts" element={<AdminContactPage />} />
               <Route path="invitations" element={<AdminInvitationsPage />} />
+              <Route path="registrations" element={<AdminRegistrationsPage />} />
               {/* Admin fallback */}
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>

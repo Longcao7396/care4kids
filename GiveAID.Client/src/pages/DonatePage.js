@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Row, Col, Form, Alert } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { causesService, donationsService } from '../services';
+import { donationsService } from '../services';
 import api from '../services/api';
 import './DonatePage.css';
 
@@ -75,7 +75,6 @@ const DonatePage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [subCauses, setSubCauses] = useState([]);
   const [treeLoading, setTreeLoading] = useState(true);
-  const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [formData, setFormData] = useState({
     causeId: location.state?.causeId != null ? String(location.state.causeId) : '',
     campaignId: location.state?.campaignId != null ? String(location.state.campaignId) : '',
@@ -191,8 +190,6 @@ const DonatePage = () => {
         setCampaigns(safeItems);
       } catch (e) {
         if (e.name !== 'CanceledError') console.error('Failed to load campaigns:', e);
-      } finally {
-        if (!ac.signal.aborted) setCampaignsLoading(false);
       }
     };
     loadTree();
@@ -310,7 +307,7 @@ const DonatePage = () => {
       <section className="dp-hero">
         <div className="dp-hero-bg">
           <img
-            src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=1600&q=80"
+            src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337379/giveaid/replacement/thang2-7378-1396341890_sh4unx.webp"
             alt="Helping hands"
           />
           <div className="dp-hero-overlay" />

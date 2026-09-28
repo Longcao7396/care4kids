@@ -1,4 +1,4 @@
-﻿# start-backend.ps1 — Build & run GiveAID v2 WebApi on port 5231.
+# start-backend.ps1 — Build & run GiveAID v2 WebApi on port 5231.
 # Logs to scripts/backend.log, writes PID to scripts/backend.pid.
 # Auto-detects path: GiveAID.Client/.. -> project-NGO.v2/
 
