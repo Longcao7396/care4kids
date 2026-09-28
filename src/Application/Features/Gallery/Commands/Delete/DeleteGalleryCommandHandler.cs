@@ -83,7 +83,8 @@ public class DeleteGalleryCommandHandler : IRequestHandler<DeleteGalleryCommand,
                 galleryId);
         }
 
-        _context.Gallery.Remove(gallery);
+        gallery.IsDeleted = true;
+        gallery.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

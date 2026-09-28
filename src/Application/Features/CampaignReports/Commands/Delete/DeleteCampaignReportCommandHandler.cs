@@ -5,7 +5,8 @@ namespace GiveAID.Application.Features.CampaignReports.Commands.Delete;
 
 /// <summary>
 /// Handler for DeleteCampaignReportCommand.
-/// Performs a hard delete on CampaignReport (no IsDeleted/DeletedAt fields exist).
+/// Performs a soft delete (sets IsDeleted/DeletedAt) so the record is
+/// excluded from normal queries but retained in the database.
 /// </summary>
 public class DeleteCampaignReportCommandHandler : IRequestHandler<DeleteCampaignReportCommand, bool>
 {
@@ -26,7 +27,8 @@ public class DeleteCampaignReportCommandHandler : IRequestHandler<DeleteCampaign
             return false;
         }
 
-        _context.CampaignReports.Remove(report);
+        report.IsDeleted = true;
+        report.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

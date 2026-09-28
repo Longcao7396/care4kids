@@ -50,5 +50,8 @@ public class GalleryConfiguration : IEntityTypeConfiguration<Gallery>
 
         builder.HasIndex(g => g.Category);
         builder.HasIndex(g => g.IsFeatured);
+
+        // Soft delete: hide deleted gallery items from normal queries.
+        builder.HasQueryFilter(g => !g.IsDeleted);
     }
 }

@@ -57,6 +57,9 @@ public interface IApplicationDbContext
     DbSet<WebhookLog> WebhookLogs { get; }
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
 
+    // Notifications
+    DbSet<Notification> Notifications { get; }
+
     // Programmes
     DbSet<Programme> Programmes { get; }
     DbSet<ProgrammeRegistration> ProgrammeRegistrations { get; }

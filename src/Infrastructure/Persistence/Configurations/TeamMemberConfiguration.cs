@@ -48,5 +48,8 @@ public class TeamMemberConfiguration : IEntityTypeConfiguration<TeamMember>
 
         builder.HasIndex(t => t.IsFeatured);
         builder.HasIndex(t => t.DisplayOrder);
+
+        // Soft delete: hide deleted team members from normal queries.
+        builder.HasQueryFilter(t => !t.IsDeleted);
     }
 }

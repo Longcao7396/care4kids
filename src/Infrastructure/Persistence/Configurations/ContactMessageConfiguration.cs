@@ -33,5 +33,8 @@ public class ContactMessageConfiguration : IEntityTypeConfiguration<ContactMessa
             .HasColumnType("nvarchar(max)");
 
         builder.HasIndex(c => c.IsRead);
+
+        // Soft delete: hide deleted contact messages from normal queries.
+        builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }

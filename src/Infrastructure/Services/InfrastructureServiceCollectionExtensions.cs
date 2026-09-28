@@ -131,6 +131,13 @@ public static class InfrastructureServiceCollectionExtensions
         });
         services.AddScoped<IImageStorageService, CloudinaryImageStorageService>();
 
+        // Current user service for audit logging
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        // Notification service
+        services.AddScoped<INotificationService, NotificationService>();
+
         return services;
     }
 }

@@ -23,7 +23,8 @@ public class DeleteCampaignCommandHandler : IRequestHandler<DeleteCampaignComman
             throw new InvalidOperationException($"Campaign with ID {request.CampaignId} not found.");
         }
 
-        _context.Campaigns.Remove(campaign);
+        campaign.IsDeleted = true;
+        campaign.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

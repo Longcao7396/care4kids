@@ -16,4 +16,20 @@ public class DashboardStatsDto
     public int DonationsToday { get; set; }
     public int DonationsThisMonth { get; set; }
     public List<RecentDonationDto> RecentDonations { get; set; } = new();
+
+    /// <summary>
+    /// Bug #2 fix: monthly donation totals for the trend chart (oldest to newest).
+    /// </summary>
+    public List<MonthlyDonationDto> DonationsByMonth { get; set; } = new();
+}
+
+/// <summary>
+/// Aggregated donation total/count for a single calendar month.
+/// </summary>
+public class MonthlyDonationDto
+{
+    public int Year { get; set; }
+    public int Month { get; set; }
+    public decimal Total { get; set; }
+    public int Count { get; set; }
 }

@@ -30,5 +30,8 @@ public class FaqConfiguration : IEntityTypeConfiguration<Faq>
         builder.HasIndex(f => f.IsActive);
         builder.HasIndex(f => f.IsFeatured);
         builder.HasIndex(f => f.Category);
+
+        // Soft delete: hide deleted FAQs from normal queries.
+        builder.HasQueryFilter(f => !f.IsDeleted);
     }
 }

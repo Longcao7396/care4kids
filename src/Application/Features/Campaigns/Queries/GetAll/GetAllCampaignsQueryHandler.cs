@@ -6,7 +6,7 @@ namespace GiveAID.Application.Features.Campaigns.Queries.GetAll;
 /// <summary>
 /// Handler for GetAllCampaignsQuery.
 /// </summary>
-public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery, IEnumerable<CampaignDto>>
+public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery, PagedCampaignsResult>
 {
     private readonly IApplicationDbContext _context;
 
@@ -15,7 +15,7 @@ public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery,
         _context = context;
     }
 
-    public async Task<IEnumerable<CampaignDto>> Handle(GetAllCampaignsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedCampaignsResult> Handle(GetAllCampaignsQuery request, CancellationToken cancellationToken)
     {
         var query = _context.Campaigns
             .Include(c => c.Cause)
@@ -38,6 +38,18 @@ public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery,
             query = query.Where(c => c.RegistrationRequired);
         }
 
+        // Bug #1 fix: free-text search on campaign name/description (case-insensitive).
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var term = request.SearchTerm.Trim();
+            query = query.Where(c =>
+                EF.Functions.Like(c.CampaignName, $"%{term}%") ||
+                (c.Description != null && EF.Functions.Like(c.Description, $"%{term}%")));
+        }
+
+        // Bug #6 fix: count the true total (pre-pagination) instead of the page's item count.
+        var totalCount = await query.CountAsync(cancellationToken);
+
         var campaigns = await query
             .OrderByDescending(c => c.IsFeatured)
             .ThenByDescending(c => c.CreatedAt)
@@ -45,7 +57,7 @@ public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery,
             .Take(request.PageSize)
             .ToListAsync(cancellationToken);
 
-        return campaigns.Select(c => new CampaignDto
+        var items = campaigns.Select(c => new CampaignDto
         {
             CampaignId = c.CampaignId,
             CauseId = c.CauseId,
@@ -77,5 +89,11 @@ public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery,
             CreatedAt = c.CreatedAt,
             DonorCount = c.Donations?.Count(d => d.PaymentStatus == "Completed") ?? 0
         });
+
+        return new PagedCampaignsResult
+        {
+            Items = items,
+            TotalCount = totalCount
+        };
     }
 }

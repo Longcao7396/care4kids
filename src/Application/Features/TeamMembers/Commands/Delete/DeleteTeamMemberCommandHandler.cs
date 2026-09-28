@@ -23,7 +23,8 @@ public class DeleteTeamMemberCommandHandler : IRequestHandler<DeleteTeamMemberCo
             throw new InvalidOperationException($"Team member with ID {request.TeamMemberId} not found.");
         }
 
-        _context.TeamMembers.Remove(member);
+        member.IsDeleted = true;
+        member.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

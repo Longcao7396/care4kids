@@ -14,5 +14,26 @@ namespace GiveAID.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Soft-delete flag. When true, the record is excluded from normal
+        /// queries via a global query filter but remains in the database.
+        /// </summary>
+        public bool IsDeleted { get; set; } = false;
+
+        /// <summary>
+        /// UTC timestamp when the record was soft-deleted. Null while active.
+        /// </summary>
+        public DateTime? DeletedAt { get; set; }
+
+        /// <summary>
+        /// User ID of the user who created this record.
+        /// </summary>
+        public string? CreatedBy { get; set; }
+
+        /// <summary>
+        /// User ID of the user who last updated this record.
+        /// </summary>
+        public string? UpdatedBy { get; set; }
     }
 }

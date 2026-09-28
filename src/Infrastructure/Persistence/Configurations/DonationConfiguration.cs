@@ -81,5 +81,8 @@ public class DonationConfiguration : IEntityTypeConfiguration<Donation>
         // Legacy indexes kept for query performance
         builder.HasIndex(d => d.UserId);
         builder.HasIndex(d => d.PaymentStatus);
+
+        // Soft delete: hide deleted donations from normal queries.
+        builder.HasQueryFilter(d => !d.IsDeleted);
     }
 }

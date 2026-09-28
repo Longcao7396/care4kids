@@ -1,4 +1,5 @@
 using GiveAID.Application.Features.CampaignRegistrations.DTOs;
+using GiveAID.Application.Common.Interfaces;
 using GiveAID.Domain.Entities;
 using MediatR;
 
@@ -10,10 +11,14 @@ namespace GiveAID.Application.Features.CampaignRegistrations.Commands.Register;
 public class RegisterCampaignCommandHandler : IRequestHandler<RegisterCampaignCommand, RegistrationDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public RegisterCampaignCommandHandler(IApplicationDbContext context)
+    public RegisterCampaignCommandHandler(
+        IApplicationDbContext context,
+        INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<RegistrationDto> Handle(RegisterCampaignCommand request, CancellationToken cancellationToken)
@@ -55,6 +60,16 @@ public class RegisterCampaignCommandHandler : IRequestHandler<RegisterCampaignCo
 
         _context.CampaignRegistrations.Add(registration);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Trigger notification for successful registration
+        await _notificationService.CreateNotificationAsync(
+            request.UserId,
+            "campaign_registration",
+            "Registration Confirmed",
+            $"You have successfully registered for {campaign.CampaignName}. Start date: {campaign.StartDate:MMM dd, yyyy}",
+            "CampaignRegistration",
+            registration.RegistrationId,
+            cancellationToken);
 
         return new RegistrationDto
         {
