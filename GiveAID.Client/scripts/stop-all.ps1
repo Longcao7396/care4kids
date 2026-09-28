@@ -7,7 +7,7 @@ $scriptDir = $PSScriptRoot
 Write-Host "[stop-all] Stopping all GiveAID v2 dev processes..." -ForegroundColor Cyan
 
 # Kill by port
-$ports = @(3000, 5000, 5069, 3001)
+$ports = @(3000, 5000, 3001)
 foreach ($p in $ports) {
     $conns = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue
     foreach ($c in $conns) {
@@ -20,7 +20,7 @@ foreach ($p in $ports) {
 }
 
 # Kill by process name
-$processNames = @('node', 'dotnet', 'GiveAID.V2.WebApi', 'GiveAID.V2.Web')
+$processNames = @('node', 'dotnet', 'GiveAID.V2.WebApi')
 foreach ($name in $processNames) {
     $procs = Get-Process -Name $name -ErrorAction SilentlyContinue
     foreach ($p in $procs) {

@@ -37,22 +37,22 @@ cd GiveAID.Client
 npm install
 ```
 
-### Run (3 terminals)
+### Run (2 terminals or use START.bat)
 
 **Terminal 1 — WebApi (port 5231)**
 ```powershell
 dotnet run --project src/WebApi/GiveAID.V2.WebApi.csproj
 ```
 
-**Terminal 2 — Admin console (port 5069)**
-```powershell
-dotnet run --project src/Web/GiveAID.V2.Web.csproj
-```
-
-**Terminal 3 — React client (port 3000)**
+**Terminal 2 — React client (port 3000)**
 ```powershell
 cd GiveAID.Client
 npm start
+```
+
+**Or use the launcher:**
+```powershell
+START.bat
 ```
 
 ### Default ports
@@ -61,8 +61,8 @@ npm start
 |----------------|---------------------------------------|
 | WebApi         | http://localhost:5231                 |
 | Scalar OpenAPI | http://localhost:5231/scalar/v1       |
-| Admin console  | http://localhost:5069/Admin/Auth/Login |
 | React client   | http://localhost:3000                 |
+| React admin    | http://localhost:3000/admin           |
 
 ## 2. Configuration Reference
 

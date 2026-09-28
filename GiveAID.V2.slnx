@@ -9,9 +9,6 @@
   <Folder Name="/src/Infrastructure/">
     <Project Path="src/Infrastructure/GiveAID.V2.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/src/Web/">
-    <Project Path="src/Web/GiveAID.V2.Web.csproj" />
-  </Folder>
   <Folder Name="/src/WebApi/">
     <Project Path="src/WebApi/GiveAID.V2.WebApi.csproj" />
   </Folder>

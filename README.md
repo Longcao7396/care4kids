@@ -1,7 +1,7 @@
 # GiveAID v2.0
 
 > NGO donation & welfare platform — Clean Architecture rewrite
-> Public React site + Admin Razor console + ASP.NET Core WebApi
+> Public React site + Admin dashboard + ASP.NET Core WebApi
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![Tests](https://img.shields.io/badge/tests-169%2F169-success)]()
