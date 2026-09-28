@@ -19,6 +19,8 @@ This document is the **single source of truth** for non-obvious decisions. Read 
   - **Database**: SQL Server (LocalDB in dev, configurable for prod)
   - **Payments**: Stripe (mock gateway in dev)
   - **Auth**: JWT Bearer + BCrypt password hashing
+  - **Data Protection**: Soft delete pattern with global query filters
+  - **Compliance**: Automatic audit logging for all entity changes
 
 ---
 
@@ -28,14 +30,17 @@ This document is the **single source of truth** for non-obvious decisions. Read 
 project NGO.v2/
 ├── src/                          # Backend (.NET, Clean Architecture)
 │   ├── Domain/                   # Entities, value objects, domain exceptions
-│   │   └── Entities/             # User, Campaign, Cause, Donation, etc.
+│   │   └── Entities/             # User, Campaign, Cause, Donation, AuditLog, etc.
 │   ├── Application/              # Use cases (CQRS via MediatR)
 │   │   ├── Common/Interfaces/    # IApplicationDbContext, IPasswordHasher, EmailOptions
+│   │   ├── Common/Behaviors/     # ValidationBehavior (global FluentValidation pipeline)
 │   │   ├── Features/             # Auth/, Campaigns/, Causes/, Donations/, etc.
 │   │   │   └── Auth/Commands/Login/LoginCommandHandler.cs  ← example
 │   │   └── Services/             # ApplicationServiceCollectionExtensions
 │   ├── Infrastructure/           # External concerns
 │   │   ├── Persistence/          # EF Core DbContext, migrations, Seed/
+│   │   │   ├── Configurations/   # AuditLogConfiguration, UserConfiguration, etc.
+│   │   │   └── Migrations/       # EF Core migrations including audit log table
 │   │   ├── Security/             # BCrypt PasswordHasher, JwtTokenService
 │   │   ├── Email/                # SMTP, email sender
 │   │   ├── Payments/             # Stripe gateway + Mock
@@ -48,7 +53,7 @@ project NGO.v2/
 │
 ├── GiveAID.Client/               # Frontend (React)
 │   ├── src/
-│   │   ├── pages/                # One file per route
+│   │   ├── pages/                # Public pages + admin/ subfolder (25 admin pages)
 │   │   ├── components/           # Shared UI
 │   │   ├── contexts/             # AuthContext.js ← single auth state owner
 │   │   ├── services/             # api.js (axios + interceptor), authService.js
@@ -94,9 +99,23 @@ Domain  ←  Application  ←  Infrastructure
 
 - Every use case = 1 Command/Query + 1 Handler. No fat services.
 - Handlers are registered by assembly scan in `ApplicationServiceCollectionExtensions.AddApplicationServices()`.
-- Validators exist (`LoginCommandValidator`, etc.) but the pipeline `ValidationBehavior` is **NOT registered**. This is a known gap. If you add a validator, manually invoke it in the handler, OR add the pipeline behavior globally (see §6).
+- **ValidationBehavior is NOW REGISTERED** — FluentValidation runs automatically for all MediatR requests. Handlers no longer need to manually call `validator.ValidateAsync()`.
 
-### 3.3 Auth flow
+### 3.3 Soft Delete Pattern
+
+- All entities inherit from `BaseEntity` which includes `IsDeleted` and `DeletedAt` fields.
+- **Global Query Filter**: EF Core automatically filters `WHERE IsDeleted = false` on all queries.
+- **Automatic Soft Delete**: When `context.Remove()` is called, `SaveChangesAsync` intercepts it and converts to soft delete (`IsDeleted = true`, `DeletedAt = DateTime.UtcNow`).
+- To query deleted entities: use `IgnoreQueryFilters()` in LINQ.
+
+### 3.4 Audit Log MVP
+
+- **Automatic tracking**: Every Create/Update/Delete operation on `BaseEntity` is logged to `audit_logs` table.
+- **JSON snapshots**: Before/after values captured via EF Core's `PropertyValues`.
+- **Who/When**: Tracks `UserId` (from `ICurrentUserService`), `Timestamp`, `EntityType`, `EntityId`.
+- Implementation: `GiveAIDDbContext.SaveChangesAsync()` captures changes before saving.
+
+### 3.5 Auth flow
 
 ```
 Frontend                    Backend
@@ -114,7 +133,7 @@ LoginPage.js  ──POST──→  AuthController.Login
 
 **Critical**: `LoginCommandHandler` checks `IsVerified` BEFORE password. Email verification is a hard requirement (configurable via `Email:RequireVerification` — `false` in dev).
 
-### 3.4 Frontend service layer
+### 3.6 Frontend service layer
 
 ```
 LoginPage.js
@@ -208,9 +227,11 @@ sqlcmd -S "(localdb)\MSSQLLocalDB" -E -Q "DROP DATABASE GiveAIDDB"
 
 ## 6. Known Gaps / TODOs (intentional, tracked)
 
-| Gap | Severity | Workaround |
+| Gap | Severity | Status |
 |---|---|---|
-| FluentValidation pipeline not enforced | Medium | Handlers call `validator.ValidateAsync(request)` manually OR add `ValidationBehavior<,>` to `AddApplicationServices()` |
+| ~~FluentValidation pipeline not enforced~~ | ~~Medium~~ | ✅ **RESOLVED** — ValidationBehavior registered in MediatR pipeline |
+| ~~Soft delete fields unused~~ | ~~Medium~~ | ✅ **RESOLVED** — Global query filter + SaveChanges intercept |
+| ~~No audit log~~ | ~~Medium~~ | ✅ **RESOLVED** — Automatic tracking in SaveChangesAsync |
 | `ExceptionHandlingMiddleware` overwrites auth exception messages | Medium | Controllers catch `UnauthorizedAccessException` explicitly (see `AuthController.Login`) |
 | `EmailOptions` not auto-validated on startup | Low | Manually set `Email:RequireVerification` in dev/prod profiles |
 | `appsettings.Development.json` not yet in .gitignore | Low | Add `appsettings.Development.json` to .gitignore before next commit if it contains real secrets |
@@ -260,5 +281,11 @@ The original developer is a domain expert but not a C# / React expert. When uncl
 
 ## 10. Versioning & Changelog
 
-- **2.0.0** (Sept 2026): Clean Architecture rewrite from v1 MVC monolith. Auth refactored, BCrypt added, JWT hardened, CQRS via MediatR.
+- **2.0.0** (Sept 2026): Clean Architecture rewrite from v1 MVC monolith. Key improvements:
+  - Auth refactored: BCrypt password hashing, JWT hardening
+  - CQRS via MediatR with ValidationBehavior pipeline
+  - Soft delete pattern with global query filters
+  - Audit log MVP with automatic change tracking
+  - React admin dashboard (25 pages) replacing Razor admin
+  - 213 unit/integration/functional tests (100% pass rate)
 - Future versions: bump `package.json` (client) and all `.csproj` `Version` (backend) together. Tag in git with `vX.Y.Z` semver.

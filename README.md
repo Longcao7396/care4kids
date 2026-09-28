@@ -4,7 +4,7 @@
 > Public React site + Admin dashboard + ASP.NET Core WebApi
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Tests](https://img.shields.io/badge/tests-169%2F169-success)]()
+[![Tests](https://img.shields.io/badge/tests-213%2F213-success)]()
 [![License](https://img.shields.io/badge/license-Proprietary-blue)]()
 
 ## Database Setup — single source of truth
@@ -95,20 +95,19 @@ Run the verification script first. The most common causes are:
 ## Overview
 
 GiveAID v2.0 is a full rewrite of the legacy ASP.NET WebForms + IIS Express stack on a
-modern **Clean Architecture** foundation. The solution separates concerns into five layers,
-supports CQRS via MediatR, and ships with a comprehensive automated test suite (169 tests,
-100% pass rate).
+modern **Clean Architecture** foundation. The solution separates concerns into four layers,
+supports CQRS via MediatR, soft delete pattern, audit logging, and ships with a comprehensive 
+automated test suite (213 tests, 100% pass rate).
 
 ## Tech Stack
 
 | Layer            | Technology                                                 |
 |------------------|------------------------------------------------------------|
-| Domain           | C# / .NET 8, pure POCOs, no dependencies                   |
+| Domain           | C# / .NET 10, pure POCOs, no dependencies                  |
 | Application      | MediatR (CQRS), FluentValidation, AutoMapper               |
-| Infrastructure   | EF Core 8 (SQL Server), JWT, SMTP, Stripe, MemoryCache     |
-| WebApi           | ASP.NET Core 8 Web API, JWT bearer, Scalar OpenAPI         |
-| Web (Admin)      | ASP.NET Core 8 MVC + Razor Pages, AdminLTE 3.2             |
-| Client (Public)  | React 18 + React Router + Axios                            |
+| Infrastructure   | EF Core 10 (SQL Server), JWT, SMTP, Stripe, MemoryCache, Audit Log |
+| WebApi           | ASP.NET Core 10 Web API, JWT bearer, Scalar OpenAPI        |
+| Client           | React 18 + React Router + Axios (Public + Admin Dashboard) |
 | Tests            | xUnit + FluentAssertions + Moq + WebApplicationFactory     |
 
 ## Repository Layout
@@ -118,15 +117,14 @@ project-NGO/
 ├── src/
 │   ├── Domain/                    # Entities, value objects, enums (no deps)
 │   ├── Application/               # CQRS handlers, validators, DTOs
-│   ├── Infrastructure/            # EF Core, JWT, Email, Payment, Cache
-│   ├── WebApi/                    # REST API (port 5231)
-│   └── Web/                       # Admin console (port 5069)
+│   ├── Infrastructure/            # EF Core, JWT, Email, Payment, Cache, Audit Log
+│   └── WebApi/                    # REST API (port 5231)
 ├── tests/
-│   ├── Domain.UnitTests/          # 71 tests
-│   ├── Application.UnitTests/     # 43 tests
+│   ├── Domain.UnitTests/          # 70 tests
+│   ├── Application.UnitTests/     # 87 tests
 │   ├── Infrastructure.IntegrationTests/  # 28 tests
-│   └── WebApi.FunctionalTests/    # 27 tests
-├── GiveAID.Client/                # React 18 public site (port 3000)
+│   └── WebApi.FunctionalTests/    # 28 tests
+├── GiveAID.Client/                # React 18 public site + admin dashboard (port 3000)
 ├── database/                      # SQL migrations + seeds
 ├── docs/                          # Architecture, API, deployment
 └── GiveAID.V2.slnx
@@ -136,7 +134,7 @@ project-NGO/
 
 ### Prerequisites
 
-- .NET 8 SDK
+- .NET 10 SDK
 - Node.js 18+
 - Visual Studio 2022 / Rider / VS Code (ships with **LocalDB** — the project's
   default SQL Server instance). No separate SQL Server install needed.
@@ -169,28 +167,22 @@ dotnet run --project src/WebApi/GiveAID.V2.WebApi.csproj
 # OpenAPI at http://localhost:5231/scalar/v1
 ```
 
-### 3. Admin Console
-
-```powershell
-dotnet run --project src/Web/GiveAID.V2.Web.csproj
-# Admin at http://localhost:5069
-# Login: admin / Admin@123  (or admin@give-aid.org)
-```
-
-### 4. Public Site
+### 3. Frontend (Public Site + Admin Dashboard)
 
 ```powershell
 cd GiveAID.Client
 npm install
 npm start
-# Site at http://localhost:3000
+# Public site: http://localhost:3000
+# Admin dashboard: http://localhost:3000/admin
+# Login: admin@give-aid.org / Admin@123
 ```
 
-### 5. Run Tests
+### 4. Run Tests
 
 ```powershell
 dotnet test GiveAID.V2.slnx
-# Expected: 169 passed, 0 failed
+# Expected: 213 passed, 0 failed
 ```
 
 ## Default Credentials
@@ -202,13 +194,15 @@ dotnet test GiveAID.V2.slnx
 
 ## Architecture Highlights
 
-- **Clean Architecture** with strict dependency direction (Domain ← Application ← Infrastructure ← WebApi/Web)
+- **Clean Architecture** with strict dependency direction (Domain ← Application ← Infrastructure ← WebApi)
 - **CQRS** via MediatR — Commands and Queries segregated in `src/Application/Features/`
 - **Envelope JSON contract** — every response is `{success, message, data, errors?}` for predictable client handling
 - **JWT auth** with refresh tokens, role-based policy (`Admin`)
 - **Rate limiting** (100 req/min/IP) via `AspNetCoreRateLimit`
-- **AdminLTE 3.2** Razor console for back-office staff
+- **Soft delete pattern** — all entities support soft delete with `IsDeleted` flag and global query filters
+- **Audit log MVP** — automatic tracking of Create/Update/Delete operations with JSON snapshots
 - **React 18** SPA with axios interceptors that auto-attach JWT and unwrap envelopes
+- **React Admin Dashboard** — 25 admin pages for full CRUD management
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full architecture document.
 
@@ -227,10 +221,10 @@ All endpoints live under `/api/v1/`. See [`docs/API_REFERENCE.md`](docs/API_REFE
 | 2     | Domain entities + enums                  | ✅      |
 | 3     | Application (CQRS + validators)          | ✅      |
 | 4     | Infrastructure (EF, JWT, Email, Stripe)  | ✅      |
-| 5     | WebApi (24 controllers + Scalar)         | ✅      |
-| 6     | Admin console (Razor + AdminLTE)         | ✅      |
-| 7     | Tests (169 tests, 100% pass)             | ✅      |
-| 8     | React client refactor                    | ✅      |
+| 5     | WebApi (28 controllers + Scalar)         | ✅      |
+| 6     | React client (public + admin dashboard)  | ✅      |
+| 7     | Soft delete pattern + Audit log MVP      | ✅      |
+| 8     | Tests (213 tests, 100% pass)             | ✅      |
 | 9     | Documentation + cutover                  | ✅      |
 
 ## Documentation
