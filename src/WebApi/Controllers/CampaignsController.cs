@@ -34,27 +34,30 @@ public class CampaignsController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? status = null,
         [FromQuery] int? causeId = null,
-        [FromQuery] bool eventsOnly = false)
+        [FromQuery] bool eventsOnly = false,
+        [FromQuery] string? search = null)
     {
-        var items = await _mediator.Send(new GetAllCampaignsQuery
+        var result = await _mediator.Send(new GetAllCampaignsQuery
         {
             Page = page,
             PageSize = pageSize,
             Status = status,
             CauseId = causeId,
-            EventsOnly = eventsOnly  // M-05: Pass eventsOnly filter to handler
+            EventsOnly = eventsOnly,  // M-05: Pass eventsOnly filter to handler
+            SearchTerm = search       // Bug #1 fix: pass search filter to handler
         });
 
         return Ok(new
         {
             success = true,
             message = "OK",
-            data = new { items, page, pageSize, totalCount = items.Count() }
+            data = new { items = result.Items, page, pageSize, totalCount = result.TotalCount }
         });
     }
 
@@ -63,6 +66,7 @@ public class CampaignsController : ControllerBase
     /// </summary>
     [HttpGet("featured")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeatured([FromQuery] int count = 3)
     {
         var items = await _mediator.Send(new GetFeaturedCampaignsQuery { Limit = count });
@@ -74,6 +78,7 @@ public class CampaignsController : ControllerBase
     /// </summary>
     [HttpGet("by-cause/{causeId:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByCause(int causeId, [FromQuery] string? status = null)
     {
         var items = await _mediator.Send(new GetCampaignsByCauseQuery
@@ -89,6 +94,8 @@ public class CampaignsController : ControllerBase
     /// </summary>
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -106,7 +113,10 @@ public class CampaignsController : ControllerBase
     /// Create a new campaign (Admin only).
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateCampaignCommand command)
     {
         var dto = await _mediator.Send(command);
@@ -118,7 +128,11 @@ public class CampaignsController : ControllerBase
     /// Update a campaign (Admin only).
     /// </summary>
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCampaignCommand command)
     {
         command.CampaignId = id;
@@ -130,7 +144,10 @@ public class CampaignsController : ControllerBase
     /// Delete a campaign (Admin only).
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
         var ok = await _mediator.Send(new DeleteCampaignCommand { CampaignId = id });
@@ -146,6 +163,9 @@ public class CampaignsController : ControllerBase
     /// </summary>
     [HttpPost("{id:int}/register")]
     [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Register(int id, [FromBody] RegistrationRequest body)
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -174,7 +194,7 @@ public class CampaignsController : ControllerBase
     /// Get campaign registrations (Admin only).
     /// </summary>
     [HttpGet("{id:int}/registrations")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> GetRegistrations(int id)
     {
         var items = await _mediator.Send(new GetRegistrationsByCampaignQuery { CampaignId = id });

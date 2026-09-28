@@ -26,7 +26,10 @@ public class AuthBootstrapController : ControllerBase
     /// Bootstrap the application with initial admin user (Admin only).
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Bootstrap([FromBody] BootstrapRequest request)
     {
         var command = new CreateAdminCommand
@@ -46,6 +49,7 @@ public class AuthBootstrapController : ControllerBase
     /// </summary>
     [HttpGet("status")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStatus()
     {
         var hasUsers = _context.Users.Any();

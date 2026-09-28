@@ -34,6 +34,7 @@ public class GalleryController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 24,
@@ -55,6 +56,7 @@ public class GalleryController : ControllerBase
 
     [HttpGet("featured")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeatured([FromQuery] int count = 8)
     {
         var items = await _mediator.Send(new GetFeaturedGalleryQuery { Limit = count });
@@ -63,6 +65,7 @@ public class GalleryController : ControllerBase
 
     [HttpGet("categories")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCategories()
     {
         // Distinct categories from gallery items.
@@ -82,6 +85,7 @@ public class GalleryController : ControllerBase
     /// </summary>
     [HttpGet("programmes")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProgrammes()
     {
         // Return empty array — Programme table no longer in use.
@@ -90,6 +94,8 @@ public class GalleryController : ControllerBase
 
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         var items = await _mediator.Send(new GetAllGalleryQuery { Page = 1, PageSize = 1000 });
@@ -102,7 +108,10 @@ public class GalleryController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] GalleryCreateDto dto)
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -124,7 +133,11 @@ public class GalleryController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(int id, [FromBody] GalleryUpdateDto dto)
     {
         await _mediator.Send(new UpdateGalleryCommand
@@ -143,7 +156,10 @@ public class GalleryController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
         await _mediator.Send(new DeleteGalleryCommand { GalleryId = id });
@@ -156,8 +172,11 @@ public class GalleryController : ControllerBase
     /// Auth: Admin only (preserved from the original Create endpoint).
     /// </summary>
     [HttpPost("upload")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     [RequestSizeLimit(5_242_880)] // 5 MB — matches the agreed-upon max file size
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateWithUpload(
         [FromForm] GalleryCreateFormDto form,
         CancellationToken cancellationToken)
@@ -217,8 +236,12 @@ public class GalleryController : ControllerBase
     /// Auth: Admin only.
     /// </summary>
     [HttpPut("{id:int}/upload")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     [RequestSizeLimit(5_242_880)] // 5 MB
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateWithUpload(
         int id,
         [FromForm] GalleryUpdateFormDto form,

@@ -15,7 +15,7 @@ namespace GiveAID.V2.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/users")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "RequireAdmin")]
 public class AdminUsersController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -29,6 +29,8 @@ public class AdminUsersController : ControllerBase
     /// Get all users with pagination.
     /// </summary>
     [HttpGet]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -49,6 +51,9 @@ public class AdminUsersController : ControllerBase
     /// Get user by ID.
     /// </summary>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -66,6 +71,10 @@ public class AdminUsersController : ControllerBase
     /// Update user (role, profile).
     /// </summary>
     [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
     {
         var dto = await _mediator.Send(new UpdateUserCommand
@@ -84,6 +93,9 @@ public class AdminUsersController : ControllerBase
     /// Deactivate a user.
     /// </summary>
     [HttpPut("{id:int}/deactivate")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Deactivate(int id)
     {
         var ok = await _mediator.Send(new DeactivateUserCommand { UserId = id });
@@ -98,6 +110,9 @@ public class AdminUsersController : ControllerBase
     /// Delete a user (soft delete).
     /// </summary>
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
         var ok = await _mediator.Send(new DeleteUserCommand { UserId = id });

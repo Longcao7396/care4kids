@@ -27,6 +27,9 @@ public class InvitationsController : ControllerBase
     /// Create/send an invitation.
     /// </summary>
     [HttpPost]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] InvitationRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -49,6 +52,8 @@ public class InvitationsController : ControllerBase
     /// Get my invitations.
     /// </summary>
     [HttpGet("mine")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMine()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -65,7 +70,9 @@ public class InvitationsController : ControllerBase
     /// Get all invitations (Admin only).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 30, [FromQuery] string? status = null)
     {
         var items = await _mediator.Send(new GetAllInvitationsQuery { Status = status });
@@ -76,6 +83,8 @@ public class InvitationsController : ControllerBase
     /// Get invitation statistics.
     /// </summary>
     [HttpGet("stats")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetStats()
     {
         var items = await _mediator.Send(new GetAllInvitationsQuery());
@@ -94,6 +103,9 @@ public class InvitationsController : ControllerBase
     /// Cancel an invitation.
     /// </summary>
     [HttpPost("{id:int}/cancel")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Cancel(int id)
     {
         var ok = await _mediator.Send(new CancelInvitationCommand { InvitationId = id });

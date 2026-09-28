@@ -12,7 +12,7 @@ namespace GiveAID.V2.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/emails")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "RequireAdmin")]
 public class AdminEmailLogsController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -26,6 +26,8 @@ public class AdminEmailLogsController : ControllerBase
     /// Get all email logs.
     /// </summary>
     [HttpGet]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -46,6 +48,9 @@ public class AdminEmailLogsController : ControllerBase
     /// Get email log by ID.
     /// </summary>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -63,6 +68,9 @@ public class AdminEmailLogsController : ControllerBase
     /// Retry sending a failed email.
     /// </summary>
     [HttpPost("{id:int}/retry")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Retry(int id)
     {
         var ok = await _mediator.Send(new RetryEmailCommand { EmailLogId = id });

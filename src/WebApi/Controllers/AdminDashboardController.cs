@@ -26,7 +26,9 @@ public class AdminDashboardController : ControllerBase
     /// Get dashboard statistics.
     /// </summary>
     [HttpGet("stats")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetDashboardStats()
     {
         var stats = await _mediator.Send(new GetDashboardStatsQuery());
@@ -38,6 +40,7 @@ public class AdminDashboardController : ControllerBase
     /// </summary>
     [HttpGet("overview")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetOverview()
     {
         var stats = await _mediator.Send(new GetOverviewStatsQuery());
@@ -48,7 +51,9 @@ public class AdminDashboardController : ControllerBase
     /// Get recent donations.
     /// </summary>
     [HttpGet("recent-donations")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetRecentDonations([FromQuery] int count = 20)
     {
         var items = await _mediator.Send(new GetRecentDonationsQuery { Limit = count });

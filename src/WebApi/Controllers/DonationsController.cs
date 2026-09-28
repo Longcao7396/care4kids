@@ -30,7 +30,9 @@ public class DonationsController : ControllerBase
     /// Get all donations (Admin only).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -58,6 +60,10 @@ public class DonationsController : ControllerBase
     /// </summary>
     [HttpGet("{id:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetById(int id)
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -87,6 +93,8 @@ public class DonationsController : ControllerBase
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateDonationRequest request)
     {
         // SECURITY FIX (C-05): UserId MUST come from authenticated identity.
@@ -126,6 +134,8 @@ public class DonationsController : ControllerBase
     /// </summary>
     [HttpGet("my-donations")]
     [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyDonations(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)

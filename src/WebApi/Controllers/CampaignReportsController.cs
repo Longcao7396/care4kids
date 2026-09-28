@@ -28,6 +28,7 @@ public class CampaignReportsController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] bool publishedOnly = false)
     {
         var items = await _mediator.Send(new GetAllCampaignReportsQuery { PublishedOnly = publishedOnly });
@@ -51,6 +52,7 @@ public class CampaignReportsController : ControllerBase
     /// </summary>
     [HttpGet("campaign/{campaignId:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByCampaign(int campaignId)
     {
         var items = await _mediator.Send(new GetCampaignReportsByCampaignQuery { CampaignId = campaignId });
@@ -61,7 +63,10 @@ public class CampaignReportsController : ControllerBase
     /// Create a new campaign report (Admin only).
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateCampaignReportRequest request)
     {
         var dto = await _mediator.Send(new CreateCampaignReportCommand
@@ -83,7 +88,11 @@ public class CampaignReportsController : ControllerBase
     /// Update a campaign report (Admin only).
     /// </summary>
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCampaignReportRequest request)
     {
         var dto = await _mediator.Send(new UpdateCampaignReportCommand
@@ -105,7 +114,10 @@ public class CampaignReportsController : ControllerBase
     /// Delete a campaign report (Admin only).
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
         var ok = await _mediator.Send(new DeleteCampaignReportCommand { ReportId = id });

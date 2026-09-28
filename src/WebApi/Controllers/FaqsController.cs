@@ -27,6 +27,7 @@ public class FaqsController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] bool activeOnly = true)
     {
         var items = await _mediator.Send(new GetAllFaqsQuery { ActiveOnly = activeOnly });
@@ -35,6 +36,7 @@ public class FaqsController : ControllerBase
 
     [HttpGet("featured")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeatured([FromQuery] int count = 6)
     {
         var items = await _mediator.Send(new GetFeaturedFaqsQuery { Limit = count });
@@ -43,6 +45,7 @@ public class FaqsController : ControllerBase
 
     [HttpGet("categories")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCategories()
     {
         var items = await _mediator.Send(new GetFaqCategoriesQuery());
@@ -51,6 +54,8 @@ public class FaqsController : ControllerBase
 
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         var items = await _mediator.Send(new GetAllFaqsQuery { ActiveOnly = false });
@@ -63,7 +68,10 @@ public class FaqsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] FaqCreateDto dto)
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -82,7 +90,11 @@ public class FaqsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(int id, [FromBody] FaqUpdateDto dto)
     {
         await _mediator.Send(new UpdateFaqCommand
@@ -99,7 +111,10 @@ public class FaqsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
         await _mediator.Send(new DeleteFaqCommand { FaqId = id });

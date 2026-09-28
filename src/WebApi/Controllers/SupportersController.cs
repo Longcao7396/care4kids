@@ -24,6 +24,7 @@ public class SupportersController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] bool activeOnly = true,
         [FromQuery] string? type = null)
@@ -38,6 +39,7 @@ public class SupportersController : ControllerBase
 
     [HttpGet("stats")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {
         var all = await _mediator.Send(new GetAllOrganizationsQuery { ActiveOnly = true });
@@ -55,6 +57,7 @@ public class SupportersController : ControllerBase
 
     [HttpGet("featured")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeatured([FromQuery] int count = 6)
     {
         var items = await _mediator.Send(new GetFeaturedOrganizationsQuery { Limit = count });
@@ -63,6 +66,8 @@ public class SupportersController : ControllerBase
 
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         var items = await _mediator.Send(new GetAllOrganizationsQuery { ActiveOnly = false });
@@ -75,17 +80,23 @@ public class SupportersController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public IActionResult Create([FromBody] object request)
         => StatusCode(501, new { success = false, message = "Not implemented", data = (object?)null });
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public IActionResult Update(int id, [FromBody] object request)
         => StatusCode(501, new { success = false, message = "Not implemented", data = (object?)null });
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public IActionResult Delete(int id)
         => StatusCode(501, new { success = false, message = "Not implemented", data = (object?)null });
 }

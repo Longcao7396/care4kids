@@ -31,6 +31,7 @@ public class CmsPagesController : ControllerBase
     /// </summary>
     [HttpGet("pages")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPages([FromQuery] string? keys = null)
     {
         var items = (await _mediator.Send(new GetAllCmsPagesQuery { ActiveOnly = false })).ToList();
@@ -53,6 +54,8 @@ public class CmsPagesController : ControllerBase
     /// </summary>
     [HttpGet("pages/{keyOrSlug}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByKeyOrSlug(string keyOrSlug)
     {
         // 1. Try by slug — use null check instead of catching InvalidOperationException
@@ -76,6 +79,9 @@ public class CmsPagesController : ControllerBase
 
     [HttpPost("pages")]
     [Authorize(Roles = "Admin,ContentManager")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateCmsPageCommand command)
     {
         var dto = await _mediator.Send(command);
@@ -84,6 +90,10 @@ public class CmsPagesController : ControllerBase
 
     [HttpPut("pages/{id:int}")]
     [Authorize(Roles = "Admin,ContentManager")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCmsPageCommand command)
     {
         command.PageId = id;
@@ -92,7 +102,9 @@ public class CmsPagesController : ControllerBase
     }
 
     [HttpDelete("pages/{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public IActionResult Delete(int id)
     {
         // Delete command not yet implemented in Application layer
