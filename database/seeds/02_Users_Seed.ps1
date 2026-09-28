@@ -4,7 +4,7 @@
 # All demo passwords = "Demo@1234" (BCrypt hash pre-computed).
 
 param(
-    [string]$Server = '.\SQLEXPRESS,62580',
+    [string]$Server = '(localdb)\MSSQLLocalDB',
     [string]$Database = 'GiveAIDDB'
 )
 

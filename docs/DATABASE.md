@@ -234,15 +234,29 @@ and `database/migrations/`.
 
 ## 5. Connection String
 
+### Local development (single source of truth)
+
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=.\\SQLEXPRESS;Database=GiveAIDDB;Integrated Security=True;TrustServerCertificate=True"
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=GiveAIDDB;Integrated Security=True;MultipleActiveResultSets=True;TrustServerCertificate=True;Connect Timeout=15"
   }
 }
 ```
 
-Production uses SQL auth or managed identity — see [DEPLOYMENT.md](DEPLOYMENT.md).
+LocalDB ships with Visual Studio — no separate SQL Server install is required.
+To switch to `.\SQLEXPRESS` instead, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Staging / Production
+
+Never commit a real connection string. Set it via the environment variable:
+
+```powershell
+$env:ConnectionStrings__DefaultConnection = "Server=prod-sql;Database=GiveAIDDB;User Id=app;Password=...;Encrypt=True;TrustServerCertificate=False"
+```
+
+For Azure SQL, Managed Identity, or AWS RDS use the connection strings
+documented in [DEPLOYMENT.md](DEPLOYMENT.md) section 3.
 
 ## 6. Backup & Recovery
 
@@ -255,8 +269,8 @@ Production uses SQL auth or managed identity — see [DEPLOYMENT.md](DEPLOYMENT.
 Restore command:
 
 ```powershell
-sqlcmd -S .\SQLEXPRESS -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Full.bak' WITH NORECOVERY, REPLACE"
-sqlcmd -S .\SQLEXPRESS -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Diff.bak' WITH RECOVERY"
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Full.bak' WITH NORECOVERY, REPLACE"
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Diff.bak' WITH RECOVERY"
 ```
 
 ## 7. Seeding

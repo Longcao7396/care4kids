@@ -1,4 +1,17 @@
-param([string]$Query, [string]$Server='localhost,62580', [string]$Database='GiveAIDDB')
+# =============================================================================
+# RunSqlQuery.ps1 — Run a SELECT query against the GiveAID database.
+# Single source of truth: matches src/WebApi/appsettings.Development.json.
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File RunSqlQuery.ps1 -Query "SELECT TOP 5 * FROM users"
+#   powershell -ExecutionPolicy Bypass -File RunSqlQuery.ps1 -Query "..." -Server ".\SQLEXPRESS" -Database GiveAIDDB
+# =============================================================================
+param(
+    [Parameter(Mandatory=$true)] [string]$Query,
+    [string]$Server = '(localdb)\MSSQLLocalDB',
+    [string]$Database = 'GiveAIDDB'
+)
+
 Add-Type -AssemblyName System.Data
 $conn = New-Object System.Data.SqlClient.SqlConnection "Server=$Server;Database=$Database;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=60;Pooling=False"
 $conn.Open()

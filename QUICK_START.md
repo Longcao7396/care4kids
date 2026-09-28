@@ -13,40 +13,36 @@
 
 ## 📦 Step 1: Database Setup (3 phút)
 
-### Option A: SQL Server Management Studio (SSMS)
+> **Single source of truth:** `(localdb)\MSSQLLocalDB` — matches
+> `src/WebApi/appsettings.Development.json`. LocalDB ships with Visual Studio,
+> nên **không cần cài SQL Server riêng**.
 
-1. **Mở SSMS và kết nối đến SQL Server**
-   ```
-   Server: localhost hoặc (local)
-   Authentication: Windows Authentication
-   ```
+### Cách nhanh nhất: để ứng dụng tự tạo database
 
-2. **Tạo Database**
-   ```sql
-   CREATE DATABASE GiveAIDDB;
-   GO
-   ```
-
-3. **Chạy Schema Script**
-   - Mở file: `NGO_Database_Schema_V2.sql`
-   - Chọn database: `USE GiveAIDDB;`
-   - Execute (F5)
-
-### Option B: Command Line (nhanh hơn)
-
-```bash
-# Navigate to project folder
-cd C:\Users\admin\Desktop\project
-
-# Create database and run schema
-sqlcmd -S localhost -E -Q "CREATE DATABASE GiveAIDDB"
-sqlcmd -S localhost -E -d GiveAIDDB -i NGO_Database_Schema_V2.sql
+```powershell
+cd "C:\Users\admin\Desktop\project NGO.v2"
+dotnet run --project src\WebApi\GiveAID.V2.WebApi.csproj
+# Lần chạy đầu tiên tự động tạo schema + seed admin user.
 ```
 
-✅ **Verify:** Kiểm tra có 16 tables được tạo:
-```sql
-SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'
+### Hoặc apply schema + seed tường minh
+
+```powershell
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
 ```
+
+### Hoặc smoke-test kết nối (không ghi dữ liệu)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
+```
+
+✅ **Kết quả mong đợi:** Tất cả `[OK]` màu xanh, exit code `0`. Script sẽ in
+hints cụ thể nếu có lỗi.
+
+> Nếu trước đây bạn dùng `.\SQLEXPRESS` mà bảng trống, nhiều khả năng bạn
+> đang connect vào **sai instance**. Xem README "Switching to SQL Server Express"
+> nếu thực sự cần Express.
 
 ---
 
@@ -64,13 +60,10 @@ SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'
    Tools > NuGet Package Manager > Restore NuGet Packages
    ```
 
-3. **Update Connection String** trong `Web.config` (nếu cần):
-   ```xml
-   <connectionStrings>
-     <add name="GiveAIDContext" 
-          connectionString="Data Source=.\SQLEXPRESS;Initial Catalog=GiveAIDDB;Integrated Security=True" 
-          providerName="System.Data.SqlClient" />
-   </connectionStrings>
+3. **Update Connection String** (chỉ khi cần — mặc định đã dùng LocalDB):
+   ```json
+   // src/WebApi/appsettings.Development.json
+   "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=GiveAIDDB;Integrated Security=True;MultipleActiveResultSets=True;TrustServerCertificate=True;Connect Timeout=15"
    ```
 
 4. **Build & Run**
@@ -167,12 +160,16 @@ Nên thấy 3 causes: Children Welfare, Education, Healthcare
 ### ❌ Problem: "Cannot connect to database"
 
 **Solution:**
-```bash
-# Check SQL Server is running
-services.msc → Tìm "SQL Server (MSSQLSERVER)" → Start
+```powershell
+# 1. Chạy verify-database.ps1 để chẩn đoán tự động
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
 
-# Test connection
-sqlcmd -S localhost -E -Q "SELECT @@VERSION"
+# 2. LocalDB chưa chạy?
+sqllocaldb info MSSQLLocalDB
+sqllocaldb start MSSQLLocalDB
+
+# 3. Test connection thủ công
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -Q "SELECT @@VERSION"
 ```
 
 ### ❌ Problem: "CORS error" in browser console

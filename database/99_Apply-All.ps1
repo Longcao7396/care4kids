@@ -2,6 +2,9 @@
 # 99_Apply-All.ps1 — Run all database scripts for GiveAID V2
 # Idempotent: safe to re-run. Drops + recreates all tables.
 #
+# Connection string standard: (localdb)\MSSQLLocalDB
+#   (matches src/WebApi/appsettings.Development.json)
+#
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File 99_Apply-All.ps1
 #   powershell -ExecutionPolicy Bypass -File 99_Apply-All.ps1 -Server "MYHOST\SQLEXPRESS" -Database GiveAIDDB
@@ -14,7 +17,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$Server = '.\SQLEXPRESS',
+    [string]$Server = '(localdb)\MSSQLLocalDB',
     [string]$Database = 'GiveAIDDB',
     [string]$ScriptDir,
     [switch]$SkipSeeds = $false,

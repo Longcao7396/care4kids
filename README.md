@@ -7,6 +7,91 @@
 [![Tests](https://img.shields.io/badge/tests-169%2F169-success)]()
 [![License](https://img.shields.io/badge/license-Proprietary-blue)]()
 
+## Database Setup — single source of truth
+
+This project targets **one** local SQL Server instance for day-to-day development:
+
+```
+(localdb)\MSSQLLocalDB
+```
+
+This is the instance baked into `src/WebApi/appsettings.Development.json` and the
+fallback in `src/Infrastructure/Persistence/GiveAIDDbContextFactory.cs`. It
+ships with **Visual Studio** (and is installed by the **.NET SDK** on Windows),
+so no separate SQL Server install is required.
+
+> If you previously used `.\SQLEXPRESS` you were almost certainly looking at the
+> **wrong database** when you saw empty tables after a migration or upload. All
+> PowerShell scripts and SQL files now default to LocalDB. See
+> [Switching to SQL Server Express](#switching-to-sql-server-express-optional)
+> below if you really need Express.
+
+### Verify the database is reachable
+
+A single PowerShell script is the canonical health check. It detects which
+instance your appsettings actually point at, pings it, checks that
+`GiveAIDDB` exists, and counts rows in the key tables.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
+```
+
+Expected: green `[OK]` lines for **Connectivity**, **Database existence**, and
+**Row counts**, followed by a `[OK] Database is reachable…` verdict. Exit
+code `0` means everything is healthy; non-zero means the script will print
+hints specific to the failure.
+
+### Set up the database from scratch
+
+Option A — **let the application do it** (recommended for new devs):
+
+```powershell
+dotnet run --project src/WebApi/GiveAID.V2.WebApi.csproj
+# First start runs migrations + seeds admin user automatically.
+```
+
+Option B — **explicit apply** (preferred for CI):
+
+```powershell
+# From repo root
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
+# Reads (localdb)\MSSQLLocalDB from appsettings.Development.json.
+```
+
+Option C — **sqlcmd** (debugging only):
+
+```powershell
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -Q "IF DB_ID('GiveAIDDB') IS NULL CREATE DATABASE GiveAIDDB"
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d master -i "database\01_CreateDatabase_V2.sql"
+```
+
+### Switching to SQL Server Express (optional)
+
+If you have SQL Server Express installed and want to use it instead:
+
+1. Enable **TCP/IP** and **Named Pipes** in
+   `SQL Server Configuration Manager → Protocols for SQLEXPRESS`.
+2. Update the connection string in
+   `src/WebApi/appsettings.Development.json` to
+   `Server=.\SQLEXPRESS;Database=GiveAIDDB;Integrated Security=True;MultipleActiveResultSets=True;TrustServerCertificate=True;Connect Timeout=15`.
+3. Tell every script/seed to use Express instead of LocalDB:
+   ```powershell
+   powershell -File verify-database.ps1 -Server ".\SQLEXPRESS"
+   powershell -File database\99_Apply-All.ps1 -Server ".\SQLEXPRESS"
+   ```
+
+### Troubleshooting — "I see empty tables!"
+
+Run the verification script first. The most common causes are:
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `Could not connect to (localdb)\MSSQLLocalDB` | LocalDB not installed or stopped | `sqllocaldb start MSSQLLocalDB` |
+| `Database 'GiveAIDDB' does NOT exist` | First run never happened | `dotnet run --project src/WebApi` (auto-creates) **or** `database\99_Apply-All.ps1` |
+| `MISSING (table does not exist)` | Schema out of sync | `database\99_Apply-All.ps1` (drops + recreates) |
+| `Some key tables are empty` | Seed never ran | `database\99_Apply-All.ps1` (idempotent re-seed) |
+| Empty tables in **SSMS** but app shows data | You connected to a different instance | Re-check: `SELECT @@SERVERNAME` in the same SSMS query window |
+
 ## Overview
 
 GiveAID v2.0 is a full rewrite of the legacy ASP.NET WebForms + IIS Express stack on a
@@ -53,20 +138,25 @@ project-NGO/
 
 - .NET 8 SDK
 - Node.js 18+
-- SQL Server 2019+ (Express works)
-- Visual Studio 2022 / Rider / VS Code
+- Visual Studio 2022 / Rider / VS Code (ships with **LocalDB** — the project's
+  default SQL Server instance). No separate SQL Server install needed.
 
 ### 1. Database
 
 ```powershell
-# Create database
-sqlcmd -S .\SQLEXPRESS -Q "CREATE DATABASE GiveAIDDB"
+# Recommended: let EF Core create + seed it on first run
+dotnet run --project src/WebApi/GiveAID.V2.WebApi.csproj
 
-# Run migrations (in order)
-cd database/migrations
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 001_InitialSchema.sql
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 002_SeedData.sql
+# Or apply the full schema + seeds explicitly
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
+
+# Or just smoke-test the connection (no writes)
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
 ```
+
+See the **Database Setup** section above for the canonical instance
+(`(localdb)\MSSQLLocalDB`) and how to switch to `.\SQLEXPRESS` if you
+already have it installed.
 
 ### 2. Backend
 
@@ -153,6 +243,7 @@ All endpoints live under `/api/v1/`. See [`docs/API_REFERENCE.md`](docs/API_REFE
 - [Migration Guide](docs/MIGRATION_GUIDE.md)
 - [Testing Strategy](docs/TESTING.md)
 - [Deployment & Runbook](docs/DEPLOYMENT.md)
+- [Production Build Guide](docs/PRODUCTION_BUILD.md)
 
 ## 🤖 For AI Agents
 

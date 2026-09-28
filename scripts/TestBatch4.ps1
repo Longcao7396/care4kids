@@ -1,6 +1,14 @@
+# =============================================================================
+# TestBatch4.ps1 — Insert Sunrise Education Foundation org (batch test).
+# Single source of truth: matches src/WebApi/appsettings.Development.json.
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File TestBatch4.ps1
+#   powershell -ExecutionPolicy Bypass -File TestBatch4.ps1 -Server ".\SQLEXPRESS" -Database GiveAIDDB
+# =============================================================================
 param(
-    [string]$Server='.\SQLEXPRESS,62580',
-    [string]$Database='GiveAIDDB'
+    [string]$Server = '(localdb)\MSSQLLocalDB',
+    [string]$Database = 'GiveAIDDB'
 )
 Add-Type -AssemblyName System.Data
 $conn = New-Object System.Data.SqlClient.SqlConnection "Server=$Server;Database=$Database;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=15"

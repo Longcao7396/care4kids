@@ -1,14 +1,20 @@
 -- =====================================================================
 -- GiveAID V2 — Complete database setup script (SQL Server 2019+)
 -- Idempotent: safe to re-run. Drops only if CREATE detects drift.
--- Creates GiveAIDDB on .\SQLEXPRESS, creates all 22 tables matching the
--- V2 Domain entities + indexes + views, seeds baseline reference data.
+-- Creates GiveAIDDB on the standard local dev instance, creates all 22
+-- tables matching the V2 Domain entities + indexes + views, seeds
+-- baseline reference data.
 -- =====================================================================
 --
--- Connection: .\SQLEXPRESS, database GiveAIDDB
+-- Connection: (localdb)\MSSQLLocalDB  (single source of truth —
+--   matches src/WebApi/appsettings.Development.json).
+-- Optional  : .\SQLEXPRESS — only if SQL Server Express is installed AND
+--             TCP/IP + Named Pipes are enabled (see README).
+-- Override : pass -Server "<your-server>" to 99_Apply-All.ps1.
+--
 -- Run from SSMS, sqlcmd, or via:
---   sqlcmd -S .\SQLEXPRESS -E -d master -i 01_CreateDatabase_V2.sql
---   powershell -File 99_Apply-All.ps1
+--   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d master -i 01_CreateDatabase_V2.sql
+--   powershell -ExecutionPolicy Bypass -File 99_Apply-All.ps1
 -- =====================================================================
 --
 -- TODO Step 7 cleanup: programme_photos (lines ~284-298 + any related

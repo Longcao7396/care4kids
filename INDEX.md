@@ -77,8 +77,10 @@ File này dùng để:
 - ✅ Insert seed data
 
 **Chạy:**
-```sql
-sqlcmd -S localhost -E -d GiveAIDDB -i NGO_Database_Schema_V2.sql
+```powershell
+# Single source of truth: (localdb)\MSSQLLocalDB
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
 ```
 
 ### 5. [NGO_Database_V1_vs_V2_Comparison.md](NGO_Database_V1_vs_V2_Comparison.md) 📊

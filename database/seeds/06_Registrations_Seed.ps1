@@ -4,7 +4,7 @@
 # Idempotent: checks (user_id, programme_id) before insert (UNIQUE constraint).
 
 param(
-    [string]$Server = '.\SQLEXPRESS,62580',
+    [string]$Server = '(localdb)\MSSQLLocalDB',
     [string]$Database = 'GiveAIDDB'
 )
 

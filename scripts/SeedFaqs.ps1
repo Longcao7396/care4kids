@@ -1,4 +1,15 @@
-param([string]$Server='.\SQLEXPRESS,62580', [string]$Database='GiveAIDDB')
+# =============================================================================
+# SeedFaqs.ps1 — Seed Care4Kids FAQs into the GiveAID database.
+# Single source of truth: matches src/WebApi/appsettings.Development.json.
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File SeedFaqs.ps1
+#   powershell -ExecutionPolicy Bypass -File SeedFaqs.ps1 -Server ".\SQLEXPRESS" -Database GiveAIDDB
+# =============================================================================
+param(
+    [string]$Server = '(localdb)\MSSQLLocalDB',
+    [string]$Database = 'GiveAIDDB'
+)
 
 # FAQ items - (id, question, answer, category, display_order, is_featured)
 $faqs = @(

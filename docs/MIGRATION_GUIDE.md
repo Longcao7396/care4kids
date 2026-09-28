@@ -80,19 +80,19 @@ Run in order from `database/migrations/`:
 cd database/migrations
 
 # 1. Initial schema (idempotent — checks for table existence)
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 001_v2_initial_schema.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 001_v2_initial_schema.sql
 
 # 2. Rename and merge tables
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 002_rename_and_merge.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 002_rename_and_merge.sql
 
 # 3. Add new tables and audit columns
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 003_new_tables.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 003_new_tables.sql
 
 # 4. Seed admin user + roles
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 004_seed_admin.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 004_seed_admin.sql
 
 # 5. (Optional) Seed sample causes/campaigns
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 005_sample_data.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 005_sample_data.sql
 ```
 
 ## 3. Code Migration
