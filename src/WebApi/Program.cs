@@ -260,8 +260,8 @@ app.UseIpRateLimiting();
 // - Map controllers and endpoints
 app.MapControllers();
 
-// - Map health check
-app.MapHealthChecks("/healthz");
+// - Map health check (M-08 FIX: exempt from rate limiting)
+app.MapHealthChecks("/healthz").DisableRateLimiting();
 
 // - Map Scalar UI for API documentation
 app.MapOpenApi();

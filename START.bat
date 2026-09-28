@@ -39,10 +39,9 @@ echo.
 
 REM ── Set dev-only secrets (DO NOT use in production!) ────────
 REM Required by SeedData: ADMIN_PASSWORD (min 8 chars), DEMO_PASSWORD
-REM Required by JwtSettings: Jwt__Secret (min 32 chars)
+REM Jwt__Secret is now in appsettings.Development.json (64-char random secret)
 set "ADMIN_PASSWORD=DevAdmin@123"
 set "DEMO_PASSWORD=Demo@123"
-set "Jwt__Secret=dev-only-jwt-secret-do-not-use-in-production-please-32+"
 set "ASPNETCORE_ENVIRONMENT=Development"
 
 REM ── Step 1: install frontend deps (first time only) ────────

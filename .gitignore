@@ -68,7 +68,7 @@ desktop.ini
 *.bak
 
 # Connection strings (if contains sensitive data)
-appsettings.Development.json
+# appsettings.Development.json — KEEP this for local dev (contains safe local connection string)
 appsettings.Staging.json
 appsettings.Production.json
 # Web.config (uncomment if needed)
