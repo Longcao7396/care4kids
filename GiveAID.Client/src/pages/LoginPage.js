@@ -11,24 +11,26 @@ function LoginPage() {
   // a login identifier — we accept a username here and pass it through
   // as `username`. Users may type either their handle ("admin") or their
   // email handle; the server's validator handles both.
+  
+  // All hooks must be called first
+  const { login, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ username: '', password: '', rememberMe: false });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  
   // Honor the URL the user originally tried to reach (set by ProtectedRoute
   // or AuthBootstrap on 401). Fall back to /dashboard.
-  const intendedFrom = location.state?.from || '/dashboard';
+  const getIntendedDestination = () => location.state?.from || '/dashboard';
 
   /* Redirect if already logged in — only fires once on mount. */
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEYS.TOKEN)) {
-      navigate(intendedFrom, { replace: true });
+      navigate(getIntendedDestination(), { replace: true });
     }
-  }, [navigate, intendedFrom]);
+  }, [navigate, location]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -66,12 +68,11 @@ function LoginPage() {
    * navigate to the originally-requested URL (or dashboard). This
    * guarantees navigation happens AFTER AuthContext's setUser has
    * propagated, so ProtectedRoute sees user set. */
-  const { user } = useAuth();
   useEffect(() => {
     if (user && !loading) {
-      navigate(intendedFrom, { replace: true });
+      navigate(getIntendedDestination(), { replace: true });
     }
-  }, [user, loading, navigate, intendedFrom]);
+  }, [user, loading, navigate, location]);
 
   return (
     <div className="auth-page">

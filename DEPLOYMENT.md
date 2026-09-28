@@ -55,14 +55,16 @@ az sql db show-connection-string \
   --name GiveAIDDB
 ```
 
-**Update Web.config:**
-```xml
-<connectionStrings>
-  <add name="GiveAIDContext" 
-       connectionString="Server=tcp:giveaid-sql-server.database.windows.net,1433;Initial Catalog=GiveAIDDB;Persist Security Info=False;User ID=sqladmin;Password=YourSecurePassword123!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" 
-       providerName="System.Data.SqlClient" />
-</connectionStrings>
+**Update `appsettings.Production.json` (or set env var `ConnectionStrings__DefaultConnection`):**
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Server=tcp:giveaid-sql-server.database.windows.net,1433;Database=GiveAIDDB;Persist Security Info=False;User ID=sqladmin;Password=YourSecurePassword123!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+}
 ```
+
+> **For local development** the canonical instance is `(localdb)\MSSQLLocalDB`
+> (see `src/WebApi/appsettings.Development.json`). The Azure SQL string above
+> is only for production.
 
 ### Step 2: Deploy Backend to Azure App Service
 
@@ -208,13 +210,11 @@ New-Website -Name "GiveAID-API" `
 # IIS Manager → Site → Bindings → Add HTTPS with SSL cert
 ```
 
-**Update Web.config:**
-```xml
-<connectionStrings>
-  <add name="GiveAIDContext" 
-       connectionString="Data Source=.\SQLEXPRESS;Initial Catalog=GiveAIDDB;Integrated Security=True" 
-       providerName="System.Data.SqlClient" />
-</connectionStrings>
+**Update `appsettings.Production.json` (or env var) — for local IIS dev, use `(localdb)\MSSQLLocalDB`:**
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=GiveAIDDB;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=15"
+}
 ```
 
 ### Step 3: Deploy Frontend

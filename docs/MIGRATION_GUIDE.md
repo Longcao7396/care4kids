@@ -80,19 +80,19 @@ Run in order from `database/migrations/`:
 cd database/migrations
 
 # 1. Initial schema (idempotent — checks for table existence)
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 001_v2_initial_schema.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 001_v2_initial_schema.sql
 
 # 2. Rename and merge tables
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 002_rename_and_merge.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 002_rename_and_merge.sql
 
 # 3. Add new tables and audit columns
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 003_new_tables.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 003_new_tables.sql
 
 # 4. Seed admin user + roles
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 004_seed_admin.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 004_seed_admin.sql
 
 # 5. (Optional) Seed sample causes/campaigns
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i 005_sample_data.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d GiveAIDDB -i 005_sample_data.sql
 ```
 
 ## 3. Code Migration
@@ -218,3 +218,133 @@ After cutover, verify:
 - [ ] FAQ and CMS pages render with custom content
 
 If all checks pass, the migration is complete.
+
+## 11. Cloudinary Image Upload (v2.0 patch)
+
+### What changed (September 2026)
+
+The Gallery feature now supports real file uploads via Cloudinary instead of
+paste-URL strings. This requires 4 new columns on `gallery` and 2 column
+expansions. **No data loss** — only `ALTER COLUMN` (expand size) and `ADD COLUMN`
+(nullable), both non-destructive.
+
+### Verified DB schema (snake_case)
+
+Schema was verified on the actual DB via `INFORMATION_SCHEMA`. The Gallery
+table and its columns are all snake_case in the database (the PascalCase you
+see in the EF migration C# code is the C# property name; EF maps it to
+snake_case columns at runtime).
+
+```sql
+SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'gallery'
+ORDER BY ORDINAL_POSITION;
+-- Returns: gallery.gallery_id, gallery.title, gallery.photo_url,
+--          gallery.thumbnail_url, gallery.category, gallery.tags,
+--          gallery.programme_id, gallery.organization_id, ...
+```
+
+**All 4 new columns + 2 ALTER COLUMN references in the migration use these
+snake_case names exactly.** If your environment uses a different naming
+convention, edit the migration file
+`src/Infrastructure/Migrations/20260924211000_AddImageUploadFields.cs`
+**before** running `dotnet ef database update`.
+
+### How to apply
+
+#### Recommended: via EF Core migration
+
+```bash
+cd src/Infrastructure
+dotnet ef database update --project GiveAID.V2.Infrastructure.csproj \
+                          --startup-project ../WebApi/GiveAID.V2.WebApi.csproj \
+                          -c GiveAIDDbContext
+```
+
+EF will:
+
+1. Create `__EFMigrationsHistory` table if missing.
+2. Insert history entry for `20260918163101_Init` (idempotent — only inserts if not present).
+3. Run the migration `20260924211000_AddImageUploadFields` (4 ADD COLUMN + 2 ALTER COLUMN).
+4. Insert history entry for `20260924211000_AddImageUploadFields`.
+
+> **Heads up:** because the existing DB was set up via raw SQL outside EF,
+> `__EFMigrationsHistory` is missing. `dotnet ef database update` will try
+> to replay the Init migration, but **Init's `CreateTable` is idempotent**
+> in our setup because it uses columns that already exist. If you get errors
+> during Init replay, skip Init by manually inserting the history row:
+>
+> ```sql
+> IF OBJECT_ID('__EFMigrationsHistory') IS NULL
+>   CREATE TABLE __EFMigrationsHistory (
+>     MigrationId NVARCHAR(150) NOT NULL PRIMARY KEY,
+>     ProductVersion NVARCHAR(32) NOT NULL
+>   );
+> IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId = '20260918163101_Init')
+>   INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion)
+>   VALUES ('20260918163101_Init', '10.0.12');
+> ```
+
+#### Manual alternative (if EF is not available)
+
+Run the SQL inside the migration's `Up()` method directly on the DB:
+
+```sql
+-- All statements are idempotent (IF COL_LENGTH check)
+IF COL_LENGTH('gallery', 'public_id') IS NULL
+    ALTER TABLE gallery ADD [public_id] nvarchar(255) NULL;
+IF COL_LENGTH('gallery', 'original_file_name') IS NULL
+    ALTER TABLE gallery ADD [original_file_name] nvarchar(255) NULL;
+IF COL_LENGTH('gallery', 'file_size_bytes') IS NULL
+    ALTER TABLE gallery ADD [file_size_bytes] bigint NULL;
+IF COL_LENGTH('gallery', 'content_type') IS NULL
+    ALTER TABLE gallery ADD [content_type] nvarchar(50) NULL;
+
+ALTER TABLE gallery ALTER COLUMN [photo_url] nvarchar(500) NOT NULL;
+ALTER TABLE gallery ALTER COLUMN [thumbnail_url] nvarchar(500) NULL;
+```
+
+### Rollback
+
+If something goes wrong, the Down() of this migration is:
+
+```sql
+ALTER TABLE gallery ALTER COLUMN [photo_url] nvarchar(255) NOT NULL;
+ALTER TABLE gallery ALTER COLUMN [thumbnail_url] nvarchar(255) NULL;
+
+IF COL_LENGTH('gallery', 'content_type') IS NOT NULL
+    ALTER TABLE gallery DROP COLUMN [content_type];
+IF COL_LENGTH('gallery', 'file_size_bytes') IS NOT NULL
+    ALTER TABLE gallery DROP COLUMN [file_size_bytes];
+IF COL_LENGTH('gallery', 'original_file_name') IS NOT NULL
+    ALTER TABLE gallery DROP COLUMN [original_file_name];
+IF COL_LENGTH('gallery', 'public_id') IS NOT NULL
+    ALTER TABLE gallery DROP COLUMN [public_id];
+
+DELETE FROM __EFMigrationsHistory WHERE MigrationId = '20260924211000_AddImageUploadFields';
+```
+
+The shrink `ALTER COLUMN` may **truncate** any data > 255 chars. Back up DB first.
+
+### Environment variables (required for upload)
+
+For the new `POST /api/v1/gallery/upload` and `PUT /api/v1/gallery/{id}/upload`
+endpoints to work:
+
+```
+CLOUDINARY_CLOUD_NAME=<from cloudinary.com dashboard>
+CLOUDINARY_API_KEY=<from cloudinary.com dashboard>
+CLOUDINARY_API_SECRET=<from cloudinary.com dashboard>
+```
+
+If these are missing, the app still starts — uploads fall back to a placeholder
+URL until you set them. Logs will show `Cloudinary is not configured` warnings.
+
+### Why this migration was hand-written
+
+EF scaffolding generated **4000+ lines** of unrelated `DROP FOREIGN KEY` +
+`RENAME COLUMN` operations because the EF model snapshot drift was large
+(model expects snake_case, but PascalCase had been used in earlier EF
+outputs, and the existing DB was set up via raw SQL outside EF). The
+hand-written migration is targeted at the `gallery` table only and safe to
+audit.

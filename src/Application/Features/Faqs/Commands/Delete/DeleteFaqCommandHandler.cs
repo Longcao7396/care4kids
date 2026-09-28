@@ -23,7 +23,8 @@ public class DeleteFaqCommandHandler : IRequestHandler<DeleteFaqCommand, bool>
             throw new InvalidOperationException($"FAQ with ID {request.FaqId} not found.");
         }
 
-        _context.Faqs.Remove(faq);
+        faq.IsDeleted = true;
+        faq.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

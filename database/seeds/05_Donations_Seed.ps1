@@ -6,7 +6,7 @@
 # Idempotent: checks by transaction_id (unique).
 
 param(
-    [string]$Server = '.\SQLEXPRESS,62580',
+    [string]$Server = '(localdb)\MSSQLLocalDB',
     [string]$Database = 'GiveAIDDB'
 )
 

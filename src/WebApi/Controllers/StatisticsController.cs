@@ -26,6 +26,7 @@ public class StatisticsController : ControllerBase
     /// </summary>
     [HttpGet("overview")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetOverview()
     {
         var stats = await _mediator.Send(new GetOverviewStatsQuery());
@@ -36,7 +37,9 @@ public class StatisticsController : ControllerBase
     /// Get dashboard statistics (Admin).
     /// </summary>
     [HttpGet("dashboard")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetDashboard()
     {
         var stats = await _mediator.Send(new GetDashboardStatsQuery());

@@ -14,7 +14,7 @@ namespace GiveAID.V2.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/payments")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "RequireAdmin")]
 public class AdminPaymentsController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -28,6 +28,8 @@ public class AdminPaymentsController : ControllerBase
     /// Get all donations/payments.
     /// </summary>
     [HttpGet]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -50,6 +52,9 @@ public class AdminPaymentsController : ControllerBase
     /// Get donation by ID.
     /// </summary>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -67,6 +72,9 @@ public class AdminPaymentsController : ControllerBase
     /// Manual confirm a donation (admin override).
     /// </summary>
     [HttpPost("{id:int}/confirm")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> ManualConfirm(int id)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -91,6 +99,8 @@ public class AdminPaymentsController : ControllerBase
     /// Refund a donation.
     /// </summary>
     [HttpPost("{id:int}/refund")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public IActionResult Refund(int id)
     {
         // Refund processing requires payment gateway integration — stub pending

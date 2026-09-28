@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Container, Row, Col, Alert, Button,
   Modal, Form, Spinner, Badge
@@ -6,23 +6,41 @@ import {
 import { galleryService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminPageFrame from '../../components/AdminPageFrame';
+import ImageUpload from '../../components/ImageUpload';
 import '../admin/AdminForm.css';
 
 /* ── Helpers ─────────────────────────────────────── */
-function validate(data) {
-  const errs = {};
-  if (!data.photoUrl?.trim())
-    errs.photoUrl = 'Photo URL is required.';
-  else if (!/^https?:\/\/.+/.test(data.photoUrl))
-    errs.photoUrl = 'Photo URL must start with http:// or https://';
-  if (data.thumbnailUrl && !/^https?:\/\/.+/.test(data.thumbnailUrl))
-    errs.thumbnailUrl = 'Thumbnail URL must start with http:// or https://';
-  return errs;
+function validateUrl(url) {
+  if (!url || !url.trim()) return 'Photo is required.';
+  if (!/^https?:\/\/.+/.test(url)) return 'Photo URL must start with http:// or https://';
+  return null;
+}
+
+function buildFormData(payload, file) {
+  const fd = new FormData();
+  // Critical: send other fields first so backend controller model binding
+  // doesn't choke on the file part. The file MUST be appended last or with a
+  // distinct name so other fields are parsed correctly.
+  if (payload.title) fd.append('Title', payload.title);
+  if (payload.category) fd.append('Category', payload.category);
+  if (payload.tags) fd.append('Tags', payload.tags);
+  if (payload.organizationId !== undefined && payload.organizationId !== null) {
+    fd.append('OrganizationId', String(payload.organizationId));
+  }
+  if (payload.programmeId !== undefined && payload.programmeId !== null) {
+    fd.append('ProgrammeId', String(payload.programmeId));
+  }
+  fd.append('DisplayOrder', String(payload.displayOrder || 0));
+  fd.append('IsFeatured', payload.isFeatured ? 'true' : 'false');
+  fd.append('ImageFile', file);
+  return fd;
 }
 
 const EMPTY_FORM = {
   title: '',
   photoUrl: '',
+  photoFile: null,
+  photoSource: 'upload', // 'upload' | 'url'
   thumbnailUrl: '',
   category: '',
   tags: '',
@@ -61,12 +79,18 @@ function GalleryFormModal({ show, editing, initial, programmes, onSave, onClose 
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const uploadErrorRef = useRef('');
 
   useEffect(() => {
     if (show) {
-      setForm({
+      // Decide initial mode: if existing photoUrl is a Cloudinary URL OR
+      // any http URL, treat it as URL source (preserves admin's URL choices
+      // made before this rollout). Admins can switch modes freely.
+      const seed = {
         title: editing ? (initial.title || '') : '',
         photoUrl: editing ? (initial.photoUrl || '') : '',
+        photoFile: null,
+        photoSource: 'url', // editing entries default to URL view; let admin switch to Upload
         thumbnailUrl: editing ? (initial.thumbnailUrl || '') : '',
         category: editing ? (initial.category || '') : '',
         tags: editing ? (initial.tags || '') : '',
@@ -74,24 +98,53 @@ function GalleryFormModal({ show, editing, initial, programmes, onSave, onClose 
         organizationId: editing && initial.organizationId ? String(initial.organizationId) : '',
         isFeatured: editing ? (initial.isFeatured || false) : false,
         displayOrder: editing ? (initial.displayOrder || 0) : 0,
-      });
+      };
+      setForm(seed);
       setErrors({});
+      uploadErrorRef.current = '';
     }
   }, [show, editing, initial]);
 
   const set = (field) => (e) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  function handleFileSelected(file) {
+    setForm((f) => ({ ...f, photoFile: file }));
+    if (errors.photo && file) setErrors((er) => ({ ...er, photo: null }));
+  }
+
+  function handleUrlSelected(url) {
+    setForm((f) => ({ ...f, photoUrl: url }));
+    if (errors.photo && url?.trim()) setErrors((er) => ({ ...er, photo: null }));
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const errs = validate(form);
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
+
+    // Validate the chosen image source.
+    let photoErr = null;
+    const usingFile = form.photoSource === 'upload' && form.photoFile;
+    const usingUrl = form.photoSource === 'url' && form.photoUrl?.trim();
+
+    if (!usingFile && !usingUrl) {
+      photoErr = form.photoSource === 'upload'
+        ? 'Please upload an image file (click or drop).'
+        : 'Photo URL is required.';
+    } else if (form.photoSource === 'url') {
+      photoErr = validateUrl(form.photoUrl);
+    }
+
+    if (photoErr) {
+      setErrors({ photo: photoErr });
+      return;
+    }
+
     setSaving(true);
     try {
+      // Build the metadata payload shared by all 3 paths.
       const payload = {
         title: form.title || null,
-        photoUrl: form.photoUrl,
-        thumbnailUrl: form.thumbnailUrl || null,
         category: form.category || null,
         tags: form.tags || null,
         programmeId: form.programmeId ? parseInt(form.programmeId) : null,
@@ -99,12 +152,35 @@ function GalleryFormModal({ show, editing, initial, programmes, onSave, onClose 
         isFeatured: form.isFeatured,
         displayOrder: parseInt(form.displayOrder) || 0,
       };
-      await onSave(payload);
+
+      if (usingFile) {
+        // Path A: multipart upload -> Cloudinary via POST/PUT /upload endpoints
+        const fd = buildFormData(payload, form.photoFile);
+        if (editing) {
+          await onSave({ kind: 'upload-replace', formData: fd });
+        } else {
+          await onSave({ kind: 'upload-create', formData: fd });
+        }
+      } else {
+        // Path B: URL string passthrough -> legacy POST/PUT /gallery endpoints
+        payload.photoUrl = form.photoUrl;
+        payload.thumbnailUrl = form.thumbnailUrl || null;
+        await onSave({
+          kind: 'json',
+          payload,
+          editingId: editing ? initial.galleryId : null,
+        });
+      }
+    } catch (err) {
+      // Surface the server-side error inside the modal so the user can retry
+      uploadErrorRef.current = err?.message || 'Upload failed. Please try again.';
+      setErrors({ photo: uploadErrorRef.current });
     } finally {
       setSaving(false);
     }
   };
 
+  // Render form fields --------------------------------------------------
   const field = (label, field, as = 'text', placeholder = '') => (
     <Form.Group className="mb-3">
       <Form.Label>{label}</Form.Label>
@@ -132,14 +208,17 @@ function GalleryFormModal({ show, editing, initial, programmes, onSave, onClose 
           <Row>
             {/* Left: form fields */}
             <Col md={7}>
-              {field('Photo URL *', 'photoUrl', 'url', 'https://example.com/photo.jpg')}
-              {form.photoUrl && !errors.photoUrl && (
-                <div className="mb-3">
-                  <ImagePreview url={form.photoUrl} alt="Preview" size={160} />
-                </div>
-              )}
+              {/* REPLACED: single Photo URL <input> -> ImageUpload component */}
+              <ImageUpload
+                initialUrl={form.photoUrl}
+                onFileSelected={handleFileSelected}
+                onUrlSelected={handleUrlSelected}
+                disabled={saving}
+                error={errors.photo || ''}
+              />
+              {/* ImageSource toggle hidden but tracked in form state */}
+              <input type="hidden" value={form.photoSource} />
 
-              {field('Thumbnail URL', 'thumbnailUrl', 'url', 'https://example.com/thumb.jpg')}
               {field('Title', 'title', 'text', 'Photo title...')}
               {field('Tags', 'tags', 'text', 'education,children,village')}
 
@@ -193,27 +272,59 @@ function GalleryFormModal({ show, editing, initial, programmes, onSave, onClose 
               </Row>
             </Col>
 
-            {/* Right: preview */}
+            {/* Right: preview of what's been chosen */}
             <Col md={5} className="d-flex flex-column align-items-center justify-content-center">
-              <p className="text-muted small mb-2">Preview</p>
-              {form.photoUrl && !errors.photoUrl ? (
-                <div className="gallery-admin-preview">
-                  <ImagePreview url={form.photoUrl} alt="Preview" size={200} />
-                  <p className="text-muted small mt-2 text-center">
-                    {form.title || 'No title'}
-                  </p>
-                  {form.category && (
-                    <Badge bg="info" className="mt-1">{form.category}</Badge>
-                  )}
-                </div>
+              <p className="text-muted small mb-2">Current</p>
+              {form.photoSource === 'upload' ? (
+                form.photoFile ? (
+                  <div className="gallery-admin-preview">
+                    <ImagePreview
+                      url={URL.createObjectURL(form.photoFile)}
+                      alt="New upload preview"
+                      size={200}
+                    />
+                    <p className="text-muted small mt-2 text-center">
+                      {form.title || 'New upload'}
+                    </p>
+                    <Badge bg="success" className="mt-1">Will upload to Cloudinary</Badge>
+                  </div>
+                ) : form.photoUrl ? (
+                  <div className="gallery-admin-preview">
+                    <ImagePreview url={form.photoUrl} alt="Existing image" size={200} />
+                    <p className="text-muted small mt-2 text-center">
+                      {form.title || 'Existing image'}
+                    </p>
+                    <Badge bg="secondary" className="mt-1">Will be REPLACED</Badge>
+                  </div>
+                ) : (
+                  <div
+                    className="d-flex flex-column align-items-center justify-content-center"
+                    style={{ width: 200, height: 150, border: '2px dashed var(--border-slate)', borderRadius: 8, color: 'var(--text-gray)' }}
+                  >
+                    <i className="bi bi-cloud-upload" style={{ fontSize: '2rem' }}></i>
+                    <p className="small mb-0 mt-1">Upload an image</p>
+                  </div>
+                )
               ) : (
-                <div
-                  className="d-flex flex-column align-items-center justify-content-center"
-                  style={{ width: 200, height: 150, border: '2px dashed var(--border-slate)', borderRadius: 8, color: 'var(--text-gray)' }}
-                >
-                  <i className="bi bi-image" style={{ fontSize: '2rem' }}></i>
-                  <p className="small mb-0 mt-1">Enter photo URL</p>
-                </div>
+                form.photoUrl ? (
+                  <div className="gallery-admin-preview">
+                    <ImagePreview url={form.photoUrl} alt="Preview" size={200} />
+                    <p className="text-muted small mt-2 text-center">
+                      {form.title || 'URL'}
+                    </p>
+                    {form.category && (
+                      <Badge bg="info" className="mt-1">{form.category}</Badge>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className="d-flex flex-column align-items-center justify-content-center"
+                    style={{ width: 200, height: 150, border: '2px dashed var(--border-slate)', borderRadius: 8, color: 'var(--text-gray)' }}
+                  >
+                    <i className="bi bi-image" style={{ fontSize: '2rem' }}></i>
+                    <p className="small mb-0 mt-1">Enter photo URL</p>
+                  </div>
+                )
               )}
             </Col>
           </Row>
@@ -314,15 +425,31 @@ function AdminGalleryPage() {
   const openAdd = () => { setEditing(null); setShowForm(true); };
   const openEdit = (item) => { setEditing(item); setShowForm(true); };
 
-  const handleSave = async (payload) => {
-    if (editing) {
-      await galleryService.update(editing.galleryId, payload);
-    } else {
-      await galleryService.create(payload);
+  const handleSave = async (saveOp) => {
+    // Three save paths (matches GalleryController endpoints):
+    //   - upload-create:  POST /gallery/upload (multipart, new file, no existing id)
+    //   - upload-replace: PUT  /gallery/{id}/upload (multipart, file replaces, server deletes old file)
+    //   - json:           POST/PUT /gallery (JSON body, URL passthrough, backward compat)
+    try {
+      if (saveOp.kind === 'upload-create') {
+        await galleryService.uploadFile(saveOp.formData);
+      } else if (saveOp.kind === 'upload-replace') {
+        await galleryService.uploadFileReplace(saveOp.editingId, saveOp.formData);
+      } else if (saveOp.kind === 'json') {
+        if (saveOp.editingId) {
+          await galleryService.update(saveOp.editingId, saveOp.payload);
+        } else {
+          await galleryService.create(saveOp.payload);
+        }
+      }
+      setShowForm(false);
+      fetchItems();
+      fetchMeta();
+    } catch (err) {
+      // Re-throw so the modal can show the error inline.
+      // (Already cleared setShowForm(false) above? No — we DON'T close on error.)
+      throw err;
     }
-    setShowForm(false);
-    fetchItems();
-    fetchMeta();
   };
 
   const handleDelete = async () => {
@@ -430,9 +557,10 @@ function AdminGalleryPage() {
                 <div className="af-gallery-card">
                   <div className="af-gallery-img-wrap">
                     <img
-                      src={item.thumbnailUrl || item.photoUrl}
+                      src={item.thumbnail || item.photoUrl}
                       alt={item.title || 'Gallery'}
                       className="af-gallery-img"
+                      loading="lazy"
                       onError={(e) => {
                         e.currentTarget.src = `https://picsum.photos/seed/${item.galleryId}/400/300`;
                       }}

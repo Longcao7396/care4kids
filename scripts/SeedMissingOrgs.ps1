@@ -1,4 +1,15 @@
-param([string]$Server='.\SQLEXPRESS,62580', [string]$Database='GiveAIDDB')
+# =============================================================================
+# SeedMissingOrgs.ps1 — Backfill the two partner organizations.
+# Single source of truth: matches src/WebApi/appsettings.Development.json.
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File SeedMissingOrgs.ps1
+#   powershell -ExecutionPolicy Bypass -File SeedMissingOrgs.ps1 -Server ".\SQLEXPRESS" -Database GiveAIDDB
+# =============================================================================
+param(
+    [string]$Server = '(localdb)\MSSQLLocalDB',
+    [string]$Database = 'GiveAIDDB'
+)
 
 # Build parameterized SQL with proper T-SQL literals (no PowerShell N-string confusion)
 

@@ -29,6 +29,7 @@ public class AchievementsController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] bool activeOnly = true)
     {
         var items = await _mediator.Send(new GetAllAchievementsQuery { ActiveOnly = activeOnly });
@@ -40,6 +41,7 @@ public class AchievementsController : ControllerBase
     /// </summary>
     [HttpGet("featured")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeatured([FromQuery] int limit = 6)
     {
         var items = await _mediator.Send(new GetFeaturedAchievementsQuery { Limit = limit });
@@ -51,6 +53,7 @@ public class AchievementsController : ControllerBase
     /// </summary>
     [HttpGet("stats")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {
         var all = await _mediator.Send(new GetAllAchievementsQuery { ActiveOnly = false });
@@ -74,6 +77,8 @@ public class AchievementsController : ControllerBase
     /// </summary>
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         var all = await _mediator.Send(new GetAllAchievementsQuery { ActiveOnly = false });
@@ -89,7 +94,10 @@ public class AchievementsController : ControllerBase
     /// Create a new achievement (Admin only).
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateAchievementRequest request)
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -123,7 +131,10 @@ public class AchievementsController : ControllerBase
     /// Update an achievement (Admin only).
     /// </summary>
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateAchievementRequest request)
     {
         var command = new UpdateAchievementCommand
@@ -154,7 +165,10 @@ public class AchievementsController : ControllerBase
     /// Delete an achievement (Admin only).
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
         var ok = await _mediator.Send(new DeleteAchievementCommand { AchievementId = id });

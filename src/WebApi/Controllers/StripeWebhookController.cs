@@ -38,6 +38,9 @@ public class StripeWebhookController : ControllerBase
     /// is computed over the exact raw bytes.
     /// </summary>
     [HttpPost]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> HandleStripeWebhook()
     {
         // L-04: Read the raw request body for signature validation

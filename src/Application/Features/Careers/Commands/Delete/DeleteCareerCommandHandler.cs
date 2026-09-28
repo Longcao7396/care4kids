@@ -23,7 +23,8 @@ public class DeleteCareerCommandHandler : IRequestHandler<DeleteCareerCommand, b
             throw new InvalidOperationException($"Career with ID {request.CareerId} not found.");
         }
 
-        _context.Careers.Remove(career);
+        career.IsDeleted = true;
+        career.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

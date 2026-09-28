@@ -11,7 +11,7 @@ for GiveAID v2.0.
 |----------------|---------|-----------------------------------------------|
 | .NET SDK       | 8.0+    | `dotnet --version` should report 8.x          |
 | Node.js        | 18+     | LTS                                           |
-| SQL Server     | 2019+   | Express edition OK                            |
+| SQL Server     | LocalDB (ships with VS) or Express 2019+ | Default = `(localdb)\MSSQLLocalDB` |
 | Git            | 2.40+   |                                               |
 | Visual Studio  | 2022 17.8+ / Rider 2024.1+ / VS Code | C# extension |
 
@@ -22,12 +22,11 @@ for GiveAID v2.0.
 git clone <repo-url>
 cd "project-NGO"
 
-# Database
-sqlcmd -S .\SQLEXPRESS -Q "CREATE DATABASE GiveAIDDB"
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i database/migrations/001_v2_initial_schema.sql
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i database/migrations/002_rename_and_merge.sql
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i database/migrations/003_new_tables.sql
-sqlcmd -S .\SQLEXPRESS -d GiveAIDDB -i database/migrations/004_seed_admin.sql
+# Verify the database connection (canonical instance is (localdb)\MSSQLLocalDB)
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
+
+# Apply database schema + seeds
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
 
 # Backend
 dotnet restore GiveAID.V2.slnx
@@ -72,7 +71,7 @@ npm start
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=.\\SQLEXPRESS;Database=GiveAIDDB;Integrated Security=True;TrustServerCertificate=True"
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=GiveAIDDB;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=15",
   },
   "Jwt": {
     "Secret": "<64-byte secret>",
@@ -241,16 +240,16 @@ For production, use a transactional email provider (SendGrid, Postmark, Mailgun)
 
 ```powershell
 # Daily full backup
-sqlcmd -S .\SQLEXPRESS -Q "BACKUP DATABASE [GiveAIDDB] TO DISK='D:\Backups\GiveAIDDB_Full.bak' WITH INIT"
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "BACKUP DATABASE [GiveAIDDB] TO DISK='D:\Backups\GiveAIDDB_Full.bak' WITH INIT"
 
 # Hourly differential
-sqlcmd -S .\SQLEXPRESS -Q "BACKUP DATABASE [GiveAIDDB] TO DISK='D:\Backups\GiveAIDDB_Diff.bak' WITH DIFFERENTIAL"
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "BACKUP DATABASE [GiveAIDDB] TO DISK='D:\Backups\GiveAIDDB_Diff.bak' WITH DIFFERENTIAL"
 ```
 
 Restore:
 
 ```powershell
-sqlcmd -S .\SQLEXPRESS -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Full.bak' WITH REPLACE"
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE DATABASE [GiveAIDDB] FROM DISK='D:\Backups\GiveAIDDB_Full.bak' WITH REPLACE"
 ```
 
 ### Common incidents

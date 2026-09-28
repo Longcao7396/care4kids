@@ -3,6 +3,7 @@ using GiveAID.Application.Services;
 using GiveAID.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using GiveAID.Application.Common.Interfaces;
 
 namespace GiveAID.Application.Features.Donations.Commands.ConfirmWebhook;
 
@@ -20,6 +21,7 @@ public class ConfirmWebhookCommandHandler : IRequestHandler<ConfirmWebhookComman
     private readonly IPaymentGateway _paymentGateway;
     private readonly IEmailSender _emailSender;
     private readonly ICacheService _cacheService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<ConfirmWebhookCommandHandler> _logger;
 
     public ConfirmWebhookCommandHandler(
@@ -27,12 +29,14 @@ public class ConfirmWebhookCommandHandler : IRequestHandler<ConfirmWebhookComman
         IPaymentGateway paymentGateway,
         IEmailSender emailSender,
         ICacheService cacheService,
+        INotificationService notificationService,
         ILogger<ConfirmWebhookCommandHandler> logger)
     {
         _context = context;
         _paymentGateway = paymentGateway;
         _emailSender = emailSender;
         _cacheService = cacheService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -124,6 +128,29 @@ public class ConfirmWebhookCommandHandler : IRequestHandler<ConfirmWebhookComman
                 if (cause != null)
                 {
                     cause.RaisedAmount += donation.Amount;
+                }
+
+                // Trigger notification for successful donation
+                if (donation.UserId.HasValue)
+                {
+                    var campaignName = donation.CampaignId.HasValue
+                        ? (await _context.Campaigns.FindAsync(new object[] { donation.CampaignId.Value }, cancellationToken))?.CampaignName
+                        : null;
+                    var causeName = (await _context.Causes.FindAsync(new object[] { donation.CauseId }, cancellationToken))?.CauseName;
+                    
+                    var title = "Donation Successful";
+                    var message = campaignName != null
+                        ? $"Your donation of ${donation.Amount:F2} to {campaignName} has been completed. Thank you!"
+                        : $"Your donation of ${donation.Amount:F2} to {causeName} has been completed. Thank you!";
+
+                    await _notificationService.CreateNotificationAsync(
+                        donation.UserId.Value,
+                        "donation_completed",
+                        title,
+                        message,
+                        "Donation",
+                        donation.DonationId,
+                        cancellationToken);
                 }
 
                 _logger.LogInformation(

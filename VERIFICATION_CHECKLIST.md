@@ -114,7 +114,7 @@
   - [ ] **CampaignReports** ← NEW
   - [ ] Donations (updated with CampaignID FK)
   - [ ] Programmes
-  - [ ] ProgrammePhotos
+  - [x] ~~ProgrammePhotos~~ (dropped in EF migration DropProgrammePhoto — Step 7 cleanup pending for docs/SQL scripts)
   - [ ] ProgrammeRegistrations
   - [ ] Conversations
   - [ ] ConversationMessages

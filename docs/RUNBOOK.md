@@ -11,7 +11,7 @@
 | .NET SDK          | 8.0+               | `dotnet --version`                        |
 | Node.js           | 18 LTS or 20 LTS   | `node -v`                                 |
 | npm               | 9+                 | `npm -v`                                  |
-| SQL Server        | Express 2019+      | `sqlcmd -S .\SQLEXPRESS -Q "SELECT @@VERSION"` |
+| SQL Server        | LocalDB (recommended) or Express 2019+ | `sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT @@VERSION"` |
 | Git               | 2.40+              | `git --version`                           |
 | Visual Studio / Rider / VS Code | 2022 17.8+ / 2024.1+ | `where.exe devenv`            |
 
@@ -19,17 +19,32 @@
 
 ### 2.1. Database
 
-```powershell
-# Create database (idempotent — skip if already exists)
-sqlcmd -S .\SQLEXPRESS -Q "IF DB_ID('GiveAIDDB') IS NULL CREATE DATABASE GiveAIDDB"
+The canonical local instance is **`(localdb)\MSSQLLocalDB`** (ships with
+Visual Studio — matches `src/WebApi/appsettings.Development.json`).
+Verify it's reachable first:
 
-# Apply EF Core migrations
-# <REPO_ROOT> = the folder containing this file (the repo root)
+```powershell
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
+```
+
+Apply the schema + seed either implicitly (recommended) or explicitly:
+
+```powershell
+# Option A — implicit: let the WebApi create + migrate on first run
+cd "<REPO_ROOT>"
+dotnet run --project src/WebApi/GiveAID.V2.WebApi.csproj
+
+# Option B — explicit apply via the all-in-one script
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
+
+# Option C — EF Core migrations only (no SQL seed file)
 cd "<REPO_ROOT>"
 dotnet ef database update --project src/Infrastructure/GiveAID.V2.Infrastructure.csproj --startup-project src/WebApi/GiveAID.V2.WebApi.csproj
 ```
 
-The migration also seeds the default `Admin` user.
+The first run also seeds the default `Admin` user. To target a different
+instance (e.g. `.\SQLEXPRESS`), pass `-Server` to the apply / verify scripts
+or set the `ConnectionStrings__DefaultConnection` environment variable.
 
 ### 2.2. Backend
 
@@ -152,9 +167,10 @@ Stop-Process -Id <pid> -Force
 
 ### 8.2. Database connection error
 
-1. Confirm SQL Server is running: `Get-Service MSSQLSERVER` or `Get-Service MSSQL$SQLEXPRESS`
-2. Test connection: `sqlcmd -S .\SQLEXPRESS -Q "SELECT 1"`
-3. If using localdb, switch connection string in `appsettings.json`
+1. Run `verify-database.ps1` first — it diagnoses the most common cases.
+2. LocalDB: `sqllocaldb info MSSQLLocalDB` → if "Stopped", run `sqllocaldb start MSSQLLocalDB`.
+3. Test the connection manually: `sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT 1"`.
+4. To switch to SQL Server Express, see the README's "Switching to SQL Server Express" section.
 
 ### 8.3. EF migration fails with "pending model changes"
 
@@ -209,12 +225,12 @@ If only specific tests fail, read the test output for the actual exception.
 ## 9. Reset to a Clean State
 
 ```powershell
-# Drop and recreate database
-sqlcmd -S .\SQLEXPRESS -Q "DROP DATABASE IF EXISTS GiveAIDDB"
-sqlcmd -S .\SQLEXPRESS -Q "CREATE DATABASE GiveAIDDB"
+# Option A — easiest: use the all-in-one apply script
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
 
-# Re-apply migrations (also re-seeds)
-cd "C:\Users\admin\Desktop\project NGO.v2"
+# Option B — manual drop + EF Core migrations (re-seeds admin user)
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -Q "DROP DATABASE IF EXISTS GiveAIDDB"
+cd "<REPO_ROOT>"
 dotnet ef database update --project src/Infrastructure/GiveAID.V2.Infrastructure.csproj --startup-project src/WebApi/GiveAID.V2.WebApi.csproj
 
 # Stop everything

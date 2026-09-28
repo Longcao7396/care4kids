@@ -26,6 +26,7 @@ public class OrganizationsController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] bool activeOnly = true,
         [FromQuery] string? type = null)
@@ -43,6 +44,7 @@ public class OrganizationsController : ControllerBase
     /// </summary>
     [HttpGet("featured")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFeatured([FromQuery] int count = 6)
     {
         var items = await _mediator.Send(new GetFeaturedOrganizationsQuery { Limit = count });
@@ -54,6 +56,7 @@ public class OrganizationsController : ControllerBase
     /// </summary>
     [HttpGet("stats")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {
         var all = await _mediator.Send(new GetAllOrganizationsQuery { ActiveOnly = true });
@@ -76,6 +79,8 @@ public class OrganizationsController : ControllerBase
     /// </summary>
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         var items = await _mediator.Send(new GetAllOrganizationsQuery { ActiveOnly = false });
@@ -91,7 +96,7 @@ public class OrganizationsController : ControllerBase
     /// Create an organization (Admin only).
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public IActionResult Create([FromBody] object request)
     {
         // Write path is intentionally a stub here — POST goes through admin
@@ -104,7 +109,7 @@ public class OrganizationsController : ControllerBase
     /// Update an organization (Admin only).
     /// </summary>
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public IActionResult Update(int id, [FromBody] object request)
     {
         return StatusCode(501, new { success = false, message = "Update not yet implemented", data = (object?)null });
@@ -114,7 +119,7 @@ public class OrganizationsController : ControllerBase
     /// Delete an organization (Admin only).
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public IActionResult Delete(int id)
     {
         return StatusCode(501, new { success = false, message = "Delete not yet implemented", data = (object?)null });

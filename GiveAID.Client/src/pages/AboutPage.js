@@ -86,7 +86,7 @@ const PROGRAMME_PILLARS = [
     icon: Icons.food,
     title: 'Nutritious Meals',
     desc: 'Daily meals, food packages and nutrition programmes that combat child hunger across Vietnam.',
-    image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
+    image: 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337379/giveaid/replacement/thang2-7378-1396341890_sh4unx.webp',
     stat: '50,000+',
     statLabel: 'Meals / year',
   },
@@ -94,7 +94,7 @@ const PROGRAMME_PILLARS = [
     icon: Icons.education,
     title: 'Education Access',
     desc: 'School supplies, scholarships, libraries and free English classes for rural and under-served children.',
-    image: 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=800&q=80',
+    image: 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337381/giveaid/replacement/thang3-4930-1396341890_cyjvnr.webp',
     stat: '1,500+',
     statLabel: 'Children in school',
   },
@@ -102,7 +102,7 @@ const PROGRAMME_PILLARS = [
     icon: Icons.health,
     title: 'Healthcare & Wellness',
     desc: 'Mobile clinics, free health checks, heart surgeries and nutrition support for vulnerable families.',
-    image: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=800&q=80',
+    image: 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337355/giveaid/replacement/thieunhi11-6736-1401513005_qhyasf.webp',
     stat: '3,000+',
     statLabel: 'Patients treated',
   },
@@ -110,7 +110,7 @@ const PROGRAMME_PILLARS = [
     icon: Icons.shelter,
     title: 'Safe Shelter',
     desc: 'Long-term residential care homes and emergency shelter for orphans and at-risk children.',
-    image: 'https://images.unsplash.com/photo-1602052793312-b779c08a90d6?auto=format&fit=crop&w=800&q=80',
+    image: 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337368/giveaid/replacement/sung1-9985-1396341889_rdwlsg.webp',
     stat: '12',
     statLabel: 'Care homes',
   },
@@ -151,10 +151,10 @@ const TIMELINE = [
 ];
 
 const LEADERS = [
-  { name: 'Nguyễn Minh Anh', role: 'Founder & Executive Director', initials: 'MA', color: '#E87A5A' },
-  { name: 'Trần Văn Hùng', role: 'Director of Programmes', initials: 'VH', color: '#0E7490' },
-  { name: 'Lê Thị Hương', role: 'Head of Partnerships', initials: 'TH', color: '#5B8C3D' },
-  { name: 'Phạm Quốc Bảo', role: 'Director of Operations', initials: 'QB', color: '#7C3AED' },
+  { name: 'Cao Hai Long', role: 'Founder & Executive Director', initials: 'CHL', color: '#E87A5A' },
+  { name: 'Nguyen Sy Son', role: 'Director of Programmes', initials: 'NSS', color: '#0E7490' },
+  { name: 'Bui Manh Duy', role: 'Head of Partnerships', initials: 'BMD', color: '#5B8C3D' },
+  { name: 'Le Ho Hoang Hai', role: 'Director of Operations', initials: 'LHH', color: '#7C3AED' },
 ];
 
 function AboutPage() {
@@ -194,7 +194,7 @@ function AboutPage() {
       <section className="ap-hero">
         <div className="ap-hero-bg">
           <img
-            src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=1800&q=80"
+            src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337357/giveaid/replacement/thieunhi9-2869-1401513005_chlpkd.webp"
             alt="Vietnamese schoolchildren studying"
           />
           <div className="ap-hero-overlay" />
@@ -290,7 +290,7 @@ function AboutPage() {
           <div className="ap-story-grid">
             <div className="ap-story-image-wrap">
               <img
-                src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=80"
+                src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337416/giveaid/replacement/6.1-1_byrdld.jpg"
                 alt="Children at a Care4Kids programme"
                 className="ap-story-image"
               />
@@ -299,7 +299,7 @@ function AboutPage() {
                 <div className="ap-story-badge-lbl">Years<br />of care</div>
               </div>
               <img
-                src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=600&q=80"
+                src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337363/giveaid/replacement/thieunhi20-2550-1401513005_nbzehq.webp"
                 alt="Child reading"
                 className="ap-story-image-secondary"
               />
@@ -321,7 +321,7 @@ function AboutPage() {
                   We measure success not in numbers, but in the quiet moments — a child finishing
                   homework, a teenager graduating, a mother smiling at a healthy baby.
                 </p>
-                <footer>— Nguyễn Minh Anh, Founder</footer>
+                <footer>— Cao Hai Long, Founder</footer>
               </blockquote>
 
               <div className="ap-story-highlights">

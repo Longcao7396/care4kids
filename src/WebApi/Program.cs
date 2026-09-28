@@ -86,7 +86,11 @@ builder.Services.AddAuthentication(options =>
 // 5. Add Authorization
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+    // Centralized policy definitions (NHÓM 2 #5). Behavior is unchanged from
+    // the previous per-controller [Authorize(Roles = "Admin")] checks — this
+    // just gives the role check a single home so new policies (e.g. a future
+    // "RequireVerifiedUser") can be added here without touching controllers.
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
     // SuperAdmin policy removed — Admin has full privileges
 });
 

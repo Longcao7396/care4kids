@@ -113,7 +113,7 @@ const ProgrammeDetailPage = () => {
           {event.imageUrl ? (
             <img src={event.imageUrl} alt={event.campaignName} onError={(e) => { e.target.style.display = 'none'; }} />
           ) : (
-            <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80" alt="" />
+            <img src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337354/giveaid/replacement/thieunhi26-3817-1401532325_hvieu1.webp" alt="" />
           )}
           <div className="pdp-hero-overlay" />
         </div>

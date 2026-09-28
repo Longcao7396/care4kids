@@ -26,6 +26,8 @@ public class UsersController : ControllerBase
     /// Get current user profile.
     /// </summary>
     [HttpGet("me")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMe()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -42,6 +44,9 @@ public class UsersController : ControllerBase
     /// Update current user profile.
     /// </summary>
     [HttpPut("me")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateMyProfileRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

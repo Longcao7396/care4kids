@@ -131,7 +131,7 @@ function CampaignDetailPage() {
               src={campaign.imageUrl}
               alt={campaign.campaignName}
               onError={(e) => {
-                e.target.src = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80';
+                e.target.src = 'https://res.cloudinary.com/mczqcagv/image/upload/v1790337366/giveaid/replacement/h-mong-9402-1396341888_y8hvch.webp';
               }}
             />
           ) : (

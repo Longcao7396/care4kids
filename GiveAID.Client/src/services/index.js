@@ -392,6 +392,38 @@ export const galleryService = {
     const response = await api.delete(API_ENDPOINTS.GALLERY.DELETE(id));
     return response.data;
   },
+
+  // ── Multipart upload (Cloudinary via server) ────────────────────────
+  // IMPORTANT: We pass FormData as the body. axios will see FormData and:
+  //   1) automatically set the Content-Type to multipart/form-data with a
+  //      generated boundary
+  //   2) need the default JSON Content-Type header DELETED first.
+  //
+  // If you set Content-Type manually (e.g. 'multipart/form-data' without the
+  // boundary), the server will fail to parse the multipart body. Always let
+  // the runtime derive it.
+  //
+  // The formData blob is built by the caller (typically ImageUpload.js
+  // -> AdminGalleryPage.js passes {imageFile, ...otherFields}).
+  uploadFile: async (formData) => {
+    const response = await api.post(API_ENDPOINTS.GALLERY.UPLOAD, formData, {
+      headers: { 'Content-Type': undefined }, // axios auto-sets multipart with boundary
+      // Long-ish timeout — admin uploads from slow connections need more time
+      // than the default 30s. Server request size limit is 5 MB.
+      timeout: 60000,
+    });
+    return response.data;
+  },
+
+  // Used when REPLACING an existing gallery image. Marks the file replacement
+  // on the server so the old Cloudinary file is deleted.
+  uploadFileReplace: async (id, formData) => {
+    const response = await api.put(API_ENDPOINTS.GALLERY.UPLOAD_UPDATE(id), formData, {
+      headers: { 'Content-Type': undefined },
+      timeout: 60000,
+    });
+    return response.data;
+  },
 };
 
 // =====================================================

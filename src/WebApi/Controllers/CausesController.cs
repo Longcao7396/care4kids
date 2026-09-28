@@ -29,6 +29,7 @@ public class CausesController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] bool activeOnly = true)
     {
         var items = await _mediator.Send(new GetAllCausesQuery { ActiveOnly = activeOnly });
@@ -40,6 +41,7 @@ public class CausesController : ControllerBase
     /// </summary>
     [HttpGet("tree")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTree()
     {
         var items = await _mediator.Send(new GetCauseTreeQuery());
@@ -51,6 +53,8 @@ public class CausesController : ControllerBase
     /// </summary>
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -69,6 +73,7 @@ public class CausesController : ControllerBase
     /// </summary>
     [HttpGet("stats")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {
         var stats = await _mediator.Send(new GetCausesStatsQuery());
@@ -79,7 +84,10 @@ public class CausesController : ControllerBase
     /// Create a new cause (Admin only).
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CauseCreateDto dto)
     {
         var newId = await _mediator.Send(new CreateCauseCommand(dto));
@@ -91,7 +99,7 @@ public class CausesController : ControllerBase
     /// Update a cause (Admin only).
     /// </summary>
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> Update(int id, [FromBody] CauseUpdateDto dto)
     {
         await _mediator.Send(new UpdateCauseCommand(id, dto));
@@ -102,7 +110,7 @@ public class CausesController : ControllerBase
     /// Delete a cause (Admin only).
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> Delete(int id)
     {
         await _mediator.Send(new DeleteCauseCommand(id));

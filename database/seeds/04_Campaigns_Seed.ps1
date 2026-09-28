@@ -4,7 +4,7 @@
 # Idempotent: checks by campaign_code.
 
 param(
-    [string]$Server = '.\SQLEXPRESS,62580',
+    [string]$Server = '(localdb)\MSSQLLocalDB',
     [string]$Database = 'GiveAIDDB'
 )
 

@@ -15,6 +15,7 @@ reference for the architecture, API surface, deployment procedures, and develope
 | [Migration Guide](MIGRATION_GUIDE.md) | v1 (legacy ASP.NET WebForms) → v2.0 migration steps |
 | [Testing Strategy](TESTING.md) | Test pyramid, xUnit patterns, fixtures, coverage targets |
 | [Deployment & Runbook](DEPLOYMENT.md) | Local + production deployment, ops procedures, troubleshooting |
+| [Production Build Guide](PRODUCTION_BUILD.md) | Build commands, env vars, CORS configuration, runtime smoke test |
 
 ## Quick Links
 

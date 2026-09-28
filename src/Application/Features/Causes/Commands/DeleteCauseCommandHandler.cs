@@ -21,7 +21,8 @@ public class DeleteCauseCommandHandler : IRequestHandler<DeleteCauseCommand>
         if (cause == null)
             throw new KeyNotFoundException($"Cause with ID {request.CauseId} not found");
 
-        _context.Causes.Remove(cause);
+        cause.IsDeleted = true;
+        cause.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
     }
 }

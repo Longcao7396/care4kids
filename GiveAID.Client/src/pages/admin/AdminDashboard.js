@@ -3,6 +3,7 @@ import { Spinner, Alert } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './AdminDashboard.css';
 
 /* ─────────────────────────────────────────────────
@@ -64,10 +65,6 @@ function AdminDashboard() {
   }
 
   const overview = stats.overview || {};
-  const maxMonthly = Math.max(
-    1,
-    ...(stats.donationsByMonth || []).map((m) => m.total)
-  );
 
   return (
     <div className="ad-page">
@@ -138,23 +135,30 @@ function AdminDashboard() {
           </div>
           <div className="ad-panel-body">
             {stats.donationsByMonth && stats.donationsByMonth.length > 0 ? (
-              <div className="ad-chart">
-                {stats.donationsByMonth.map((m) => {
-                  const pct = Math.round((m.total / maxMonthly) * 100);
-                  return (
-                    <div key={`${m.year}-${m.month}`} className="ad-chart-col">
-                      <div className="ad-chart-bar-wrap" title={`${formatCurrency(m.total)} · ${m.count} donations`}>
-                        <div className="ad-chart-bar" style={{ height: `${pct}%` }}>
-                          <span className="ad-chart-bar-val">{formatCurrencyShort(m.total)}</span>
-                        </div>
-                      </div>
-                      <div className="ad-chart-label">
-                        {monthShort(m.month)} {String(m.year).slice(-2)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart
+                  data={stats.donationsByMonth.map((m) => ({
+                    name: `${monthShort(m.month)} ${String(m.year).slice(-2)}`,
+                    total: m.total,
+                    count: m.count,
+                  }))}
+                  margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" opacity={0.3} />
+                  <XAxis dataKey="name" stroke="#94A3B8" style={{ fontSize: 12 }} />
+                  <YAxis stroke="#94A3B8" style={{ fontSize: 12 }} tickFormatter={(val) => formatCurrencyShort(val)} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: 8 }}
+                    labelStyle={{ color: '#F8FAFC', fontWeight: 600 }}
+                    itemStyle={{ color: '#22D3EE' }}
+                    formatter={(value, name, props) => [
+                      `${formatCurrency(value)} · ${props.payload.count} donations`,
+                      'Total'
+                    ]}
+                  />
+                  <Bar dataKey="total" fill="#22D3EE" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             ) : (
               <Empty>No donation data yet</Empty>
             )}

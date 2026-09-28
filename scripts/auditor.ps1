@@ -1,4 +1,4 @@
-﻿#requires -Version 5.0
+#requires -Version 5.0
 <#
 .SYNOPSIS
     Self-improving auditor for the GiveAID project.
@@ -323,7 +323,7 @@ if (-not $script:OLD_PROJECT_ROOT) {
 # Verify admin user in DB has valid BCrypt hash
 try {
     $query = "SELECT Email, LEFT(PasswordHash, 4) AS Prefix FROM GiveAIDDB.dbo.Users WHERE Email = 'admin@give-aid.org'"
-    $dbResult = & sqlcmd -S .\SQLEXPRESS -E -Q $query -h -1 2>&1
+    $dbResult = & sqlcmd -S "(localdb)\MSSQLLocalDB" -E -Q $query -h -1 2>&1
     $hashPrefix = ($dbResult | Where-Object { $_ -match '\$2[ay]?\$' }) -replace '\s+', ' '
     if ($hashPrefix -match '\$2[ay]?\$') {
         Write-Ok "Admin password hash is BCrypt-formatted"

@@ -1,13 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using GiveAID.Application.Common.Interfaces;
+using GiveAID.Application.Services;
 using GiveAID.Domain.Entities;
 
 namespace GiveAID.Infrastructure.Persistence;
 
 public class GiveAIDDbContext : DbContext, IApplicationDbContext
 {
-    public GiveAIDDbContext(DbContextOptions<GiveAIDDbContext> options) : base(options)
+    private readonly ICurrentUserService? _currentUserService;
+
+    public GiveAIDDbContext(
+        DbContextOptions<GiveAIDDbContext> options,
+        ICurrentUserService? currentUserService = null) : base(options)
     {
+        _currentUserService = currentUserService;
     }
 
     public DbSet<User> Users => Set<User>();
@@ -18,7 +24,6 @@ public class GiveAIDDbContext : DbContext, IApplicationDbContext
     public DbSet<Donation> Donations => Set<Donation>();
     public DbSet<Programme> Programmes => Set<Programme>();
     public DbSet<ProgrammeRegistration> ProgrammeRegistrations => Set<ProgrammeRegistration>();
-    public DbSet<ProgrammePhoto> ProgrammePhotos => Set<ProgrammePhoto>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<ConversationMessage> ConversationMessages => Set<ConversationMessage>();
@@ -34,6 +39,7 @@ public class GiveAIDDbContext : DbContext, IApplicationDbContext
     public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<WebhookLog> WebhookLogs => Set<WebhookLog>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,9 +54,11 @@ public class GiveAIDDbContext : DbContext, IApplicationDbContext
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Auto-set CreatedAt and UpdatedAt for entities
+        // Auto-set CreatedAt, UpdatedAt, CreatedBy, UpdatedBy for entities
         var entries = ChangeTracker.Entries()
             .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+        var currentUserId = _currentUserService?.GetUserId();
 
         foreach (var entry in entries)
         {
@@ -59,10 +67,18 @@ public class GiveAIDDbContext : DbContext, IApplicationDbContext
                 if (entry.State == EntityState.Added)
                 {
                     baseEntity.CreatedAt = DateTime.UtcNow;
+                    if (currentUserId != null)
+                    {
+                        baseEntity.CreatedBy = currentUserId;
+                    }
                 }
                 else if (entry.State == EntityState.Modified)
                 {
                     baseEntity.UpdatedAt = DateTime.UtcNow;
+                    if (currentUserId != null)
+                    {
+                        baseEntity.UpdatedBy = currentUserId;
+                    }
                 }
             }
         }

@@ -39,5 +39,8 @@ public class CareerConfiguration : IEntityTypeConfiguration<Career>
 
         builder.HasIndex(c => c.IsActive);
         builder.HasIndex(c => c.PostedDate);
+
+        // Soft delete: hide deleted careers from normal queries.
+        builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }

@@ -16,17 +16,27 @@ public class GalleryConfiguration : IEntityTypeConfiguration<Gallery>
             .HasMaxLength(200);
 
         builder.Property(g => g.PhotoUrl)
-            .HasMaxLength(255)
+            .HasMaxLength(500)
             .IsRequired();
 
         builder.Property(g => g.ThumbnailUrl)
-            .HasMaxLength(255);
+            .HasMaxLength(500);
 
         builder.Property(g => g.Category)
             .HasMaxLength(50);
 
         builder.Property(g => g.Tags)
             .HasMaxLength(255);
+
+        // Cloudinary metadata
+        builder.Property(g => g.PublicId)
+            .HasMaxLength(255);
+
+        builder.Property(g => g.OriginalFileName)
+            .HasMaxLength(255);
+
+        builder.Property(g => g.ContentType)
+            .HasMaxLength(50);
 
         builder.HasOne(g => g.Programme)
             .WithMany(p => p.GalleryItems)
@@ -40,5 +50,8 @@ public class GalleryConfiguration : IEntityTypeConfiguration<Gallery>
 
         builder.HasIndex(g => g.Category);
         builder.HasIndex(g => g.IsFeatured);
+
+        // Soft delete: hide deleted gallery items from normal queries.
+        builder.HasQueryFilter(g => !g.IsDeleted);
     }
 }

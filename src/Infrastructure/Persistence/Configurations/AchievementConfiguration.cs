@@ -50,5 +50,8 @@ public class AchievementConfiguration : IEntityTypeConfiguration<Achievement>
 
         builder.HasIndex(a => a.IsFeatured);
         builder.HasIndex(a => a.DisplayOrder);
+
+        // Soft delete: hide deleted achievements from normal queries.
+        builder.HasQueryFilter(a => !a.IsDeleted);
     }
 }

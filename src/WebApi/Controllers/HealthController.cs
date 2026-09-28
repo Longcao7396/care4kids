@@ -15,6 +15,7 @@ public class HealthController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public IActionResult Get()
     {
         return Ok(new
@@ -30,6 +31,7 @@ public class HealthController : ControllerBase
     /// </summary>
     [HttpGet("ready")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public IActionResult Ready()
     {
         return Ok(new
@@ -44,6 +46,7 @@ public class HealthController : ControllerBase
     /// </summary>
     [HttpGet("live")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public IActionResult Live()
     {
         return Ok(new

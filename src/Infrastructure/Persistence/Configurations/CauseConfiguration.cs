@@ -42,5 +42,8 @@ public class CauseConfiguration : IEntityTypeConfiguration<Cause>
 
         builder.HasIndex(c => c.CauseCode);
         builder.HasIndex(c => c.DisplayOrder);
+
+        // Soft delete: hide deleted causes from normal queries.
+        builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }

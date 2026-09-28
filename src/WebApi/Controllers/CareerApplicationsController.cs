@@ -23,6 +23,8 @@ public class CareerApplicationsController : ControllerBase
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Submit([FromBody] object request)
     {
         return Ok(new { success = true, message = "Application submitted successfully", data = (object?)null });
@@ -32,7 +34,9 @@ public class CareerApplicationsController : ControllerBase
     /// Get all applications (Admin only).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         return Ok(new { success = true, message = "OK", data = new { items = Array.Empty<object>(), page, pageSize } });

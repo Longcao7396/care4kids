@@ -4,7 +4,7 @@
 # Idempotent: each section checks for existing rows.
 
 param(
-    [string]$Server = '.\SQLEXPRESS,62580',
+    [string]$Server = '(localdb)\MSSQLLocalDB',
     [string]$Database = 'GiveAIDDB'
 )
 

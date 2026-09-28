@@ -152,8 +152,12 @@ function GalleryItem({ item, onClick }) {
       aria-label={`View ${item.title}`}
     >
       <div className="gp-item-img-wrap">
+        {/* Grid uses Cloudinary auto-generated thumbnail (w_300,h_300,c_fill)
+            instead of the full PhotoUrl. This is the bandwidth-saving path.
+            When the user clicks and opens the lightbox, the lightbox swaps to
+            the original URL for the full-size view. */}
         <img
-          src={item.url}
+          src={item.thumbnail || item.url}
           alt={item.alt || item.title}
           loading="lazy"
           className="gp-item-img"
@@ -250,7 +254,7 @@ function GalleryPage() {
       <section className="gp-hero">
         <div className="gp-hero-bg">
           <img
-            src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=1800&q=80"
+            src="https://res.cloudinary.com/mczqcagv/image/upload/v1790337412/giveaid/replacement/thieunhi-6226-1401513004_dqjcpq.webp"
             alt="Vietnamese schoolchildren studying"
           />
           <div className="gp-hero-overlay" />

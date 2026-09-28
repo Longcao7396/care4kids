@@ -555,9 +555,12 @@ npm start
 # Backend (Visual Studio)
 Press F5 to run
 
-# Database
-sqlcmd -S localhost -E -d GiveAIDDB -i NGO_Database_Schema_V2.sql
+# Database (single source of truth: (localdb)\MSSQLLocalDB)
+powershell -ExecutionPolicy Bypass -File verify-database.ps1
+powershell -ExecutionPolicy Bypass -File database\99_Apply-All.ps1
 ```
+
+> Nếu trước đây bạn dùng `.\SQLEXPRESS`, xem README để switch.
 
 ---
 

@@ -693,6 +693,58 @@
   box-shadow: 0 8px 20px rgba(232, 122, 90, 0.25);
 }
 
+.cp-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 48px;
+  flex-wrap: wrap;
+}
+
+.cp-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cp-page-btn {
+  border: 1px solid var(--c4k-gray-200);
+  background: var(--c4k-white);
+  color: var(--c4k-gray-700, #444);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.cp-page-btn:hover:not(:disabled) {
+  border-color: #E87A5A;
+  color: #E87A5A;
+  background: rgba(232, 122, 90, 0.06);
+}
+
+.cp-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cp-page-number {
+  min-width: 40px;
+  text-align: center;
+  padding: 8px 12px;
+}
+
+.cp-page-number.active {
+  background: linear-gradient(135deg, #E87A5A 0%, #D86A4A 100%);
+  border-color: transparent;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(232, 122, 90, 0.25);
+}
+
 .cp-campaign-card {
   border: 1px solid var(--c4k-gray-200);
   border-radius: var(--radius-xl);

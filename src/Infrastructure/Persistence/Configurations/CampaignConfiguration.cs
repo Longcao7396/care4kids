@@ -61,5 +61,8 @@ public class CampaignConfiguration : IEntityTypeConfiguration<Campaign>
         builder.HasIndex(c => c.CauseId);
         builder.HasIndex(c => c.Status);
         builder.HasIndex(c => c.IsFeatured);
+
+        // Soft delete: hide deleted campaigns from normal queries.
+        builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }

@@ -29,7 +29,12 @@ public class CreateGalleryCommandHandler : IRequestHandler<CreateGalleryCommand,
             DisplayOrder = request.DisplayOrder,
             IsFeatured = request.IsFeatured,
             UploadedBy = request.UploadedBy,
-            UploadedAt = DateTime.UtcNow
+            UploadedAt = DateTime.UtcNow,
+            // Cloudinary metadata (may be null when going through URL paste path)
+            PublicId = request.PublicId,
+            OriginalFileName = request.OriginalFileName,
+            FileSizeBytes = request.FileSizeBytes,
+            ContentType = request.ContentType
         };
 
         _context.Gallery.Add(gallery);
@@ -54,7 +59,11 @@ public class CreateGalleryCommandHandler : IRequestHandler<CreateGalleryCommand,
             OrganizationName = orgName,
             DisplayOrder = gallery.DisplayOrder,
             IsFeatured = gallery.IsFeatured,
-            UploadedAt = gallery.UploadedAt
+            UploadedAt = gallery.UploadedAt,
+            PublicId = gallery.PublicId,
+            OriginalFileName = gallery.OriginalFileName,
+            FileSizeBytes = gallery.FileSizeBytes,
+            ContentType = gallery.ContentType
         };
     }
 }

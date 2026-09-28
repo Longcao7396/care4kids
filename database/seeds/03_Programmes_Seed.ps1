@@ -3,7 +3,7 @@
 # Idempotent: checks (title, organization_id) before insert.
 
 param(
-    [string]$Server = '.\SQLEXPRESS,62580',
+    [string]$Server = '(localdb)\MSSQLLocalDB',
     [string]$Database = 'GiveAIDDB'
 )
 

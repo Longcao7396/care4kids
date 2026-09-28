@@ -31,6 +31,9 @@ public class ConversationsController : ControllerBase
     /// Create a new conversation.
     /// </summary>
     [HttpPost]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateConversationRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -51,6 +54,9 @@ public class ConversationsController : ControllerBase
     /// Add a message to a conversation.
     /// </summary>
     [HttpPost("{id:int}/messages")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> AddMessage(int id, [FromBody] AddMessageRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -73,6 +79,8 @@ public class ConversationsController : ControllerBase
     /// Get my conversations.
     /// </summary>
     [HttpGet("mine")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMine([FromQuery] string? status = null)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -89,6 +97,9 @@ public class ConversationsController : ControllerBase
     /// Get conversation by ID.
     /// </summary>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -106,7 +117,9 @@ public class ConversationsController : ControllerBase
     /// Get all conversations (Admin only).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -127,6 +140,9 @@ public class ConversationsController : ControllerBase
     /// Close a conversation.
     /// </summary>
     [HttpPost("{id:int}/close")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Close(int id)
     {
         var ok = await _mediator.Send(new CloseConversationCommand { ConversationId = id });
@@ -141,6 +157,9 @@ public class ConversationsController : ControllerBase
     /// Assign a conversation to an admin.
     /// </summary>
     [HttpPost("{id:int}/assign")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Assign(int id, [FromBody] AssignConversationRequest request)
     {
         var ok = await _mediator.Send(new AssignConversationCommand

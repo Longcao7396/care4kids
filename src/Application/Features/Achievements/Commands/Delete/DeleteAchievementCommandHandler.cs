@@ -23,7 +23,8 @@ public class DeleteAchievementCommandHandler : IRequestHandler<DeleteAchievement
             throw new InvalidOperationException($"Achievement with ID {request.AchievementId} not found.");
         }
 
-        _context.Achievements.Remove(achievement);
+        achievement.IsDeleted = true;
+        achievement.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

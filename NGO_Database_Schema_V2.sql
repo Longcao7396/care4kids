@@ -12,6 +12,12 @@
 -- 5. Created CmsPages for static content
 -- 6. Kept Programmes separate for events/activities
 -- =====================================================
+-- TODO Step 7 cleanup: ProgrammePhotos table is dropped in EF migration
+-- DropProgrammePhoto (cleanup pending in docs/SQL). Marked here so a
+-- fresh setup from this script does NOT recreate programme_photos for
+-- new dev environments when that table is being phased out.
+-- Search: "programme_photos" in this file → remove CREATE and DROP blocks
+-- when Step 7 lands.
 
 -- Keep session options compatible with table/index creation in SQL Server.
 SET ANSI_NULLS ON;

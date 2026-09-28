@@ -1,4 +1,16 @@
-param([string]$Server='.\SQLEXPRESS,62580', [string]$Database='GiveAIDDB')
+# =============================================================================
+# TestConnection.ps1 — Quick connectivity check against the GiveAID database.
+# Single source of truth: matches src/WebApi/appsettings.Development.json.
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File TestConnection.ps1
+#   powershell -ExecutionPolicy Bypass -File TestConnection.ps1 -Server "MYHOST\SQLEXPRESS" -Database GiveAIDDB
+# =============================================================================
+param(
+    [string]$Server = '(localdb)\MSSQLLocalDB',
+    [string]$Database = 'GiveAIDDB'
+)
+
 Add-Type -AssemblyName System.Data
 $connStr = "Server=$Server;Database=$Database;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=60;Pooling=False"
 $sw = [System.Diagnostics.Stopwatch]::StartNew()

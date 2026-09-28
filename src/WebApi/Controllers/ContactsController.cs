@@ -1,3 +1,5 @@
+using GiveAID.Application.Features.Contacts.Commands.Delete;
+using GiveAID.Application.Features.Contacts.Commands.Reply;
 using GiveAID.Application.Features.Contacts.Commands.Submit;
 using GiveAID.Application.Features.Contacts.DTOs;
 using GiveAID.Application.Features.Contacts.Queries.GetAll;
@@ -27,6 +29,8 @@ public class ContactsController : ControllerBase
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Submit([FromBody] ContactSubmitDto dto)
     {
         var result = await _mediator.Send(new SubmitContactCommand
@@ -49,7 +53,9 @@ public class ContactsController : ControllerBase
     /// Get all contact submissions (Admin only).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         var items = await _mediator.Send(new GetAllContactsQuery
@@ -69,7 +75,9 @@ public class ContactsController : ControllerBase
     /// Get contact stats (Admin only).
     /// </summary>
     [HttpGet("stats")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetStats()
     {
         var all = await _mediator.Send(new GetAllContactsQuery { Page = 1, PageSize = 1000 });
@@ -85,7 +93,10 @@ public class ContactsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -100,14 +111,51 @@ public class ContactsController : ControllerBase
     }
 
     [HttpPut("{id:int}/reply")]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Reply(int id, [FromBody] object request)
-        => StatusCode(501, new { success = false, message = "Reply not yet implemented", data = (object?)null });
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Reply(int id, [FromBody] ContactReplyDto request)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        int.TryParse(userIdClaim, out var userId);
+
+        try
+        {
+            var dto = await _mediator.Send(new ReplyContactCommand
+            {
+                ContactId = id,
+                ReplyMessage = request.ReplyMessage,
+                RepliedBy = userId > 0 ? (int?)userId : null
+            });
+            return Ok(new { success = true, message = "Reply sent", data = dto });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { success = false, message = $"Contact {id} not found", data = (object?)null });
+        }
+    }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Delete(int id)
-        => StatusCode(501, new { success = false, message = "Delete not yet implemented", data = (object?)null });
+    [Authorize(Policy = "RequireAdmin")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var deleted = await _mediator.Send(new DeleteContactCommand { ContactId = id });
+        if (!deleted)
+        {
+            return NotFound(new { success = false, message = $"Contact {id} not found", data = (object?)null });
+        }
+        return Ok(new { success = true, message = "Contact deleted", data = (object?)null });
+    }
+}
+
+/// <summary>Body for PUT /contacts/{id}/reply.</summary>
+public class ContactReplyDto
+{
+    public string ReplyMessage { get; set; } = string.Empty;
 }
 
 /// <summary>Public DTO accepted by POST /api/v1/contacts.</summary>
