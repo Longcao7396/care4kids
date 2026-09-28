@@ -73,7 +73,19 @@ appsettings.Staging.json
 appsettings.Production.json
 # Web.config (uncomment if needed)
 
+# Throwaway script (Stage 2 real-photo upload). Remove after run + UI verification.
+src/Scripts/UpsertRealPhotos/
+
 # Compiled files
 *.exe
 *.dll
 *.pdb
+
+# Temporary reports and session files
+PROGRESS_REPORT.md
+SESSION_SUMMARY.md
+TASK_COMPLETION_SUMMARY.md
+WORK_COMPLETE.md
+tree_output.txt
+cors-test.log.err
+verify-database.ps1
