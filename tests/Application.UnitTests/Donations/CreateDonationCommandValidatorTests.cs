@@ -20,7 +20,6 @@ public class CreateDonationCommandValidatorTests
 
     [Theory]
     [InlineData(1.00)]
-    [InlineData(1.0)]
     [InlineData(100.0)]
     [InlineData(999999.99)]
     public async Task Validate_PositiveAmount_Passes(decimal amount)

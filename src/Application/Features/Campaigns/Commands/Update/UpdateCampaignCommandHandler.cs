@@ -22,12 +22,8 @@ public class UpdateCampaignCommandHandler : IRequestHandler<UpdateCampaignComman
 
     public async Task<CampaignDto> Handle(UpdateCampaignCommand request, CancellationToken cancellationToken)
     {
-        // L-05: Validate campaign update
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            throw new ValidationException(validationResult.Errors);
-        }
+        // M-02 FIX: ValidationBehavior now handles this automatically in the pipeline
+        // Removed manual validator.ValidateAsync() call to avoid double validation
 
         var campaign = await _context.Campaigns.FindAsync(new object[] { request.CampaignId }, cancellationToken);
 

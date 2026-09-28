@@ -27,6 +27,8 @@ public class CreateDonationCommandHandler : IRequestHandler<CreateDonationComman
 {
     private readonly IApplicationDbContext _context;
     private readonly IPaymentGateway _paymentGateway;
+    // M-02 NOTE: Validator is no longer used in handler - ValidationBehavior handles it
+    // Keeping field for backward compatibility with unit tests
     private readonly IValidator<CreateDonationCommand> _validator;
     private readonly IAtomicCampaignUpdater _atomicCampaignUpdater;
     private readonly IDbTransactionFactory _dbTransactionFactory;
@@ -42,7 +44,7 @@ public class CreateDonationCommandHandler : IRequestHandler<CreateDonationComman
     {
         _context = context;
         _paymentGateway = paymentGateway;
-        _validator = validator;
+        _validator = validator; // Kept for unit test compatibility
         _atomicCampaignUpdater = atomicCampaignUpdater;
         _dbTransactionFactory = dbTransactionFactory;
         _logger = logger;
@@ -50,12 +52,8 @@ public class CreateDonationCommandHandler : IRequestHandler<CreateDonationComman
 
     public async Task<DonationDto> Handle(CreateDonationCommand request, CancellationToken cancellationToken)
     {
-        // H-01: Server-side validation — reject amounts <= 0
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            throw new ValidationException(validationResult.Errors);
-        }
+        // M-02 FIX: ValidationBehavior now handles this automatically in the pipeline
+        // Removed manual validator.ValidateAsync() call to avoid double validation
 
         // L-05: Check if campaign exists and is not expired (if donating to a campaign)
         if (request.CampaignId.HasValue)

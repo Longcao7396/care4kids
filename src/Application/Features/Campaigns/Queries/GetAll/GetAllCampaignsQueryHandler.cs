@@ -17,10 +17,10 @@ public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery,
 
     public async Task<PagedCampaignsResult> Handle(GetAllCampaignsQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Campaigns
-            .Include(c => c.Cause)
-            .Include(c => c.Organization)
-            .AsQueryable();
+        // M-05 FIX: Use projection with Select() to avoid N+1 queries
+        // Old approach: Include() loaded full entities, then .Select() in memory (51 queries)
+        // New approach: Project directly in SQL (1-2 queries)
+        var query = _context.Campaigns.AsNoTracking();
 
         if (!string.IsNullOrEmpty(request.Status))
         {
@@ -32,13 +32,13 @@ public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery,
             query = query.Where(c => c.CauseId == request.CauseId.Value);
         }
 
-        // M-05: Filter to events-only campaigns when requested
+        // Filter to events-only campaigns when requested
         if (request.EventsOnly)
         {
             query = query.Where(c => c.RegistrationRequired);
         }
 
-        // Bug #1 fix: free-text search on campaign name/description (case-insensitive).
+        // Free-text search on campaign name/description (case-insensitive)
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var term = request.SearchTerm.Trim();
@@ -47,48 +47,48 @@ public class GetAllCampaignsQueryHandler : IRequestHandler<GetAllCampaignsQuery,
                 (c.Description != null && EF.Functions.Like(c.Description, $"%{term}%")));
         }
 
-        // Bug #6 fix: count the true total (pre-pagination) instead of the page's item count.
+        // Count the true total (pre-pagination)
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var campaigns = await query
+        // Project directly to DTO in SQL (avoid loading full entities)
+        var items = await query
             .OrderByDescending(c => c.IsFeatured)
             .ThenByDescending(c => c.CreatedAt)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
+            .Select(c => new CampaignDto
+            {
+                CampaignId = c.CampaignId,
+                CauseId = c.CauseId,
+                CauseName = c.Cause != null ? c.Cause.CauseName : null,
+                OrganizationId = c.OrganizationId,
+                OrganizationName = c.Organization != null ? c.Organization.OrganizationName : null,
+                CampaignName = c.CampaignName,
+                CampaignCode = c.CampaignCode,
+                ProgrammeType = c.ProgrammeType,
+                RegistrationRequired = c.RegistrationRequired,
+                MaxParticipants = c.MaxParticipants,
+                TargetBeneficiaries = c.TargetBeneficiaries,
+                ExpectedBudget = c.ExpectedBudget,
+                ActualBudget = c.ActualBudget,
+                Description = c.Description,
+                GoalAmount = c.GoalAmount,
+                RaisedAmount = c.RaisedAmount,
+                PercentageReached = c.GoalAmount > 0 ? Math.Min((c.RaisedAmount / c.GoalAmount) * 100, 100) : 0,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                DaysRemaining = c.EndDate.HasValue ? Math.Max((c.EndDate.Value - DateTime.UtcNow).Days, 0) : null,
+                ImageUrl = c.ImageUrl,
+                BeneficiariesCount = c.BeneficiariesCount,
+                Location = c.Location,
+                Status = c.Status,
+                IsFeatured = c.IsFeatured,
+                DisplayOrder = c.DisplayOrder,
+                CreatedBy = c.CreatedBy,
+                CreatedAt = c.CreatedAt,
+                DonorCount = c.Donations.Count(d => d.PaymentStatus == "Completed")
+            })
             .ToListAsync(cancellationToken);
-
-        var items = campaigns.Select(c => new CampaignDto
-        {
-            CampaignId = c.CampaignId,
-            CauseId = c.CauseId,
-            CauseName = c.Cause?.CauseName,
-            OrganizationId = c.OrganizationId,
-            OrganizationName = c.Organization?.OrganizationName,
-            CampaignName = c.CampaignName,
-            CampaignCode = c.CampaignCode,
-            ProgrammeType = c.ProgrammeType,
-            RegistrationRequired = c.RegistrationRequired,
-            MaxParticipants = c.MaxParticipants,
-            TargetBeneficiaries = c.TargetBeneficiaries,
-            ExpectedBudget = c.ExpectedBudget,
-            ActualBudget = c.ActualBudget,
-            Description = c.Description,
-            GoalAmount = c.GoalAmount,
-            RaisedAmount = c.RaisedAmount,
-            PercentageReached = c.GoalAmount > 0 ? Math.Min((c.RaisedAmount / c.GoalAmount) * 100, 100) : 0,
-            StartDate = c.StartDate,
-            EndDate = c.EndDate,
-            DaysRemaining = c.EndDate.HasValue ? Math.Max((c.EndDate.Value - DateTime.UtcNow).Days, 0) : null,
-            ImageUrl = c.ImageUrl,
-            BeneficiariesCount = c.BeneficiariesCount,
-            Location = c.Location,
-            Status = c.Status,
-            IsFeatured = c.IsFeatured,
-            DisplayOrder = c.DisplayOrder,
-            CreatedBy = c.CreatedBy,
-            CreatedAt = c.CreatedAt,
-            DonorCount = c.Donations?.Count(d => d.PaymentStatus == "Completed") ?? 0
-        });
 
         return new PagedCampaignsResult
         {
